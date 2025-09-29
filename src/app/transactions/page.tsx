@@ -51,7 +51,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { extractTransactionsAction } from '../actions';
-import type { ExtractedTransaction } from '@/ai/flows/extract-transactions-from-document';
+import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 
 const initialTransactions: ExtractedTransaction[] = [
   {

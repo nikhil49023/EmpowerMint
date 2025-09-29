@@ -5,11 +5,11 @@ import {
   GenerateSuggestionsFromPromptInput,
   GenerateSuggestionsFromPromptOutput,
 } from '@/ai/flows/generate-suggestions-from-prompt';
-import {
-  extractTransactionsFromDocument,
+import { extractTransactionsFromDocument } from '@/ai/flows/extract-transactions-from-document';
+import type {
   ExtractTransactionsInput,
   ExtractTransactionsOutput,
-} from '@/ai/flows/extract-transactions-from-document';
+} from '@/ai/schemas/transactions';
 
 export async function generateSuggestionsAction(
   input: GenerateSuggestionsFromPromptInput
