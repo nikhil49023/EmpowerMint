@@ -74,38 +74,125 @@ const startupSteps = [
   {
     icon: Lightbulb,
     title: '1. Idea & Validation',
-    description:
-      'Define and validate your idea. The Startup India Seed Fund Scheme can provide early-stage funding to help you develop your concept into a proof of concept.',
+    description: (
+      <>
+        Define and validate your idea. The{' '}
+        <a
+          href="https://www.startupindia.gov.in/content/sih/en/funding/schemes/seed-fund-scheme.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          Startup India Seed Fund Scheme
+        </a>{' '}
+        can provide early-stage funding to help you develop your concept into a
+        proof of concept.
+      </>
+    ),
   },
   {
     icon: FileText,
     title: '2. Business Plan',
-    description:
-      'Create a solid plan. The government offers free tools and templates through the Startup India Hub portal to help you structure your business plan effectively.',
+    description: (
+      <>
+        Create a solid plan. The government offers free tools and templates through
+        the{' '}
+        <a
+          href="https://www.startupindia.gov.in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          Startup India Hub portal
+        </a>{' '}
+        to help you structure your business plan effectively.
+      </>
+    ),
   },
   {
     icon: Building,
     title: '3. Register Your Business',
-    description:
-      'Register as a Private Limited Company, LLP, or Partnership. Registering with Startup India (DPIIT) gives you tax exemptions and other benefits.',
+    description: (
+      <>
+        Register as a Private Limited Company, LLP, or Partnership. Registering
+        with{' '}
+        <a
+          href="https://www.startupindia.gov.in/content/sih/en/registration.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          Startup India (DPIIT)
+        </a>{' '}
+        gives you tax exemptions and other benefits.
+      </>
+    ),
   },
   {
     icon: Banknote,
     title: '4. Funding & Finance',
-    description:
-      "Secure capital through schemes like MUDRA loans for small businesses, or CGTMSE for collateral-free bank loans. Angel tax relief is also available for eligible startups.",
+    description: (
+      <>
+        Secure capital through schemes like{' '}
+        <a
+          href="https://www.mudra.org.in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          MUDRA loans
+        </a>{' '}
+        for small businesses, or{' '}
+        <a
+          href="https://www.cgtmse.in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          CGTMSE
+        </a>{' '}
+        for collateral-free bank loans. Angel tax relief is also available for
+        eligible startups.
+      </>
+    ),
   },
   {
     icon: Rocket,
     title: '5. Build & Launch',
-    description:
-      'Develop your MVP. The government provides access to incubation centers and grants under schemes like the Atal Innovation Mission to support your launch.',
+    description: (
+      <>
+        Develop your MVP. The government provides access to incubation centers and
+        grants under schemes like the{' '}
+        <a
+          href="https://aim.gov.in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          Atal Innovation Mission
+        </a>{' '}
+        to support your launch.
+      </>
+    ),
   },
   {
     icon: Megaphone,
     title: '6. Market & Grow',
-    description:
-      'Promote your business. Participate in government tenders with relaxed norms for startups and leverage the GeM (Government e-Marketplace) to reach a wider audience.',
+    description: (
+      <>
+        Promote your business. Participate in government tenders with relaxed norms
+        for startups and leverage the{' '}
+        <a
+          href="https://gem.gov.in/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline"
+        >
+          GeM (Government e-Marketplace)
+        </a>{' '}
+        to reach a wider audience.
+      </>
+    ),
   },
 ];
 
