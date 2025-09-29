@@ -24,52 +24,54 @@ export default function Home() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Carousel
-          opts={{
-            align: 'start',
-            loop: true,
-          }}
-          orientation="vertical"
-          plugins={[plugin.current]}
-          onMouseEnter={plugin.current.stop}
-          onMouseLeave={plugin.current.reset}
-          className="md:col-span-2 h-[124px] md:h-auto"
-        >
-          <CarouselContent className="-mt-0">
-            <CarouselItem className="pt-0">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Your Expenses
-                  </CardTitle>
-                  <div className="p-2 bg-red-100 rounded-full">
-                    <TrendingDown className="w-4 h-4 text-red-600" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">INR 2589.00</div>
-                  <p className="text-xs text-muted-foreground">This month</p>
-                </CardContent>
-              </Card>
-            </CarouselItem>
-            <CarouselItem className="pt-0">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Your Income
-                  </CardTitle>
-                  <div className="p-2 bg-green-100 rounded-full">
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">INR 3600.00</div>
-                  <p className="text-xs text-muted-foreground">This month</p>
-                </CardContent>
-              </Card>
-            </CarouselItem>
-          </CarouselContent>
-        </Carousel>
+        <div className="md:col-span-2">
+          <Carousel
+            opts={{
+              align: 'start',
+              loop: true,
+            }}
+            orientation="vertical"
+            plugins={[plugin.current]}
+            onMouseEnter={plugin.current.stop}
+            onMouseLeave={plugin.current.reset}
+            className="h-[124px]"
+          >
+            <CarouselContent className="-mt-0 h-full">
+              <CarouselItem className="pt-0 basis-full">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Your Expenses
+                    </CardTitle>
+                    <div className="p-2 bg-red-100 rounded-full">
+                      <TrendingDown className="w-4 h-4 text-red-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">INR 2589.00</div>
+                    <p className="text-xs text-muted-foreground">This month</p>
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+              <CarouselItem className="pt-0 basis-full">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Your Income
+                    </CardTitle>
+                    <div className="p-2 bg-green-100 rounded-full">
+                      <TrendingUp className="w-4 h-4 text-green-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">INR 3600.00</div>
+                    <p className="text-xs text-muted-foreground">This month</p>
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+            </CarouselContent>
+          </Carousel>
+        </div>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
