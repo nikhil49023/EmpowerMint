@@ -19,6 +19,8 @@ import type {
 } from '@/ai/flows/generate-financial-advice';
 import { generateDashboardSummary } from '@/ai/flows/generate-dashboard-summary';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
+import { generateInvestmentIdeaAnalysis } from '@/ai/flows/generate-investment-idea-analysis';
+import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
 import type { ExtractedTransaction } from './ai/schemas/transactions';
 
 export async function generateSuggestionsAction(
@@ -105,6 +107,24 @@ export async function generateDashboardSummaryAction(
     return {
       success: false,
       error: 'Failed to generate dashboard summary. Please try again.',
+    };
+  }
+}
+
+export async function generateInvestmentIdeaAnalysisAction(
+  idea: string
+): Promise<
+  | { success: true; data: GenerateInvestmentIdeaAnalysisOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateInvestmentIdeaAnalysis({ idea });
+    return { success: true, data: result };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: 'Failed to generate investment idea analysis. Please try again.',
     };
   }
 }

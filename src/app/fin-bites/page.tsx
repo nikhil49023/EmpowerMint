@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
+import Link from 'next/link';
 
 export default function FinBitesPage() {
   const [finBite, setFinBite] = useState<GenerateFinBiteOutput | null>(null);
@@ -165,9 +166,11 @@ export default function FinBitesPage() {
                 Tier-3 cities in India.
               </p>
             </div>
-            <Button>
-              <FileText className="mr-2" />
-              View Detailed Analysis
+            <Button asChild>
+              <Link href="/investment-ideas/paper-plate-manufacturing">
+                <FileText className="mr-2" />
+                View Detailed Analysis
+              </Link>
             </Button>
           </div>
         </CardContent>
