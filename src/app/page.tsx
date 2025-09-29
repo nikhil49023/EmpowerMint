@@ -35,8 +35,8 @@ export default function Home() {
           onMouseLeave={plugin.current.reset}
           className="w-full"
         >
-          <CarouselContent className="-mt-0 h-[124px]">
-            <CarouselItem className="pt-0 basis-full">
+          <CarouselContent className="h-[124px]">
+            <CarouselItem>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -52,7 +52,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             </CarouselItem>
-            <CarouselItem className="pt-0 basis-full">
+            <CarouselItem>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
