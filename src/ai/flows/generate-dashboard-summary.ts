@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -51,10 +52,13 @@ const prompt = ai.definePrompt({
   `,
 });
 
-function parseCurrency(amount: string): number {
+function parseCurrency(amount: string | number): number {
   if (typeof amount === 'number') return amount;
-  // Remove currency symbols, commas, and whitespace, then parse as a float.
-  return parseFloat(amount.replace(/[^0-9.-]+/g, ''));
+  if (typeof amount === 'string') {
+    // Remove currency symbols, commas, and whitespace, then parse as a float.
+    return parseFloat(amount.replace(/[^0-9.-]+/g, ''));
+  }
+  return 0;
 }
 
 const generateDashboardSummaryFlow = ai.defineFlow(
