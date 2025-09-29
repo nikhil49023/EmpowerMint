@@ -82,7 +82,7 @@ export default function Home() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">INR 2589.00</div>
+                  <div className="text-3xl font-bold">INR 0.00</div>
                   <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
               </Card>
@@ -98,7 +98,7 @@ export default function Home() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">INR 3600.00</div>
+                  <div className="text-3xl font-bold">INR 0.00</div>
                   <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
               </Card>
@@ -112,7 +112,7 @@ export default function Home() {
             <PiggyBank className="w-5 h-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">28%</div>
+            <div className="text-3xl font-bold">0%</div>
             <p className="text-xs text-muted-foreground">
               Of your income this month
             </p>
