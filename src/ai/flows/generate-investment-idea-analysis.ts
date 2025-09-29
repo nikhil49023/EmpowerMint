@@ -71,7 +71,14 @@ const prompt = ai.definePrompt({
   5.  **Return on Investment (ROI)**: Provide a realistic projection of potential revenue and profit. Explain the factors that influence profitability and a possible timeline to break even and achieve profitability.
   6.  **Future Proofing**: Discuss the long-term viability of the business. Cover aspects like scalability, potential for product diversification, market trends, and competitive landscape.
 
-  Your tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. Ensure the output is in the specified JSON format.`,
+  Your tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. 
+  
+  **Formatting instructions**:
+  - Use simple, easy-to-understand language.
+  - Use markdown to **bold** important keywords and phrases.
+  - When mentioning any currency amount, wrap it in the format \`CURRENCY{...\}\`. For example, instead of "INR 50,000", write "CURRENCY{INR 50,000}".
+
+  Ensure the output is in the specified JSON format.`,
 });
 
 const generateInvestmentIdeaAnalysisFlow = ai.defineFlow(

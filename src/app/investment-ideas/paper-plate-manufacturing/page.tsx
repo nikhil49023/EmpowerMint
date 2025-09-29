@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
+import { FormattedText } from '@/components/financify/formatted-text';
 
 export default function InvestmentIdeaPage() {
   const [analysis, setAnalysis] =
@@ -64,9 +65,7 @@ export default function InvestmentIdeaPage() {
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : (
-            <p className="text-muted-foreground whitespace-pre-line">
-              {content}
-            </p>
+            <FormattedText text={content || ''} />
           )}
         </CardContent>
       </Card>
