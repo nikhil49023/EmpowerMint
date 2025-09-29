@@ -27,12 +27,22 @@ export default function Sidebar() {
   return (
     <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
       <div className="p-6 flex items-center gap-2">
-        <div className="flex items-end gap-1 text-primary">
-            <div className="w-1.5 h-4 bg-current rounded-full"></div>
-            <div className="w-1.5 h-6 bg-current rounded-full"></div>
-            <div className="w-1.5 h-3 bg-current rounded-full"></div>
-        </div>
-        <h1 className="text-xl font-bold">Financify</h1>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-6 w-6 text-primary"
+        >
+          <path d="M18 15l-6-6-6 6" />
+          <path d="M12 21V9" />
+        </svg>
+        <h1 className="text-xl font-bold">Uplift AI</h1>
       </div>
       <nav className="flex-1 px-4 py-2 space-y-1">
         {navItems.map((item) => (
