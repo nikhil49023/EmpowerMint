@@ -23,8 +23,8 @@ export default function Home() {
         <p className="text-muted-foreground">Good Evening, there!</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="md:col-span-2">
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="md:col-span-1">
           <Carousel
             opts={{
               align: 'start',
@@ -43,7 +43,7 @@ export default function Home() {
                     <CardTitle className="text-sm font-medium">
                       Your Expenses
                     </CardTitle>
-                    <div className="p-2 bg-red-100 rounded-full">
+                    <div className="p-2 bg-red-100 rounded-md">
                       <TrendingDown className="w-4 h-4 text-red-600" />
                     </div>
                   </CardHeader>
@@ -59,7 +59,7 @@ export default function Home() {
                     <CardTitle className="text-sm font-medium">
                       Your Income
                     </CardTitle>
-                    <div className="p-2 bg-green-100 rounded-full">
+                    <div className="p-2 bg-green-100 rounded-md">
                       <TrendingUp className="w-4 h-4 text-green-600" />
                     </div>
                   </CardHeader>
@@ -79,7 +79,7 @@ export default function Home() {
             <PiggyBank className="w-5 h-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">28%</div>
+            <div className="text-3xl font-bold">0%</div>
             <p className="text-xs text-muted-foreground">
               Of your income this month
             </p>
