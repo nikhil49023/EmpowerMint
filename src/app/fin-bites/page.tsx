@@ -8,6 +8,11 @@ import {
   Loader2,
   Newspaper,
   Send,
+  Lightbulb,
+  Building,
+  Banknote,
+  Rocket,
+  Megaphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -64,6 +69,45 @@ const investmentIdeaCategories = {
     'Local Experience & Tourism Curation',
   ],
 };
+
+const startupSteps = [
+  {
+    icon: Lightbulb,
+    title: '1. Idea & Validation',
+    description:
+      'Define your idea and validate it by talking to potential customers. Does it solve a real problem?',
+  },
+  {
+    icon: FileText,
+    title: '2. Business Plan',
+    description:
+      'Create a solid plan outlining your business goals, strategies, and how you will achieve them.',
+  },
+  {
+    icon: Building,
+    title: '3. Register Your Business',
+    description:
+      'Choose a legal structure (like Sole Proprietorship, OPC, or LLP) and register your company.',
+  },
+  {
+    icon: Banknote,
+    title: '4. Funding & Finance',
+    description:
+      'Secure initial capital through personal savings, loans (like MUDRA), or angel investors.',
+  },
+  {
+    icon: Rocket,
+    title: '5. Build & Launch',
+    description:
+      'Develop your Minimum Viable Product (MVP), create an online presence, and launch your business.',
+  },
+  {
+    icon: Megaphone,
+    title: '6. Market & Grow',
+    description:
+      'Promote your business, acquire customers, gather feedback, and iterate to scale your operations.',
+  },
+];
 
 export default function FinBitesPage() {
   const [finBite, setFinBite] = useState<GenerateFinBiteOutput | null>(null);
@@ -264,6 +308,36 @@ export default function FinBitesPage() {
               <Send className="mr-2" /> Get Insights
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="glassmorphic">
+        <CardHeader>
+          <CardTitle>Your Startup Journey</CardTitle>
+          <CardDescription>
+            A step-by-step guide to starting your business in India.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {startupSteps.map((step, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className="flex items-start gap-4"
+            >
+              <div className="p-3 bg-accent rounded-full">
+                <step.icon className="h-6 w-6 text-accent-foreground" />
+              </div>
+              <div>
+                <h3 className="font-semibold">{step.title}</h3>
+                <p className="text-muted-foreground text-sm">
+                  {step.description}
+                </p>
+              </div>
+            </motion.div>
+          ))}
         </CardContent>
       </Card>
     </div>
