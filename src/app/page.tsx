@@ -33,9 +33,9 @@ export default function Home() {
           plugins={[plugin.current]}
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
-          className="md:col-span-2"
+          className="md:col-span-2 h-[124px] md:h-auto"
         >
-          <CarouselContent className="-mt-0 h-full">
+          <CarouselContent className="-mt-0">
             <CarouselItem className="pt-0">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
