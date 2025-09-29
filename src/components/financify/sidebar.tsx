@@ -2,12 +2,12 @@
 'use client';
 
 import {
-  ArrowLeftRight,
-  BarChart3,
-  BookMarked,
-  LayoutDashboard,
+  Home,
+  Wallet,
+  PiggyBank,
+  BrainCircuit,
+  Newspaper,
   LogOut,
-  Sparkles,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -27,11 +27,11 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-  { href: '/budgets', label: 'Budgets', icon: BookMarked },
-  { href: '/ai-advisor', label: 'AI Advisor', icon: Sparkles },
-  { href: '/fin-bites', label: 'Fin Bites', icon: BarChart3 },
+  { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/transactions', label: 'Transactions', icon: Wallet },
+  { href: '/budgets', label: 'Budgets', icon: PiggyBank },
+  { href: '/ai-advisor', label: 'AI Advisor', icon: BrainCircuit },
+  { href: '/fin-bites', label: 'Fin Bites', icon: Newspaper },
 ];
 
 export default function Sidebar() {
