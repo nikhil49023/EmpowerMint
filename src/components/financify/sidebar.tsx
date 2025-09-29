@@ -6,13 +6,25 @@ import {
   BarChart3,
   BookMarked,
   LayoutDashboard,
+  LogOut,
   Sparkles,
   User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -24,14 +36,19 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    router.push('/login');
+  };
 
   return (
     <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
       <div className="p-6 flex items-center gap-2">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
+          width="32"
+          height="32"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -40,16 +57,12 @@ export default function Sidebar() {
           strokeLinejoin="round"
           className="h-8 w-8 text-primary"
         >
-          <path d="M12 2L12 8" />
-          <path d="M12 16L12 22" />
-          <path d="M17 7L19 7" />
-          <path d="M5 7L7 7" />
-          <path d="M17 17L19 17" />
-          <path d="M5 17L7 17" />
-          <path d="M12 2L15 5L12 8L9 5L12 2" />
-          <path d="M9 19L12 22L15 19L12 16L9 19" />
-          <path d="M2 12L5 15L8 12L5 9L2 12" />
-          <path d="M16 12L19 15L22 12L19 9L16 12" />
+          <path d="M3 3v18h18" />
+          <path d="m19 9-5 5-4-4-3 3" />
+          <path d="M12 21.5a2.5 2.5 0 0 1-2.5-2.5V18" />
+          <path d="M12 15a2.5 2.5 0 0 1 2.5 2.5V19" />
+          <path d="m15.5 14.5-3-3-3 3" />
+          <path d="M12.5 8a2.5 2.5 0 0 1-3 0" />
         </svg>
         <h1 className="text-xl font-bold">Uplift AI</h1>
       </div>
@@ -73,10 +86,38 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="p-4 border-t">
-        <Button variant="ghost" className="w-full justify-start text-muted-foreground">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-muted-foreground"
+        >
           <User className="mr-3 h-5 w-5" />
           My Profile
         </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-destructive hover:text-destructive"
+            >
+              <LogOut className="mr-3 h-5 w-5" />
+              Logout
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You will be redirected to the login page.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleLogout}>
+                Logout
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </aside>
   );
