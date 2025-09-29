@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ElementRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { askAIAdvisorAction } from '../actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { ElementRef } from 'react';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 
 type Message = {
   id: string;
@@ -25,6 +26,10 @@ export default function AIAdvisorPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
+  const [transactions] = useLocalStorage<ExtractedTransaction[]>(
+    'transactions',
+    []
+  );
 
   useEffect(() => {
     // Generate a unique ID that is stable on the client
@@ -68,7 +73,7 @@ export default function AIAdvisorPage() {
     setInput('');
     setIsLoading(true);
 
-    const result = await askAIAdvisorAction({ query: input });
+    const result = await askAIAdvisorAction({ query: input, transactions });
 
     if (result.success) {
       const newAiMessage: Message = {
