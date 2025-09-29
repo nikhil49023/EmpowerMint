@@ -40,19 +40,21 @@ export default function Sidebar() {
           strokeLinejoin="round"
           className="h-8 w-8 text-primary"
         >
-          <path d="M15.5 22.5a2.5 2.5 0 0 1-3 0" />
-          <path d="M12.5 20a2.5 2.5 0 0 1-3 0" />
-          <path d="m6.5 17.5-3-3 2.5-5 3.5 2.5-3 2.5" />
-          <path d="m17.5 17.5 3-3-2.5-5-3.5 2.5 3 2.5" />
-          <path d="M12.5 6.5a2.5 2.5 0 0 1-3 0" />
-          <path d="m15.5 4-3-3-3 3" />
-          <path d="m6.5 11.5-3-3 2.5-5 3.5 2.5-3 2.5" />
-          <path d="m17.5 11.5 3-3-2.5-5-3.5 2.5 3 2.5" />
+          <path d="M12 2L12 8" />
+          <path d="M12 16L12 22" />
+          <path d="M17 7L19 7" />
+          <path d="M5 7L7 7" />
+          <path d="M17 17L19 17" />
+          <path d="M5 17L7 17" />
+          <path d="M12 2L15 5L12 8L9 5L12 2" />
+          <path d="M9 19L12 22L15 19L12 16L9 19" />
+          <path d="M2 12L5 15L8 12L5 9L2 12" />
+          <path d="M16 12L19 15L22 12L19 9L16 12" />
         </svg>
         <h1 className="text-xl font-bold">Uplift AI</h1>
       </div>
       <nav className="flex-1 px-4 py-2 space-y-1">
-        {navItems.map((item) => (
+        {navItems.map(item => (
           <Button
             key={item.label}
             variant="ghost"
