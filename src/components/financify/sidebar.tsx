@@ -38,10 +38,16 @@ export default function Sidebar() {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-6 w-6 text-primary"
+          className="h-8 w-8 text-primary"
         >
-          <path d="m12.5 2.5-2.5 5 2.5 5-5-2.5-5 2.5 5-2.5-2.5-5 2.5 5 5-2.5Z" />
-          <path d="m12.5 11.5-2.5 5 2.5 5-5-2.5-5 2.5 5-2.5-2.5-5 2.5 5 5-2.5Z" />
+          <path d="M15.5 22.5a2.5 2.5 0 0 1-3 0" />
+          <path d="M12.5 20a2.5 2.5 0 0 1-3 0" />
+          <path d="m6.5 17.5-3-3 2.5-5 3.5 2.5-3 2.5" />
+          <path d="m17.5 17.5 3-3-2.5-5-3.5 2.5 3 2.5" />
+          <path d="M12.5 6.5a2.5 2.5 0 0 1-3 0" />
+          <path d="m15.5 4-3-3-3 3" />
+          <path d="m6.5 11.5-3-3 2.5-5 3.5 2.5-3 2.5" />
+          <path d="m17.5 11.5 3-3-2.5-5-3.5 2.5 3 2.5" />
         </svg>
         <h1 className="text-xl font-bold">Uplift AI</h1>
       </div>

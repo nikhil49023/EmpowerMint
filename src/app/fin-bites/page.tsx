@@ -1,11 +1,9 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import {
-  RefreshCw,
   FileText,
-  Loader2,
   Newspaper,
   Send,
   Lightbulb,
@@ -13,6 +11,7 @@ import {
   Banknote,
   Rocket,
   Megaphone,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,11 +23,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { generateFinBiteAction } from '../actions';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
@@ -197,46 +193,17 @@ const startupSteps = [
   },
 ];
 
+const staticFinBite = {
+  title: 'Startup India Seed Fund Scheme',
+  summary:
+    'This scheme provides financial assistance to startups for proof of concept, prototype development, product trials, market entry, and commercialization. It helps bridge the gap between idea and venture.',
+  link: 'https://www.startupindia.gov.in/content/sih/en/funding/schemes/seed-fund-scheme.html',
+};
+
 export default function FinBitesPage() {
-  const [finBite, setFinBite] = useState<GenerateFinBiteOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [userIdea, setUserIdea] = useState('');
   const router = useRouter();
-
-  const fetchFinBite = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await generateFinBiteAction();
-      if (result.success) {
-        setFinBite(result.data);
-      } else {
-        setError(result.error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: result.error,
-        });
-      }
-    } catch (e) {
-      const errorMessage =
-        e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError(errorMessage);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: errorMessage,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchFinBite();
-  }, [fetchFinBite]);
 
   const handleAnalyzeIdea = () => {
     if (!userIdea.trim()) {
@@ -259,57 +226,33 @@ export default function FinBitesPage() {
             Your daily dose of financial wisdom.
           </p>
         </div>
-        <Button onClick={fetchFinBite} disabled={isLoading}>
-          {isLoading && !finBite ? (
-            <Loader2 className="mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2" />
-          )}
-          New Bite
+        <Button asChild>
+          <a href={staticFinBite.link} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="mr-2" />
+            Learn More
+          </a>
         </Button>
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={finBite?.title || (isLoading ? 'loading' : 'error')}
+          key="static-fin-bite"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
         >
-          {isLoading ? (
-            <Card className="glassmorphic">
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6 mt-2" />
-              </CardContent>
-            </Card>
-          ) : error ? (
-            <Card className="glassmorphic">
-              <CardContent className="pt-6">
-                <div className="text-center text-destructive">
-                  <p>
-                    <strong>Oops!</strong> {error}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="glassmorphic overflow-hidden">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Newspaper className="h-5 w-5 text-primary" />
-                  {finBite?.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{finBite?.summary}</p>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="glassmorphic overflow-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Newspaper className="h-5 w-5 text-primary" />
+                {staticFinBite.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">{staticFinBite.summary}</p>
+            </CardContent>
+          </Card>
         </motion.div>
       </AnimatePresence>
 
@@ -329,8 +272,14 @@ export default function FinBitesPage() {
                 strokeLinejoin="round"
                 className="h-6 w-6 text-primary"
               >
-                <path d="m12.5 2.5-2.5 5 2.5 5-5-2.5-5 2.5 5-2.5-2.5-5 2.5 5 5-2.5Z" />
-                <path d="m12.5 11.5-2.5 5 2.5 5-5-2.5-5 2.5 5-2.5-2.5-5 2.5 5 5-2.5Z" />
+                <path d="M15.5 22.5a2.5 2.5 0 0 1-3 0" />
+                <path d="M12.5 20a2.5 2.5 0 0 1-3 0" />
+                <path d="m6.5 17.5-3-3 2.5-5 3.5 2.5-3 2.5" />
+                <path d="m17.5 17.5 3-3-2.5-5-3.5 2.5 3 2.5" />
+                <path d="M12.5 6.5a2.5 2.5 0 0 1-3 0" />
+                <path d="m15.5 4-3-3-3 3" />
+                <path d="m6.5 11.5-3-3 2.5-5 3.5 2.5-3 2.5" />
+                <path d="m17.5 11.5 3-3-2.5-5-3.5 2.5 3 2.5" />
               </svg>
               Investment Ideas
             </h2>
