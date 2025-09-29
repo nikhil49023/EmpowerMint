@@ -1,7 +1,13 @@
 
 'use client';
 
-import { TrendingUp, PiggyBank, Settings, TrendingDown } from 'lucide-react';
+import {
+  TrendingUp,
+  PiggyBank,
+  Settings,
+  TrendingDown,
+  Lightbulb,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -10,12 +16,30 @@ import {
   CarouselItem,
 } from '@/components/ui/carousel';
 import Autoplay from 'embla-carousel-autoplay';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { generateFinBiteAction } from './actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Home() {
   const plugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })
   );
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSuggestion() {
+      setIsLoading(true);
+      const result = await generateFinBiteAction();
+      if (result.success) {
+        setSuggestion(result.data.tip);
+      } else {
+        setSuggestion(result.error);
+      }
+      setIsLoading(false);
+    }
+    fetchSuggestion();
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -34,11 +58,11 @@ export default function Home() {
           plugins={[plugin.current]}
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
-          className="w-full"
+          className="w-full h-full"
         >
-          <CarouselContent className="-mt-0 h-[148px]">
-            <CarouselItem className="pt-0 pb-4">
-              <Card className="glassmorphic">
+          <CarouselContent className="-mt-0 h-full">
+            <CarouselItem className="pt-0 pb-4 h-full">
+              <Card className="glassmorphic h-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
                     Your Expenses
@@ -53,8 +77,8 @@ export default function Home() {
                 </CardContent>
               </Card>
             </CarouselItem>
-            <CarouselItem className="pt-0 pb-4">
-              <Card className="glassmorphic">
+            <CarouselItem className="pt-0 pb-4 h-full">
+              <Card className="glassmorphic h-full">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
                     Your Income
@@ -93,14 +117,23 @@ export default function Home() {
         </div>
         <Card className="glassmorphic">
           <CardContent className="pt-6">
-            <Alert
-              variant="destructive"
-              className="bg-red-50 border-red-200"
-            >
-              <AlertDescription className="text-red-700">
-                Failed to get financial advice.
-              </AlertDescription>
-            </Alert>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ) : (
+              <Alert className="border-0 p-0 bg-transparent">
+                <div className="flex items-start gap-3">
+                  <span className="p-2 bg-accent rounded-full">
+                    <Lightbulb className="w-4 h-4 text-accent-foreground" />
+                  </span>
+                  <div className="flex-1">
+                    <AlertDescription>{suggestion}</AlertDescription>
+                  </div>
+                </div>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       </div>
