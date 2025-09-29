@@ -21,7 +21,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   // Do not show sidebar on login page
-  if (pathname === '/login') {
+  if (pathname === '/') {
     return (
       <html lang="en">
         <body className={`${inter.variable} font-body antialiased`}>

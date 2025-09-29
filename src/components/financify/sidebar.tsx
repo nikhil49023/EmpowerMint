@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/transactions', label: 'Transactions', icon: Wallet },
   { href: '/budgets', label: 'Budgets', icon: PiggyBank },
   { href: '/ai-advisor', label: 'AI Advisor', icon: BrainCircuit },
@@ -39,7 +39,7 @@ export default function Sidebar() {
   const router = useRouter();
 
   const handleLogout = () => {
-    router.push('/login');
+    router.push('/');
   };
 
   return (
