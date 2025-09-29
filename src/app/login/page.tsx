@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,13 +14,57 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { auth } from '@/lib/firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const handleLogin = () => {
-    router.push('/');
+  const handleAuthAction = async () => {
+    setError(null);
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
+        toast({
+          title: 'Account Created',
+          description: 'You have been successfully signed up. Please log in.',
+        });
+        setIsSignUp(false); // Switch to login view after sign up
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        router.push('/');
+      }
+    } catch (err: any) {
+      let errorMessage = 'An unexpected error occurred.';
+      switch (err.code) {
+        case 'auth/user-not-found':
+          errorMessage = 'No user found with this email.';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/email-already-in-use':
+          errorMessage = 'This email is already registered. Please log in.';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'Password should be at least 6 characters long.';
+          break;
+        default:
+          errorMessage = err.message;
+          break;
+      }
+      setError(errorMessage);
+    }
   };
 
   return (
@@ -39,24 +84,27 @@ export default function LoginPage() {
               strokeLinejoin="round"
               className="h-12 w-12 text-primary"
             >
-              <path d="M12 2L12 8" />
-              <path d="M12 16L12 22" />
-              <path d="M17 7L19 7" />
-              <path d="M5 7L7 7" />
-              <path d="M17 17L19 17" />
-              <path d="M5 17L7 17" />
-              <path d="M12 2L15 5L12 8L9 5L12 2" />
-              <path d="M9 19L12 22L15 19L12 16L9 19" />
-              <path d="M2 12L5 15L8 12L5 9L2 12" />
-              <path d="M16 12L19 15L22 12L19 9L16 12" />
+              <path d="M12 21.5a2.5 2.5 0 0 1-2.5-2.5V18" />
+              <path d="M12 15a2.5 2.5 0 0 1 2.5 2.5V19" />
+              <path d="m15.5 14.5-3-3-3 3" />
+              <path d="M12.5 8a2.5 2.5 0 0 1-3 0" />
             </svg>
           </div>
-          <CardTitle className="text-2xl">Welcome to Uplift AI</CardTitle>
+          <CardTitle className="text-2xl">
+            {isSignUp ? 'Create an Account' : 'Welcome to Uplift AI'}
+          </CardTitle>
           <CardDescription>
-            Enter your credentials to access your dashboard.
+            {isSignUp
+              ? 'Enter your details to get started.'
+              : 'Enter your credentials to access your dashboard.'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -64,22 +112,37 @@ export default function LoginPage() {
               type="email"
               placeholder="user@example.com"
               required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required />
+            <Input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" onClick={handleLogin}>
-            Login
+          <Button className="w-full" onClick={handleAuthAction}>
+            {isSignUp ? 'Sign Up' : 'Login'}
           </Button>
           <p className="text-xs text-center text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link href="#" className="underline text-primary">
-              Sign up
-            </Link>
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <Button
+              variant="link"
+              className="p-0 h-auto text-primary"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+              }}
+            >
+              {isSignUp ? 'Login' : 'Sign up'}
+            </Button>
           </p>
         </CardFooter>
       </Card>
