@@ -378,7 +378,7 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="glassmorphic">
         <CardHeader>
           <CardTitle>Transaction History</CardTitle>
           <CardDescription>A list of your recent transactions.</CardDescription>

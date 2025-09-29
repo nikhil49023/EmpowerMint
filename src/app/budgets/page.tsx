@@ -187,7 +187,7 @@ export default function BudgetsPage() {
       </div>
 
       {budgetsWithSpending.length === 0 ? (
-        <Card className="flex items-center justify-center min-h-[400px] border-dashed shadow-none">
+        <Card className="flex items-center justify-center min-h-[400px] border-dashed shadow-none glassmorphic">
           <CardContent className="text-center p-6">
             <div className="flex justify-center mb-4">
               <PiggyBank className="w-16 h-16 text-muted-foreground" />
@@ -217,7 +217,7 @@ export default function BudgetsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
-                <Card>
+                <Card className="glassmorphic">
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-base font-medium flex items-center gap-2">
                       <Icon className="h-5 w-5 text-primary" />
