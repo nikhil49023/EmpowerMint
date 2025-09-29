@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import {
   RefreshCw,
   FileText,
-  BarChart3,
   Loader2,
   Newspaper,
   Send,
@@ -27,6 +26,31 @@ import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { ChevronsUpDown } from 'lucide-react';
+
+const investmentIdeas = [
+  'Paper Plate Manufacturing Business',
+  'Mobile Soil & Water Testing Lab',
+  'Millet-Based Snack Production Unit',
+  'Ghost Kitchen for Regional Cuisine',
+  'Vermicomposting Organic Fertilizer Production',
+  'Digital Marketing Agency for Local Businesses',
+  'Hyperlocal Errand & Delivery Service',
+  'Online Handicrafts Marketplace',
+  'Upcycled Fashion & Home Decor',
+  'EV Charging Station (in partnership with a local business)',
+  'Rental Service for Reusable Event Supplies',
+  'Co-working Space in a Tier-2 City',
+  'Subscription-Based Toy & Book Library',
+  'Senior Citizen Care Services (Non-Medical)',
+  'Customized Gifting & Curation Service',
+  'Local Experience & Tourism Curation',
+];
 
 export default function FinBitesPage() {
   const [finBite, setFinBite] = useState<GenerateFinBiteOutput | null>(null);
@@ -168,32 +192,43 @@ export default function FinBitesPage() {
             <Badge variant="outline">Beta</Badge>
           </div>
           <CardDescription>
-            Explore potential business ideas. Either view our sample analysis
-            or enter your own idea below.
+            Explore our curated library of startup ideas or enter your own
+            below to get AI-powered insights.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="bg-accent/50 rounded-lg p-4 flex items-center justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-2">
-                <FileText className="text-primary" />
-                <h3 className="font-semibold text-primary">
-                  Paper Plate Manufacturing Business
-                </h3>
-              </div>
-              <p className="text-sm text-accent-foreground mt-1">
-                A low-investment, high-demand business suitable for Tier-2 and
-                Tier-3 cities in India.
-              </p>
-            </div>
-            <Button asChild>
-              <Link href="/investment-ideas/paper-plate-manufacturing">
+        <CardContent className="space-y-6">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full">
                 <FileText className="mr-2" />
-                View Detailed Analysis
-              </Link>
-            </Button>
-          </div>
-          <div className="space-y-4">
+                Browse Idea Library
+                <ChevronsUpDown className="ml-auto h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {investmentIdeas.map(idea => (
+                  <Link
+                    href={`/investment-ideas/custom?idea=${encodeURIComponent(
+                      idea
+                    )}`}
+                    key={idea}
+                    passHref
+                  >
+                    <Button
+                      variant="ghost"
+                      className="w-full h-full text-left justify-start p-4"
+                    >
+                      <FileText className="mr-3 flex-shrink-0" />
+                      <span className="flex-1">{idea}</span>
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          <div className="space-y-4 pt-6 border-t">
             <h3 className="font-semibold">Analyze Your Own Business Idea</h3>
             <Textarea
               placeholder="Describe your business idea, e.g., 'A cloud kitchen for healthy salads in metropolitan cities...'"
