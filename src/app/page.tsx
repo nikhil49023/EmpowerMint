@@ -36,7 +36,7 @@ export default function Home() {
           className="w-full"
         >
           <CarouselContent className="h-[124px] -mt-0">
-            <CarouselItem className="pt-0">
+            <CarouselItem className="pt-0 pb-4">
               <Card className="glassmorphic">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -52,7 +52,7 @@ export default function Home() {
                 </CardContent>
               </Card>
             </CarouselItem>
-            <CarouselItem className="pt-0">
+            <CarouselItem className="pt-0 pb-4">
               <Card className="glassmorphic">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
