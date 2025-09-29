@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -53,12 +53,13 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { extractTransactionsAction } from '../actions';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
-import { transactions as initialTransactions } from '@/lib/data';
 import { cn } from '@/lib/utils';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] =
-    useState<ExtractedTransaction[]>(initialTransactions);
+  const [transactions, setTransactions] = useLocalStorage<
+    ExtractedTransaction[]
+  >('transactions', []);
   const [newTransaction, setNewTransaction] = useState({
     description: '',
     date: '',
@@ -403,7 +404,9 @@ export default function TransactionsPage() {
                     <TableCell>
                       <Badge
                         variant={
-                          transaction.type === 'income' ? 'default' : 'destructive'
+                          transaction.type === 'income'
+                            ? 'default'
+                            : 'destructive'
                         }
                         className={
                           transaction.type === 'income'

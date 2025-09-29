@@ -17,6 +17,9 @@ import type {
   GenerateFinancialAdviceInput,
   GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
+import { generateDashboardSummary } from '@/ai/flows/generate-dashboard-summary';
+import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
+import type { ExtractedTransaction } from './ai/schemas/transactions';
 
 export async function generateSuggestionsAction(
   input: GenerateSuggestionsFromPromptInput
@@ -84,6 +87,24 @@ export async function askAIAdvisorAction(
     return {
       success: false,
       error: 'Failed to get a response. Please try again.',
+    };
+  }
+}
+
+export async function generateDashboardSummaryAction(
+  transactions: ExtractedTransaction[]
+): Promise<
+  | { success: true; data: GenerateDashboardSummaryOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateDashboardSummary({ transactions });
+    return { success: true, data: result };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: 'Failed to generate dashboard summary. Please try again.',
     };
   }
 }

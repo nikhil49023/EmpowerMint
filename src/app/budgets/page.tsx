@@ -27,7 +27,8 @@ import {
   HeartPulse,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { transactions as allTransactions } from '@/lib/data';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 
 const categoryIcons: { [key: string]: React.ElementType } = {
   Groceries: ShoppingBag,
@@ -63,7 +64,8 @@ const initialBudgets: Budget[] = [
 ];
 
 export default function BudgetsPage() {
-  const [budgets, setBudgets] = useState<Budget[]>(initialBudgets);
+  const [budgets, setBudgets] = useLocalStorage<Budget[]>('budgets', initialBudgets);
+  const [transactions] = useLocalStorage<ExtractedTransaction[]>('transactions', []);
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
@@ -71,7 +73,7 @@ export default function BudgetsPage() {
 
   const budgetsWithSpending = useMemo(() => {
     return budgets.map(budget => {
-      const spent = allTransactions
+      const spent = transactions
         .filter(
           t =>
             t.type === 'expense' &&
@@ -79,13 +81,13 @@ export default function BudgetsPage() {
         )
         .reduce((sum, t) => {
           const amount = parseFloat(
-            t.amount.replace(/[^0-9.-]+/g, '')
+            String(t.amount).replace(/[^0-9.-]+/g, '')
           );
           return sum + amount;
         }, 0);
       return { ...budget, spent };
     });
-  }, [budgets]);
+  }, [budgets, transactions]);
 
   const handleAddBudget = () => {
     if (!newBudgetName || !newBudgetAmount) {
