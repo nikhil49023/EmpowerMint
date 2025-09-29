@@ -14,11 +14,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -87,8 +88,24 @@ export default function LoginPage() {
     setError(null);
     try {
       if (isSignUp) {
-        // Here you would typically also save the additional user info to a database like Firestore
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+        const user = userCredential.user;
+        
+        // Save additional user info to Firestore
+        await setDoc(doc(db, 'users', user.uid), {
+          name,
+          age,
+          occupation,
+          annualIncome,
+          state,
+          district,
+          email: user.email,
+        });
+
         toast({
           title: 'Account Created',
           description: 'You have been successfully signed up. Please log in.',
