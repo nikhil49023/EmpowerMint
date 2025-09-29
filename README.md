@@ -49,11 +49,30 @@ To get a local copy up and running, follow these simple steps.
     ```
 
 3.  **Set up environment variables:**
-    Create a `.env.local` file in the root of your project and add your Gemini API key:
-    ```env
-    GEMINI_API_KEY=your_gemini_api_key_here
+    Create a `.env.local` file in the root of your project by copying the `.env` file. Then, fill in your Firebase and Gemini API credentials.
+    ```bash
+    cp .env .env.local
     ```
-    *You will also need to replace the placeholder Firebase configuration in `src/lib/firebase.ts` with your own project's configuration.*
+    Now, open `.env.local` and add your project-specific keys.
+
+    ```env
+    # .env.local
+
+    # Genkit
+    GENKIT_ENV=dev
+
+    # Firebase - Replace with your actual Firebase project configuration
+    NEXT_PUBLIC_FIREBASE_API_KEY="your-firebase-api-key"
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-firebase-auth-domain"
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-firebase-project-id"
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your-storage-bucket"
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your-messaging-sender-id"
+    NEXT_PUBLIC_FIREBASE_APP_ID="your-firebase-app-id"
+
+    # Gemini - Replace with your actual Gemini API key
+    GEMINI_API_KEY="your_gemini_api_key_here"
+    ```
+    You can get your Firebase configuration object from the Firebase console under Project Settings.
 
 4.  **Run the development server:**
     ```bash
