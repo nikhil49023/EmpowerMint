@@ -11,11 +11,9 @@ export default function LoginLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body className={`${inter.variable} font-body antialiased`}>
-        {children}
-      </body>
-    </html>
-  );
+  // This layout is intentionally simple. The root layout in src/app/layout.tsx
+  // already handles the main <html> and <body> structure. This component
+  // just ensures the children for the /login route are rendered correctly
+  // without adding the sidebar.
+  return <>{children}</>;
 }
