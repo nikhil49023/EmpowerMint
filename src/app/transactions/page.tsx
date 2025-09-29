@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Trash2, Upload, Loader2 } from 'lucide-react';
+import { PlusCircle, Trash2, Upload, Loader2, FileUp } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +54,7 @@ import { useToast } from '@/hooks/use-toast';
 import { extractTransactionsAction } from '../actions';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { transactions as initialTransactions } from '@/lib/data';
+import { cn } from '@/lib/utils';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] =
@@ -70,6 +71,7 @@ export default function TransactionsPage() {
   const [addTransactionDialogOpen, setAddTransactionDialogOpen] =
     useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleClearData = () => {
     setTransactions([]);
@@ -106,12 +108,7 @@ export default function TransactionsPage() {
     });
   };
 
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const processFile = async (file: File) => {
     setIsImporting(true);
     setImportDialogOpen(false);
 
@@ -155,6 +152,42 @@ export default function TransactionsPage() {
       });
       setIsImporting(false);
     }
+  };
+
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
   };
 
   return (
@@ -205,31 +238,40 @@ export default function TransactionsPage() {
               <DialogHeader>
                 <DialogTitle>Import Transactions</DialogTitle>
                 <DialogDescription>
-                  Upload a document (e.g., bank statement PDF) to automatically
-                  extract and import your transactions.
+                  Upload a document to automatically extract transactions.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid w-full max-w-sm items-center gap-1.5 py-4">
-                <Label htmlFor="document">Document</Label>
-                <Input
+              <div
+                className={cn(
+                  'mt-4 border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 text-center cursor-pointer transition-colors',
+                  { 'bg-accent': isDragging }
+                )}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
                   id="document"
                   type="file"
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   accept=".pdf,.doc,.docx,.txt,.csv"
+                  className="hidden"
                 />
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <FileUp className="w-8 h-8" />
+                  <p>
+                    {isDragging
+                      ? 'Drop the file here'
+                      : 'Drag & drop a file or click to select'}
+                  </p>
+                  <p className="text-xs">
+                    Supports PDF, DOC, DOCX, TXT, and CSV files.
+                  </p>
+                </div>
               </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setImportDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                </DialogClose>
-              </DialogFooter>
             </DialogContent>
           </Dialog>
 
@@ -360,7 +402,9 @@ export default function TransactionsPage() {
                     <TableCell>{transaction.date}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={transaction.type === 'income' ? 'default' : 'destructive'}
+                        variant={
+                          transaction.type === 'income' ? 'default' : 'destructive'
+                        }
                         className={
                           transaction.type === 'income'
                             ? 'bg-green-100 text-green-800 border-green-200'
