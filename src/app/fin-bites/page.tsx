@@ -75,37 +75,37 @@ const startupSteps = [
     icon: Lightbulb,
     title: '1. Idea & Validation',
     description:
-      'Define your idea and validate it by talking to potential customers. Does it solve a real problem?',
+      'Define and validate your idea. The Startup India Seed Fund Scheme can provide early-stage funding to help you develop your concept into a proof of concept.',
   },
   {
     icon: FileText,
     title: '2. Business Plan',
     description:
-      'Create a solid plan outlining your business goals, strategies, and how you will achieve them.',
+      'Create a solid plan. The government offers free tools and templates through the Startup India Hub portal to help you structure your business plan effectively.',
   },
   {
     icon: Building,
     title: '3. Register Your Business',
     description:
-      'Choose a legal structure (like Sole Proprietorship, OPC, or LLP) and register your company.',
+      'Register as a Private Limited Company, LLP, or Partnership. Registering with Startup India (DPIIT) gives you tax exemptions and other benefits.',
   },
   {
     icon: Banknote,
     title: '4. Funding & Finance',
     description:
-      'Secure initial capital through personal savings, loans (like MUDRA), or angel investors.',
+      "Secure capital through schemes like MUDRA loans for small businesses, or CGTMSE for collateral-free bank loans. Angel tax relief is also available for eligible startups.",
   },
   {
     icon: Rocket,
     title: '5. Build & Launch',
     description:
-      'Develop your Minimum Viable Product (MVP), create an online presence, and launch your business.',
+      'Develop your MVP. The government provides access to incubation centers and grants under schemes like the Atal Innovation Mission to support your launch.',
   },
   {
     icon: Megaphone,
     title: '6. Market & Grow',
     description:
-      'Promote your business, acquire customers, gather feedback, and iterate to scale your operations.',
+      'Promote your business. Participate in government tenders with relaxed norms for startups and leverage the GeM (Government e-Marketplace) to reach a wider audience.',
   },
 ];
 
