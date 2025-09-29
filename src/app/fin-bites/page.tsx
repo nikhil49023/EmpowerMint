@@ -31,26 +31,39 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { ChevronsUpDown } from 'lucide-react';
 
-const investmentIdeas = [
-  'Paper Plate Manufacturing Business',
-  'Mobile Soil & Water Testing Lab',
-  'Millet-Based Snack Production Unit',
-  'Ghost Kitchen for Regional Cuisine',
-  'Vermicomposting Organic Fertilizer Production',
-  'Digital Marketing Agency for Local Businesses',
-  'Hyperlocal Errand & Delivery Service',
-  'Online Handicrafts Marketplace',
-  'Upcycled Fashion & Home Decor',
-  'EV Charging Station (in partnership with a local business)',
-  'Rental Service for Reusable Event Supplies',
-  'Co-working Space in a Tier-2 City',
-  'Subscription-Based Toy & Book Library',
-  'Senior Citizen Care Services (Non-Medical)',
-  'Customized Gifting & Curation Service',
-  'Local Experience & Tourism Curation',
-];
+const investmentIdeaCategories = {
+  'AgriTech & Food Processing': [
+    'Mobile Soil & Water Testing Lab',
+    'Millet-Based Snack Production Unit',
+    'Ghost Kitchen for Regional Cuisine',
+    'Vermicomposting Organic Fertilizer Production',
+  ],
+  'Tech & Digital Services': [
+    'Digital Marketing Agency for Local Businesses',
+    'Hyperlocal Errand & Delivery Service',
+    'Online Handicrafts Marketplace',
+  ],
+  'Eco-Friendly & Sustainable': [
+    'Upcycled Fashion & Home Decor',
+    'EV Charging Station (in partnership with a local business)',
+    'Rental Service for Reusable Event Supplies',
+  ],
+  'Local & Community Services': [
+    'Co-working Space in a Tier-2 City',
+    'Subscription-Based Toy & Book Library',
+    'Senior Citizen Care Services (Non-Medical)',
+    'Customized Gifting & Curation Service',
+    'Local Experience & Tourism Curation',
+  ],
+};
 
 export default function FinBitesPage() {
   const [finBite, setFinBite] = useState<GenerateFinBiteOutput | null>(null);
@@ -206,25 +219,36 @@ export default function FinBitesPage() {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {investmentIdeas.map(idea => (
-                  <Link
-                    href={`/investment-ideas/custom?idea=${encodeURIComponent(
-                      idea
-                    )}`}
-                    key={idea}
-                    passHref
-                  >
-                    <Button
-                      variant="ghost"
-                      className="w-full h-full text-left justify-start p-4"
-                    >
-                      <FileText className="mr-3 flex-shrink-0" />
-                      <span className="flex-1">{idea}</span>
-                    </Button>
-                  </Link>
-                ))}
-              </div>
+              <Accordion type="single" collapsible className="w-full mt-4">
+                {Object.entries(investmentIdeaCategories).map(
+                  ([category, ideas]) => (
+                    <AccordionItem value={category} key={category}>
+                      <AccordionTrigger>{category}</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {ideas.map(idea => (
+                            <Link
+                              href={`/investment-ideas/custom?idea=${encodeURIComponent(
+                                idea
+                              )}`}
+                              key={idea}
+                              passHref
+                            >
+                              <Button
+                                variant="ghost"
+                                className="w-full h-full text-left justify-start p-3"
+                              >
+                                <FileText className="mr-3 h-4 w-4 flex-shrink-0" />
+                                <span className="flex-1 text-sm">{idea}</span>
+                              </Button>
+                            </Link>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )
+                )}
+              </Accordion>
             </CollapsibleContent>
           </Collapsible>
 
