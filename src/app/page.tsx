@@ -1,3 +1,4 @@
+
 'use client';
 
 import { TrendingUp, PiggyBank, Settings, TrendingDown } from 'lucide-react';
@@ -35,7 +36,7 @@ export default function Home() {
           onMouseLeave={plugin.current.reset}
           className="w-full"
         >
-          <CarouselContent className="h-[124px] -mt-0">
+          <CarouselContent className="-mt-0 h-[148px]">
             <CarouselItem className="pt-0 pb-4">
               <Card className="glassmorphic">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
