@@ -21,11 +21,25 @@ import {
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+  const [occupation, setOccupation] = useState('');
+  const [annualIncome, setAnnualIncome] = useState('');
+  const [state, setState] = useState('');
+  const [district, setDistrict] = useState('');
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -34,6 +48,7 @@ export default function LoginPage() {
     setError(null);
     try {
       if (isSignUp) {
+        // Here you would typically also save the additional user info to a database like Firestore
         await createUserWithEmailAndPassword(auth, email, password);
         toast({
           title: 'Account Created',
@@ -68,8 +83,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-full max-w-sm glassmorphic">
+    <div className="flex items-center justify-center min-h-screen bg-background py-12">
+      <Card className="w-full max-w-md glassmorphic">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
             <svg
@@ -112,6 +127,81 @@ export default function LoginPage() {
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
+          )}
+          {isSignUp && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  placeholder="John Doe"
+                  required={isSignUp}
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="age">Age</Label>
+                  <Input
+                    id="age"
+                    type="number"
+                    placeholder="25"
+                    required={isSignUp}
+                    value={age}
+                    onChange={e => setAge(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="occupation">Occupation</Label>
+                  <Select onValueChange={setOccupation} value={occupation}>
+                    <SelectTrigger id="occupation">
+                      <SelectValue placeholder="Select occupation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="public">Public Sector</SelectItem>
+                      <SelectItem value="private">Private Sector</SelectItem>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="self-employed">Self-employed</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="annualIncome">Annual Income (INR)</Label>
+                <Input
+                  id="annualIncome"
+                  type="number"
+                  placeholder="500000"
+                  required={isSignUp}
+                  value={annualIncome}
+                  onChange={e => setAnnualIncome(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="state">State</Label>
+                  <Input
+                    id="state"
+                    placeholder="Maharashtra"
+                    required={isSignUp}
+                    value={state}
+                    onChange={e => setState(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="district">District</Label>
+                  <Input
+                    id="district"
+                    placeholder="Pune"
+                    required={isSignUp}
+                    value={district}
+                    onChange={e => setDistrict(e.target.value)}
+                  />
+                </div>
+              </div>
+            </>
           )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
