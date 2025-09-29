@@ -1,17 +1,30 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, FileText, BarChart3, Loader2 } from 'lucide-react';
+import {
+  RefreshCw,
+  FileText,
+  BarChart3,
+  Loader2,
+  Newspaper,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { generateFinBiteAction } from '../actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
 
 export default function FinBitesPage() {
-  const [finBite, setFinBite] = useState<string | null>(null);
+  const [finBite, setFinBite] = useState<GenerateFinBiteOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -22,7 +35,7 @@ export default function FinBitesPage() {
     try {
       const result = await generateFinBiteAction();
       if (result.success) {
-        setFinBite(result.data.tip);
+        setFinBite(result.data);
       } else {
         setError(result.error);
         toast({
@@ -68,36 +81,49 @@ export default function FinBitesPage() {
         </Button>
       </div>
 
-      <Card className="glassmorphic overflow-hidden">
-        <CardContent className="p-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={finBite || (isLoading ? 'loading' : 'error')}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {isLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                </div>
-              ) : error ? (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={finBite?.title || (isLoading ? 'loading' : 'error')}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          {isLoading ? (
+            <Card className="glassmorphic">
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6 mt-2" />
+              </CardContent>
+            </Card>
+          ) : error ? (
+            <Card className="glassmorphic">
+              <CardContent className="pt-6">
                 <div className="text-center text-destructive">
                   <p>
                     <strong>Oops!</strong> {error}
                   </p>
                 </div>
-              ) : (
-                <blockquote className="border-l-4 border-primary pl-4 italic text-lg">
-                  "{finBite}"
-                </blockquote>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="glassmorphic overflow-hidden">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Newspaper className="h-5 w-5 text-primary" />
+                  {finBite?.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{finBite?.summary}</p>
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       <Card className="glassmorphic">
         <CardContent className="pt-6">
