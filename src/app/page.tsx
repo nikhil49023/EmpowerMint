@@ -26,8 +26,18 @@ export default function Home() {
   );
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
+    const hours = new Date().getHours();
+    if (hours < 12) {
+      setGreeting('Good Morning, there!');
+    } else if (hours < 18) {
+      setGreeting('Good Afternoon, there!');
+    } else {
+      setGreeting('Good Evening, there!');
+    }
+
     async function fetchSuggestion() {
       setIsLoading(true);
       const result = await generateFinBiteAction();
@@ -45,7 +55,7 @@ export default function Home() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Good Evening, there!</p>
+        <p className="text-muted-foreground">{greeting}</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

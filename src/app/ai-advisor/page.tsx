@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -11,15 +12,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Message = {
-  id: number;
+  id: string;
   text: string;
   sender: 'user' | 'ai';
 };
 
+let messageIdCounter = 0;
+const getUniqueMessageId = () => `msg-${Date.now()}-${messageIdCounter++}`;
+
 export default function AIAdvisorPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 1,
+      id: getUniqueMessageId(),
       text: "Hello! I'm your AI Financial Advisor. Ask me anything about personal finance, budgeting, or investing.",
       sender: 'ai',
     },
@@ -30,10 +34,15 @@ export default function AIAdvisorPage() {
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
+      const scrollableNode = scrollAreaRef.current.querySelector(
+        '[data-radix-scroll-area-viewport]'
+      ) as HTMLDivElement;
+      if (scrollableNode) {
+        scrollableNode.scrollTo({
+          top: scrollableNode.scrollHeight,
+          behavior: 'smooth',
+        });
+      }
     }
   };
 
@@ -46,7 +55,7 @@ export default function AIAdvisorPage() {
     if (!input.trim() || isLoading) return;
 
     const newUserMessage: Message = {
-      id: Date.now(),
+      id: getUniqueMessageId(),
       text: input,
       sender: 'user',
     };
@@ -59,14 +68,14 @@ export default function AIAdvisorPage() {
 
     if (result.success) {
       const newAiMessage: Message = {
-        id: Date.now() + 1,
+        id: getUniqueMessageId(),
         text: result.data.advice,
         sender: 'ai',
       };
       setMessages(prev => [...prev, newAiMessage]);
     } else {
       const errorAiMessage: Message = {
-        id: Date.now() + 1,
+        id: getUniqueMessageId(),
         text: "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment.",
         sender: 'ai',
       };
