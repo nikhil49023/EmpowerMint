@@ -19,6 +19,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -426,6 +427,13 @@ export default function FinBitesPage() {
             </motion.div>
           ))}
         </CardContent>
+        <CardFooter>
+          <p className="text-center w-full text-muted-foreground text-sm">
+            All the best on your entrepreneurial journey! <br />
+            Let's <strong className="text-primary">#BuildBharat</strong>{' '}
+            together with Uplift.
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );
