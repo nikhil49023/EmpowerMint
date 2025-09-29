@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   RefreshCw,
   FileText,
@@ -205,7 +205,7 @@ export default function FinBitesPage() {
   const [userIdea, setUserIdea] = useState('');
   const router = useRouter();
 
-  const fetchFinBite = async () => {
+  const fetchFinBite = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -232,11 +232,11 @@ export default function FinBitesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchFinBite();
-  }, []);
+  }, [fetchFinBite]);
 
   const handleAnalyzeIdea = () => {
     if (!userIdea.trim()) {

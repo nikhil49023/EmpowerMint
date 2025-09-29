@@ -32,13 +32,16 @@ export default function AIAdvisorPage() {
   );
 
   useEffect(() => {
-    // Generate a unique ID that is stable on the client
-    const welcomeMessage: Message = {
-      id: getUniqueMessageId(),
-      text: "Hello! I'm your AI Financial Advisor. Ask me anything about personal finance, budgeting, or investing.",
-      sender: 'ai',
-    };
-    setMessages([welcomeMessage]);
+    // Generate the welcome message on the client-side to avoid hydration mismatch
+    if (messages.length === 0) {
+      const welcomeMessage: Message = {
+        id: getUniqueMessageId(),
+        text: "Hello! I'm your AI Financial Advisor. Ask me anything about personal finance, budgeting, or investing.",
+        sender: 'ai',
+      };
+      setMessages([welcomeMessage]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const scrollToBottom = () => {
