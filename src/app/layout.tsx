@@ -27,7 +27,7 @@ export default function RootLayout({
         <meta name="description" content="Your personal finance dashboard." />
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
-        <div className="flex min-h-screen">
+        <div className="flex h-screen overflow-hidden">
           <Sidebar />
           <main className="flex-1 p-8 overflow-auto">
             <AnimatePresence mode="wait">
