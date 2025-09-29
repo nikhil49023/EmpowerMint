@@ -35,9 +35,9 @@ export default function Home() {
           onMouseLeave={plugin.current.reset}
           className="w-full"
         >
-          <CarouselContent className="h-[124px]">
-            <CarouselItem>
-              <Card>
+          <CarouselContent className="h-[124px] -mt-0">
+            <CarouselItem className="pt-0">
+              <Card className="glassmorphic">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
                     Your Expenses
@@ -52,8 +52,8 @@ export default function Home() {
                 </CardContent>
               </Card>
             </CarouselItem>
-            <CarouselItem>
-              <Card>
+            <CarouselItem className="pt-0">
+              <Card className="glassmorphic">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
                     Your Income
@@ -71,7 +71,7 @@ export default function Home() {
           </CarouselContent>
         </Carousel>
 
-        <Card>
+        <Card className="glassmorphic">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Savings Rate</CardTitle>
             <PiggyBank className="w-5 h-5 text-primary" />
@@ -90,7 +90,7 @@ export default function Home() {
           <h2 className="text-xl font-semibold">Personalized Suggestions</h2>
           <Settings className="w-5 h-5 text-muted-foreground cursor-pointer" />
         </div>
-        <Card>
+        <Card className="glassmorphic">
           <CardContent className="pt-6">
             <Alert
               variant="destructive"
