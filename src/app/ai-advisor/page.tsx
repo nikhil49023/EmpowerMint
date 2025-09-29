@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { askAIAdvisorAction } from '../actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { ElementRef } from 'react';
 
 type Message = {
   id: string;
@@ -17,29 +18,32 @@ type Message = {
   sender: 'user' | 'ai';
 };
 
-let messageIdCounter = 0;
-const getUniqueMessageId = () => `msg-${Date.now()}-${messageIdCounter++}`;
+const getUniqueMessageId = () => `msg-${Date.now()}-${Math.random()}`;
 
 export default function AIAdvisorPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
+
+  useEffect(() => {
+    // Generate a unique ID that is stable on the client
+    const welcomeMessage: Message = {
       id: getUniqueMessageId(),
       text: "Hello! I'm your AI Financial Advisor. Ask me anything about personal finance, budgeting, or investing.",
       sender: 'ai',
-    },
-  ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+    };
+    setMessages([welcomeMessage]);
+  }, []);
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
-      const scrollableNode = scrollAreaRef.current.querySelector(
-        '[data-radix-scroll-area-viewport]'
-      ) as HTMLDivElement;
-      if (scrollableNode) {
-        scrollableNode.scrollTo({
-          top: scrollableNode.scrollHeight,
+      const scrollableViewport = (
+        scrollAreaRef.current.childNodes[0] as HTMLDivElement
+      )?.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollableViewport) {
+        scrollableViewport.scrollTo({
+          top: scrollableViewport.scrollHeight,
           behavior: 'smooth',
         });
       }

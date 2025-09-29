@@ -21,12 +21,12 @@ export default function RootLayout({
   const pathname = usePathname();
 
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <head>
         <title>Financify</title>
         <meta name="description" content="Your personal finance dashboard." />
       </head>
-      <body className="font-body antialiased">
+      <body className={`${inter.variable} font-body antialiased`}>
         <div className="flex min-h-screen">
           <Sidebar />
           <main className="flex-1 p-8 overflow-auto">
