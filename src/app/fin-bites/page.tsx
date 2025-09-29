@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,6 +8,7 @@ import {
   BarChart3,
   Loader2,
   Newspaper,
+  Send,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,12 +25,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
 import Link from 'next/link';
+import { Textarea } from '@/components/ui/textarea';
+import { useRouter } from 'next/navigation';
 
 export default function FinBitesPage() {
   const [finBite, setFinBite] = useState<GenerateFinBiteOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [userIdea, setUserIdea] = useState('');
+  const router = useRouter();
 
   const fetchFinBite = async () => {
     setIsLoading(true);
@@ -62,6 +68,18 @@ export default function FinBitesPage() {
   useEffect(() => {
     fetchFinBite();
   }, []);
+
+  const handleAnalyzeIdea = () => {
+    if (!userIdea.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please enter an idea to analyze.',
+      });
+      return;
+    }
+    router.push(`/investment-ideas/custom?idea=${encodeURIComponent(userIdea)}`);
+  };
 
   return (
     <div className="space-y-8">
@@ -127,7 +145,7 @@ export default function FinBitesPage() {
       </AnimatePresence>
 
       <Card className="glassmorphic">
-        <CardContent className="pt-6">
+        <CardHeader>
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <svg
@@ -149,11 +167,13 @@ export default function FinBitesPage() {
             </h2>
             <Badge variant="outline">Beta</Badge>
           </div>
-          <p className="text-muted-foreground mb-4">
-            Explore potential business ideas. Here is a sample analysis for a
-            small-scale business.
-          </p>
-          <div className="bg-accent/50 rounded-lg p-4 flex items-center justify-between">
+          <CardDescription>
+            Explore potential business ideas. Either view our sample analysis
+            or enter your own idea below.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-accent/50 rounded-lg p-4 flex items-center justify-between mb-6">
             <div>
               <div className="flex items-center gap-2">
                 <FileText className="text-primary" />
@@ -173,63 +193,20 @@ export default function FinBitesPage() {
               </Link>
             </Button>
           </div>
+          <div className="space-y-4">
+            <h3 className="font-semibold">Analyze Your Own Business Idea</h3>
+            <Textarea
+              placeholder="Describe your business idea, e.g., 'A cloud kitchen for healthy salads in metropolitan cities...'"
+              value={userIdea}
+              onChange={e => setUserIdea(e.target.value)}
+              rows={3}
+            />
+            <Button onClick={handleAnalyzeIdea} disabled={!userIdea.trim()}>
+              <Send className="mr-2" /> Get Insights
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" />
-            100 Investment Options in India
-          </h2>
-          <Badge variant="outline">Beta</Badge>
-        </div>
-        <p className="text-muted-foreground text-sm">
-          A comprehensive list categorized by risk level.
-        </p>
-        <p className="text-muted-foreground text-xs">
-          Disclaimer: This is for educational purposes only. Not financial
-          advice.
-        </p>
-
-        <div className="flex gap-2 mt-4 mb-4">
-          <Button variant="secondary" size="sm">
-            All Risk
-          </Button>
-          <Button variant="secondary" size="sm">
-            Low Risk
-          </Button>
-          <Button variant="secondary" size="sm">
-            Moderate Risk
-          </Button>
-          <Button variant="secondary" size="sm">
-            High Risk
-          </Button>
-        </div>
-
-        <Card className="glassmorphic">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-green-800 flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="lucide lucide-check-circle h-5 w-5"
-              >
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <path d="m9 11 3 3L22 4" />
-              </svg>
-              Low Risk Investments
-            </h3>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
