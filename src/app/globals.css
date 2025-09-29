@@ -4,26 +4,26 @@
 
 @layer base {
   :root {
-    --background: 216 28% 95%;
+    --background: 240 25% 98%;
     --foreground: 224 71% 4%;
     --card: 0 0% 100%;
     --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
-    --primary: 207 70% 53%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 345 95% 68%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 224 71% 4%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 27 80% 51%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 345 95% 95%;
+    --accent-foreground: 345 95% 68%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 207 70% 53%;
-    --chart-1: 207 70% 53%;
+    --ring: 345 95% 68%;
+    --chart-1: 345 95% 68%;
     --chart-2: 27 80% 51%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
@@ -32,26 +32,26 @@
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 216 28% 95%;
-    --card: 224 71% 8%;
-    --card-foreground: 216 28% 95%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 216 28% 95%;
-    --primary: 207 70% 53%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 224 71% 10%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 224 71% 10%;
+    --background: 240 25% 98%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    --primary: 345 95% 68%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 224 71% 4%;
+    --muted: 210 40% 96.1%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 27 80% 51%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --accent: 345 95% 95%;
+    --accent-foreground: 345 95% 68%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 224 71% 15%;
-    --input: 224 71% 15%;
-    --ring: 207 70% 53%;
-    --chart-1: 207 70% 53%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 345 95% 68%;
+    --chart-1: 345 95% 68%;
     --chart-2: 27 80% 51%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
