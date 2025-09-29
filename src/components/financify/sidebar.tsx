@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -39,8 +40,9 @@ export default function Sidebar() {
           strokeLinejoin="round"
           className="h-6 w-6 text-primary"
         >
-          <path d="M18 15l-6-6-6 6" />
-          <path d="M12 21V9" />
+          <path d="M4 20V10a8 8 0 0 1 16 0v10" />
+          <path d="m16 8 4-4" />
+          <path d="M20 8h-4V4" />
         </svg>
         <h1 className="text-xl font-bold">Uplift AI</h1>
       </div>
