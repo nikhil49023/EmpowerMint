@@ -108,9 +108,9 @@ export default function LoginPage() {
 
         toast({
           title: 'Account Created',
-          description: 'You have been successfully signed up. Please log in.',
+          description: 'Welcome! Redirecting you to the dashboard.',
         });
-        setIsSignUp(false); // Switch to login view after sign up
+        router.push('/dashboard');
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         router.push('/dashboard');
