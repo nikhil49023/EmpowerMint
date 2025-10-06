@@ -48,59 +48,18 @@ export default function Sidebar() {
         <svg
           width="32"
           height="32"
-          viewBox="0 0 48 48"
+          viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="h-8 w-8 text-primary"
         >
           <path
-            d="M11.3333 4H36.6667L44 14.1667V33.8333L36.6667 44H11.3333L4 33.8333V14.1667L11.3333 4Z"
-            stroke="currentColor"
-            strokeWidth="4"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M11.3333 4L4 14.1667H18.6667L11.3333 4Z"
+            d="M12 2L3 7V17L12 22L21 17V7L12 2Z"
             fill="currentColor"
             stroke="currentColor"
-            strokeWidth="4"
-            strokeLinejoin="round"
+            strokeWidth="0"
           />
-          <path
-            d="M36.6667 4L44 14.1667H29.3333L36.6667 4Z"
-            fill="currentColor"
-            stroke="currentColor"
-            strokeWidth="4"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M24 19.0833V33.8333"
-            stroke="white"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M14 19.0833V33.8333"
-            stroke="white"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M34 19.0833V33.8333"
-            stroke="white"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M14 33.8333C14 29.9528 18.4772 26.75 24 26.75C29.5228 26.75 34 29.9528 34 33.8333"
-            stroke="white"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d="M7.5 10.5L12 13L16.5 10.5L12 8L7.5 10.5Z" fill="white" />
         </svg>
         <h1 className="text-xl font-bold">Uplift AI</h1>
       </div>
