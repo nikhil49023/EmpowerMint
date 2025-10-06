@@ -144,29 +144,61 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
             <svg
-              xmlns="http://www.w3.org/2000/svg"
               width="48"
               height="48"
-              viewBox="0 0 24 24"
+              viewBox="0 0 48 48"
               fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              xmlns="http://www.w3.org/2000/svg"
               className="h-12 w-12 text-primary"
             >
-              <path d="M12 2L12 10" />
-              <path d="M12 10L15.58 12.83" />
-              <path d="M12 10L8.42 12.83" />
-              <path d="M12 22L12 14" />
-              <path d="M12 14L15.58 11.17" />
-              <path d="M12 14L8.42 11.17" />
-              <path d="M10.24 3.9L13.76 3.9" />
-              <path d="M17.17 6.42L20.08 8.42" />
-              <path d="M17.17 17.58L20.08 15.58" />
-              <path d="M6.83 17.58L3.92 15.58" />
-              <path d="M6.83 6.42L3.92 8.42" />
-              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
+              <path
+                d="M11.3333 4H36.6667L44 14.1667V33.8333L36.6667 44H11.3333L4 33.8333V14.1667L11.3333 4Z"
+                stroke="currentColor"
+                strokeWidth="4"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M11.3333 4L4 14.1667H18.6667L11.3333 4Z"
+                fill="currentColor"
+                stroke="currentColor"
+                strokeWidth="4"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M36.6667 4L44 14.1667H29.3333L36.6667 4Z"
+                fill="currentColor"
+                stroke="currentColor"
+                strokeWidth="4"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M24 19.0833V33.8333"
+                stroke="white"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M14 19.0833V33.8333"
+                stroke="white"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M34 19.0833V33.8333"
+                stroke="white"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M14 33.8333C14 29.9528 18.4772 26.75 24 26.75C29.5228 26.75 34 29.9528 34 33.8333"
+                stroke="white"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
           <CardTitle className="text-2xl">
