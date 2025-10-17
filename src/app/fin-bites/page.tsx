@@ -217,6 +217,20 @@ export default function FinBitesPage() {
     router.push(`/investment-ideas/custom?idea=${encodeURIComponent(userIdea)}`);
   };
 
+  const handleGenerateDRP = () => {
+    if (!userIdea.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please enter an idea to generate a DRP.',
+      });
+      return;
+    }
+    // For now, this will also navigate to the custom idea page.
+    // This can be changed later to point to a different flow or page.
+    router.push(`/investment-ideas/custom?idea=${encodeURIComponent(userIdea)}`);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-start">
@@ -341,9 +355,18 @@ export default function FinBitesPage() {
               onChange={e => setUserIdea(e.target.value)}
               rows={3}
             />
-            <Button onClick={handleAnalyzeIdea} disabled={!userIdea.trim()}>
-              <Send className="mr-2" /> Get Insights
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleAnalyzeIdea} disabled={!userIdea.trim()}>
+                <Send className="mr-2" /> Get Insights
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleGenerateDRP}
+                disabled={!userIdea.trim()}
+              >
+                <FileText className="mr-2" /> Generate DRP
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -387,3 +410,5 @@ export default function FinBitesPage() {
     </div>
   );
 }
+
+    
