@@ -20,7 +20,7 @@ import type {
   GenerateInvestmentIdeaAnalysisInput,
   GenerateInvestmentIdeaAnalysisOutput,
 } from '@/ai/flows/generate-investment-idea-analysis';
-import type { ExtractedTransaction } from './ai/schemas/transactions';
+import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { generateDprConversation } from '@/ai/flows/generate-dpr-conversation';
 import type {
   GenerateDprConversationInput,
