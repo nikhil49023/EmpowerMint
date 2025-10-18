@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -26,6 +26,10 @@ import {
   Loader2,
   FileUp,
   PiggyBank,
+  ShoppingBag,
+  Film,
+  Home,
+  HeartPulse,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -57,12 +61,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { extractTransactionsAction } from '../actions';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { cn } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import Link from 'next/link';
+import { motion } from 'framer-motion';
+
+const categoryIcons: { [key: string]: React.ElementType } = {
+  Groceries: ShoppingBag,
+  Entertainment: Film,
+  Rent: Home,
+  Health: HeartPulse,
+  Default: PiggyBank,
+};
+
+type Budget = {
+  id: number;
+  name: string;
+  amount: number;
+  spent: number;
+  icon: React.ElementType;
+};
+
+const initialBudgets: Budget[] = [
+  {
+    id: 1,
+    name: 'Groceries',
+    amount: 8000,
+    spent: 0,
+    icon: ShoppingBag,
+  },
+  {
+    id: 2,
+    name: 'Entertainment',
+    amount: 5000,
+    spent: 0,
+    icon: Film,
+  },
+];
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useLocalStorage<
@@ -81,6 +119,64 @@ export default function TransactionsPage() {
     useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Budget state and logic moved here
+  const [budgets, setBudgets] = useLocalStorage<Budget[]>('budgets', initialBudgets);
+  const [newBudgetName, setNewBudgetName] = useState('');
+  const [newBudgetAmount, setNewBudgetAmount] = useState('');
+  const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
+
+  const budgetsWithSpending = useMemo(() => {
+    return budgets.map(budget => {
+      const spent = transactions
+        .filter(
+          t =>
+            t.type === 'expense' &&
+            t.description.toLowerCase().includes(budget.name.toLowerCase())
+        )
+        .reduce((sum, t) => {
+          const amount = parseFloat(
+            String(t.amount).replace(/[^0-9.-]+/g, '')
+          );
+          return sum + amount;
+        }, 0);
+      return { ...budget, spent };
+    });
+  }, [budgets, transactions]);
+  
+  const handleAddBudget = () => {
+    if (!newBudgetName || !newBudgetAmount) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please fill out all fields.',
+      });
+      return;
+    }
+    const newBudget: Budget = {
+      id: budgets.length + 1,
+      name: newBudgetName,
+      amount: parseFloat(newBudgetAmount),
+      spent: 0,
+      icon: categoryIcons[newBudgetName] || categoryIcons.Default,
+    };
+    setBudgets(prev => [newBudget, ...prev]);
+    setNewBudgetName('');
+    setNewBudgetAmount('');
+    setAddBudgetDialogOpen(false);
+    toast({
+      title: 'Success',
+      description: 'Budget added successfully.',
+    });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+    }).format(amount);
+  };
+
 
   const handleClearData = () => {
     setTransactions([]);
@@ -284,11 +380,147 @@ export default function TransactionsPage() {
             </DialogContent>
           </Dialog>
 
-          <Button asChild variant="outline">
-            <Link href="/budgets">
-              <PiggyBank className="mr-2 h-4 w-4" /> View Budgets
-            </Link>
-          </Button>
+          {/* Budget Dialog Trigger */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <PiggyBank className="mr-2 h-4 w-4" /> View Budgets
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Your Budgets</DialogTitle>
+                <DialogDescription>
+                  Track and manage your monthly spending.
+                </DialogDescription>
+              </DialogHeader>
+              
+              {/* Budget Content */}
+              <div className="space-y-8 py-4">
+                 <div className="flex justify-end">
+                    <Dialog open={addBudgetDialogOpen} onOpenChange={setAddBudgetDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <PlusCircle className="mr-2 h-4 w-4" /> Add New Budget
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add New Budget</DialogTitle>
+                          <DialogDescription>
+                            Create a new budget to track your spending for a category.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">
+                              Name
+                            </Label>
+                            <Input
+                              id="name"
+                              value={newBudgetName}
+                              onChange={e => setNewBudgetName(e.target.value)}
+                              className="col-span-3"
+                              placeholder="e.g., Groceries"
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="amount" className="text-right">
+                              Amount
+                            </Label>
+                            <Input
+                              id="amount"
+                              type="number"
+                              value={newBudgetAmount}
+                              onChange={e => setNewBudgetAmount(e.target.value)}
+                              className="col-span-3"
+                              placeholder="e.g., 5000"
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                           <DialogClose asChild>
+                            <Button type="button" variant="secondary">
+                              Cancel
+                            </Button>
+                          </DialogClose>
+                          <Button onClick={handleAddBudget}>Add Budget</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                {budgetsWithSpending.length === 0 ? (
+                    <Card className="flex items-center justify-center min-h-[200px] border-dashed shadow-none glassmorphic">
+                      <CardContent className="text-center p-6">
+                        <div className="flex justify-center mb-4">
+                          <PiggyBank className="w-16 h-16 text-muted-foreground" />
+                        </div>
+                        <h2 className="text-xl font-semibold">No Budgets Yet</h2>
+                        <p className="text-muted-foreground mt-2">
+                          Click "Add New Budget" to get started.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                  <motion.div
+                    className="grid gap-6 md:grid-cols-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {budgetsWithSpending.map((budget, index) => {
+                      const Icon = budget.icon;
+                      const progress = (budget.spent / budget.amount) * 100;
+                      const remaining = budget.amount - budget.spent;
+
+                      return (
+                        <motion.div
+                          key={budget.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                        >
+                          <Card className="glassmorphic">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                              <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <Icon className="h-5 w-5 text-primary" />
+                                {budget.name}
+                              </CardTitle>
+                              <div className="text-sm font-bold">
+                                {formatCurrency(budget.amount)}
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-2">
+                                <Progress value={progress} />
+                                <div className="flex justify-between text-sm">
+                                  <p className="text-muted-foreground">Spent</p>
+                                  <p className="font-medium">
+                                    {formatCurrency(budget.spent)}
+                                  </p>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <p className="text-muted-foreground">Remaining</p>
+                                  <p
+                                    className={`font-medium ${
+                                      remaining < 0 ? 'text-destructive' : ''
+                                    }`}
+                                  >
+                                    {formatCurrency(remaining)}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
 
           <Dialog
             open={addTransactionDialogOpen}
