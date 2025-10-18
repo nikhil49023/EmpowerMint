@@ -7,6 +7,7 @@ import {
   LogOut,
   User,
   BrainCircuit,
+  Rocket,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -27,7 +28,9 @@ import {
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/transactions', label: 'Transactions', icon: Wallet },
-  { href: '/fin-bites', label: 'Brainstorm', icon: BrainCircuit },
+  { href: '/budgets', label: 'Budgets', icon: Wallet },
+  { href: '/brainstorm', label: 'Brainstorm', icon: BrainCircuit },
+  { href: '/launchpad', label: 'Launchpad', icon: Rocket },
 ];
 
 export default function Sidebar() {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -76,7 +77,7 @@ export default function InvestmentIdeaPage() {
     <div className="space-y-8">
       <div>
         <Button variant="ghost" asChild className="-ml-4">
-          <Link href="/fin-bites">
+          <Link href="/brainstorm">
             <ArrowLeft className="mr-2" />
             Back to Brainstorm
           </Link>
