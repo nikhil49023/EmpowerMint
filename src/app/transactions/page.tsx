@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -66,8 +66,16 @@ import { useToast } from '@/hooks/use-toast';
 import { extractTransactionsAction } from '../actions';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { cn } from '@/lib/utils';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { motion } from 'framer-motion';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import {
+  collection,
+  addDoc,
+  query,
+  onSnapshot,
+  writeBatch,
+} from 'firebase/firestore';
 
 const categoryIcons: { [key: string]: React.ElementType } = {
   Groceries: ShoppingBag,
@@ -78,34 +86,19 @@ const categoryIcons: { [key: string]: React.ElementType } = {
 };
 
 type Budget = {
-  id: number;
+  id: string;
   name: string;
   amount: number;
   spent: number;
   icon: React.ElementType;
 };
 
-const initialBudgets: Budget[] = [
-  {
-    id: 1,
-    name: 'Groceries',
-    amount: 8000,
-    spent: 0,
-    icon: ShoppingBag,
-  },
-  {
-    id: 2,
-    name: 'Entertainment',
-    amount: 5000,
-    spent: 0,
-    icon: Film,
-  },
-];
-
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useLocalStorage<
-    ExtractedTransaction[]
-  >('transactions', []);
+  const [user, loadingAuth] = useAuthState(auth);
+  const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
   const [newTransaction, setNewTransaction] = useState({
     description: '',
     date: '',
@@ -119,12 +112,46 @@ export default function TransactionsPage() {
     useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  
-  // Budget state and logic moved here
-  const [budgets, setBudgets] = useLocalStorage<Budget[]>('budgets', initialBudgets);
+
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setLoadingData(true);
+      const transQuery = query(collection(db, 'users', user.uid, 'transactions'));
+      const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
+
+      const unsubTransactions = onSnapshot(transQuery, snapshot => {
+        const transData = snapshot.docs.map(doc => ({
+          ...(doc.data() as ExtractedTransaction),
+        }));
+        setTransactions(transData);
+        if(loadingData) setLoadingData(false);
+      });
+
+      const unsubBudgets = onSnapshot(budgetQuery, snapshot => {
+        const budgetsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Budget, 'id' | 'spent' | 'icon'>),
+          spent: 0, // Will be calculated in useMemo
+          icon: categoryIcons[doc.data().name] || categoryIcons.Default,
+        }));
+        setBudgets(budgetsData);
+         if(loadingData) setLoadingData(false);
+      });
+
+      return () => {
+        unsubTransactions();
+        unsubBudgets();
+      };
+    } else if (!loadingAuth) {
+      setLoadingData(false);
+      setTransactions([]);
+      setBudgets([]);
+    }
+  }, [user, loadingAuth]);
 
   const budgetsWithSpending = useMemo(() => {
     return budgets.map(budget => {
@@ -143,8 +170,12 @@ export default function TransactionsPage() {
       return { ...budget, spent };
     });
   }, [budgets, transactions]);
-  
-  const handleAddBudget = () => {
+
+  const handleAddBudget = async () => {
+    if (!user) {
+       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add a budget.' });
+       return;
+    }
     if (!newBudgetName || !newBudgetAmount) {
       toast({
         variant: 'destructive',
@@ -153,21 +184,23 @@ export default function TransactionsPage() {
       });
       return;
     }
-    const newBudget: Budget = {
-      id: budgets.length + 1,
+    const newBudgetData = {
       name: newBudgetName,
       amount: parseFloat(newBudgetAmount),
-      spent: 0,
-      icon: categoryIcons[newBudgetName] || categoryIcons.Default,
     };
-    setBudgets(prev => [newBudget, ...prev]);
-    setNewBudgetName('');
-    setNewBudgetAmount('');
-    setAddBudgetDialogOpen(false);
-    toast({
-      title: 'Success',
-      description: 'Budget added successfully.',
-    });
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'budgets'), newBudgetData);
+      setNewBudgetName('');
+      setNewBudgetAmount('');
+      setAddBudgetDialogOpen(false);
+      toast({
+        title: 'Success',
+        description: 'Budget added successfully.',
+      });
+    } catch (error) {
+       console.error("Error adding budget: ", error);
+       toast({ variant: 'destructive', title: 'Error', description: 'Failed to add budget.' });
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -177,16 +210,31 @@ export default function TransactionsPage() {
     }).format(amount);
   };
 
+  const handleClearData = async () => {
+    if (!user) return;
+    const transQuery = query(collection(db, 'users', user.uid, 'transactions'));
+    const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
 
-  const handleClearData = () => {
-    setTransactions([]);
+    const batch = writeBatch(db);
+    const transSnapshot = await getDocs(transQuery);
+    transSnapshot.forEach(doc => batch.delete(doc.ref));
+    
+    const budgetSnapshot = await getDocs(budgetQuery);
+    budgetSnapshot.forEach(doc => batch.delete(doc.ref));
+
+    await batch.commit();
+
     toast({
       title: 'Success',
-      description: 'All transaction data has been cleared.',
+      description: 'All transaction and budget data has been cleared.',
     });
   };
 
-  const handleAddTransaction = () => {
+  const handleAddTransaction = async () => {
+     if (!user) {
+       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add a transaction.' });
+       return;
+    }
     if (
       !newTransaction.description ||
       !newTransaction.date ||
@@ -199,21 +247,30 @@ export default function TransactionsPage() {
       });
       return;
     }
-    setTransactions(prev => [newTransaction, ...prev]);
-    setNewTransaction({
-      description: '',
-      date: '',
-      type: 'expense',
-      amount: '',
-    });
-    setAddTransactionDialogOpen(false);
-    toast({
-      title: 'Success',
-      description: 'Transaction added successfully.',
-    });
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
+      setNewTransaction({
+        description: '',
+        date: '',
+        type: 'expense',
+        amount: '',
+      });
+      setAddTransactionDialogOpen(false);
+      toast({
+        title: 'Success',
+        description: 'Transaction added successfully.',
+      });
+    } catch (error) {
+      console.error("Error adding transaction: ", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add transaction.' });
+    }
   };
 
   const processFile = async (file: File) => {
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to import transactions.' });
+      return;
+    }
     setIsImporting(true);
     setImportDialogOpen(false);
 
@@ -225,7 +282,14 @@ export default function TransactionsPage() {
         const result = await extractTransactionsAction({ documentDataUri });
 
         if (result.success) {
-          setTransactions(prev => [...result.data.transactions, ...prev]);
+          const batch = writeBatch(db);
+          const transactionsCol = collection(db, 'users', user.uid, 'transactions');
+          result.data.transactions.forEach(transaction => {
+            const docRef = doc(transactionsCol); // Automatically generate unique ID
+            batch.set(docRef, transaction);
+          });
+          await batch.commit();
+
           toast({
             title: 'Import Successful',
             description: `${result.data.transactions.length} transactions were imported.`,
@@ -295,6 +359,16 @@ export default function TransactionsPage() {
     setIsDragging(false);
   };
 
+  const showLoginPrompt = !user && !loadingAuth;
+
+  if (loadingAuth || loadingData) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-start">
@@ -307,7 +381,7 @@ export default function TransactionsPage() {
         <div className="flex gap-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">
+              <Button variant="destructive" disabled={showLoginPrompt}>
                 <Trash2 className="mr-2 h-4 w-4" /> Clear All Data
               </Button>
             </AlertDialogTrigger>
@@ -316,7 +390,7 @@ export default function TransactionsPage() {
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This action cannot be undone. This will permanently delete all
-                  your transaction data.
+                  your transaction and budget data from the database.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -330,7 +404,7 @@ export default function TransactionsPage() {
 
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={isImporting}>
+              <Button variant="outline" disabled={isImporting || showLoginPrompt}>
                 {isImporting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -380,10 +454,9 @@ export default function TransactionsPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Budget Dialog Trigger */}
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" disabled={showLoginPrompt}>
                 <PiggyBank className="mr-2 h-4 w-4" /> View Budgets
               </Button>
             </DialogTrigger>
@@ -395,7 +468,6 @@ export default function TransactionsPage() {
                 </DialogDescription>
               </DialogHeader>
               
-              {/* Budget Content */}
               <div className="space-y-8 py-4">
                  <div className="flex justify-end">
                     <Dialog open={addBudgetDialogOpen} onOpenChange={setAddBudgetDialogOpen}>
@@ -527,7 +599,7 @@ export default function TransactionsPage() {
             onOpenChange={setAddTransactionDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button>
+              <Button disabled={showLoginPrompt}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Transaction
               </Button>
             </DialogTrigger>
@@ -640,7 +712,16 @@ export default function TransactionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.length > 0 ? (
+              {showLoginPrompt ? (
+                 <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center h-24 text-muted-foreground"
+                  >
+                    Please log in to view and manage your transactions.
+                  </TableCell>
+                </TableRow>
+              ) : transactions.length > 0 ? (
                 transactions.map((transaction, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">

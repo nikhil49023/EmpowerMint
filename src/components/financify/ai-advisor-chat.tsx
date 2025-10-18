@@ -9,8 +9,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { askAIAdvisorAction } from '@/app/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 
 type Message = {
   id: string;
@@ -25,10 +27,8 @@ export default function AIAdvisorChat() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
-  const [transactions] = useLocalStorage<ExtractedTransaction[]>(
-    'transactions',
-    []
-  );
+  const [user, loadingAuth] = useAuthState(auth);
+  const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
 
   useEffect(() => {
     // Generate the welcome message on the client-side to avoid hydration mismatch
@@ -42,6 +42,19 @@ export default function AIAdvisorChat() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      const q = query(collection(db, 'users', user.uid, 'transactions'));
+      const unsubscribe = onSnapshot(q, querySnapshot => {
+        const transactionsData = querySnapshot.docs.map(
+          doc => doc.data() as ExtractedTransaction
+        );
+        setTransactions(transactionsData);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -166,13 +179,13 @@ export default function AIAdvisorChat() {
             onChange={e => setInput(e.target.value)}
             placeholder="Ask about saving for retirement..."
             className="pr-12 h-12"
-            disabled={isLoading}
+            disabled={isLoading || (!user && !loadingAuth)}
           />
           <Button
             type="submit"
             size="icon"
             className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9"
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || !input.trim() || (!user && !loadingAuth)}
           >
             <Send className="h-4 w-4" />
           </Button>

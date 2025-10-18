@@ -16,14 +16,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import React, { useEffect, useState, useCallback } from 'react';
 import { generateDashboardSummaryAction } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 
 export default function DashboardPage() {
-  const [transactions] = useLocalStorage<ExtractedTransaction[]>('transactions', []);
+  const [user, loadingAuth] = useAuthState(auth);
+  const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
   const [summary, setSummary] = useState<GenerateDashboardSummaryOutput | null>(
     null
   );
@@ -44,17 +47,45 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const fetchSummary = useCallback(async () => {
-    setIsLoading(true);
-    const result = await generateDashboardSummaryAction(transactions);
-    if (result.success) {
-      setSummary(result.data);
-    } else {
-      console.error(result.error);
-      // Handle error state if needed
+  useEffect(() => {
+    if (user) {
+      const q = query(collection(db, 'users', user.uid, 'transactions'));
+      const unsubscribe = onSnapshot(q, querySnapshot => {
+        const transactionsData = querySnapshot.docs.map(
+          doc => doc.data() as ExtractedTransaction
+        );
+        setTransactions(transactionsData);
+      });
+      return () => unsubscribe();
+    } else if (!loadingAuth) {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [transactions]);
+  }, [user, loadingAuth]);
+
+  const fetchSummary = useCallback(async () => {
+    if (transactions.length === 0 && !loadingAuth && user) {
+       setSummary({
+        totalIncome: 0,
+        totalExpenses: 0,
+        savingsRate: 0,
+        suggestion:
+          'Start by adding some transactions to see your financial summary.',
+      });
+      setIsLoading(false);
+      return;
+    }
+    if (transactions.length > 0) {
+      setIsLoading(true);
+      const result = await generateDashboardSummaryAction(transactions);
+      if (result.success) {
+        setSummary(result.data);
+      } else {
+        console.error(result.error);
+        // Handle error state if needed
+      }
+      setIsLoading(false);
+    }
+  }, [transactions, user, loadingAuth]);
 
   useEffect(() => {
     fetchSummary();

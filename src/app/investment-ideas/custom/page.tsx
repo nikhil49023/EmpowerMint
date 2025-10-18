@@ -19,19 +19,17 @@ import {
   Save,
   CheckCircle,
 } from 'lucide-react';
-import {
-  generateInvestmentIdeaAnalysisAction,
-  saveInvestmentIdeaAction,
-} from '@/app/actions';
+import { generateInvestmentIdeaAnalysisAction } from '@/app/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
 import { FormattedText } from '@/components/financify/formatted-text';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useToast } from '@/hooks/use-toast';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 function InvestmentIdeaContent() {
   const searchParams = useSearchParams();
@@ -77,20 +75,25 @@ function InvestmentIdeaContent() {
       return;
     }
     setIsSaving(true);
-    const result = await saveInvestmentIdeaAction(user.uid, analysis);
-    setIsSaving(false);
-    if (result.success) {
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'ideas'), {
+        ...analysis,
+        savedAt: serverTimestamp(),
+      });
       setIsSaved(true);
       toast({
         title: 'Success!',
         description: 'Your idea has been saved successfully.',
       });
-    } else {
+    } catch (error) {
+      console.error('Error saving idea: ', error);
       toast({
         variant: 'destructive',
         title: 'Save Failed',
-        description: result.error,
+        description: 'There was an error saving your idea.',
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -170,7 +173,7 @@ function InvestmentIdeaContent() {
             <CardContent>
               <Button
                 onClick={handleSaveIdea}
-                disabled={isSaving || isSaved}
+                disabled={isSaving || isSaved || !user}
               >
                 {isSaved ? (
                   <>
