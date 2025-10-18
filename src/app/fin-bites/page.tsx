@@ -307,37 +307,30 @@ export default function FinBitesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries(investmentIdeaCategories).map(
               ([category, { icon: Icon, ideas }]) => (
-                <Card key={category} className="flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Icon className="h-6 w-6 text-primary" />
-                      {category}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1 space-y-2">
+                <Card key={category} className="flex flex-col p-4">
+                  <CardTitle className="flex items-center gap-2 text-base mb-3">
+                    <Icon className="h-5 w-5 text-primary" />
+                    {category}
+                  </CardTitle>
+                  <ul className="space-y-2">
                     {ideas.map(idea => (
-                      <Link
-                        href={`/investment-ideas/custom?idea=${encodeURIComponent(
-                          idea
-                        )}`}
-                        key={idea}
-                        passHref
-                      >
-                        <Button
-                          variant="ghost"
-                          className="w-full h-full text-left justify-start p-3"
+                      <li key={idea}>
+                        <Link
+                          href={`/investment-ideas/custom?idea=${encodeURIComponent(
+                            idea
+                          )}`}
+                          passHref
+                          className="flex items-start gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
                         >
-                          <FileText className="mr-3 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                          <span className="flex-1 text-sm font-normal text-muted-foreground hover:text-foreground">
-                            {idea}
-                          </span>
-                        </Button>
-                      </Link>
+                          <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                           <span className="flex-1 group-hover:underline">{idea}</span>
+                        </Link>
+                      </li>
                     ))}
-                  </CardContent>
+                  </ul>
                 </Card>
               )
             )}
@@ -351,7 +344,7 @@ export default function FinBitesPage() {
               onChange={e => setUserIdea(e.target.value)}
               rows={3}
             />
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button onClick={handleAnalyzeIdea} disabled={!userIdea.trim()}>
                 <Send className="mr-2" /> Get Insights
               </Button>
