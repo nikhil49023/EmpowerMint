@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,7 +19,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Trash2, Upload, Loader2, FileUp } from 'lucide-react';
+import {
+  PlusCircle,
+  Trash2,
+  Upload,
+  Loader2,
+  FileUp,
+  PiggyBank,
+} from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +62,7 @@ import { extractTransactionsAction } from '../actions';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { cn } from '@/lib/utils';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import Link from 'next/link';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useLocalStorage<
@@ -275,6 +283,12 @@ export default function TransactionsPage() {
               </div>
             </DialogContent>
           </Dialog>
+
+          <Button asChild variant="outline">
+            <Link href="/budgets">
+              <PiggyBank className="mr-2 h-4 w-4" /> View Budgets
+            </Link>
+          </Button>
 
           <Dialog
             open={addTransactionDialogOpen}

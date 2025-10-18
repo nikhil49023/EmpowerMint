@@ -9,7 +9,6 @@ import {
   Newspaper,
   LogOut,
   User,
-  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -30,10 +29,8 @@ import {
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/transactions', label: 'Transactions', icon: Wallet },
-  { href: '/budgets', label: 'Budgets', icon: PiggyBank },
   { href: '/ai-advisor', label: 'AI Advisor', icon: BrainCircuit },
   { href: '/fin-bites', label: 'Fin Bites', icon: Newspaper },
-  { href: '/generate-drp', label: 'Generate DRP', icon: FileText },
 ];
 
 export default function Sidebar() {
@@ -48,12 +45,12 @@ export default function Sidebar() {
     <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
       <div className="p-6 flex items-center gap-2">
         <svg
-          width="32"
-          height="32"
+          width="40"
+          height="40"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="h-8 w-8 text-primary"
+          className="h-10 w-10 text-primary"
         >
           <path
             d="M12 2L3 7V17L12 22L21 17V7L12 2Z"
@@ -63,6 +60,12 @@ export default function Sidebar() {
           />
           <path
             d="M12 22V12M12 12L3 7L12 2L21 7L12 12Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M16.5 4.5L7.5 9.5"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinejoin="round"
