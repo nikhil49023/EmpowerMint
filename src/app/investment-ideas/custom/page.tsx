@@ -82,8 +82,8 @@ function InvestmentIdeaContent() {
     if (result.success) {
       setIsSaved(true);
       toast({
-        title: 'Idea Saved!',
-        description: `"${analysis.title}" has been saved to your ideas.`,
+        title: 'Success!',
+        description: 'Your idea has been saved successfully.',
       });
     } else {
       toast({
@@ -180,7 +180,7 @@ function InvestmentIdeaContent() {
                   'Saving...'
                 ) : (
                   <>
-                    <Save className="mr-2" /> Save Idea for Later
+                    <Save className="mr-2" /> Add to My Ideas
                   </>
                 )}
               </Button>
@@ -250,3 +250,5 @@ export default function CustomInvestmentIdeaPage() {
     </Suspense>
   );
 }
+
+    
