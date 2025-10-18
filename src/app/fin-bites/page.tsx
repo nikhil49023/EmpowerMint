@@ -12,6 +12,10 @@ import {
   Rocket,
   Megaphone,
   ExternalLink,
+  Leaf,
+  Laptop,
+  Recycle,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,43 +32,43 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { ChevronsUpDown } from 'lucide-react';
 
 const investmentIdeaCategories = {
-  'AgriTech & Food Processing': [
-    'Mobile Soil & Water Testing Lab',
-    'Millet-Based Snack Production Unit',
-    'Ghost Kitchen for Regional Cuisine',
-    'Vermicomposting Organic Fertilizer Production',
-  ],
-  'Tech & Digital Services': [
-    'Digital Marketing Agency for Local Businesses',
-    'Hyperlocal Errand & Delivery Service',
-    'Online Handicrafts Marketplace',
-  ],
-  'Eco-Friendly & Sustainable': [
-    'Upcycled Fashion & Home Decor',
-    'EV Charging Station (in partnership with a local business)',
-    'Rental Service for Reusable Event Supplies',
-  ],
-  'Local & Community Services': [
-    'Co-working Space in a Tier-2 City',
-    'Subscription-Based Toy & Book Library',
-    'Senior Citizen Care Services (Non-Medical)',
-    'Customized Gifting & Curation Service',
-    'Local Experience & Tourism Curation',
-  ],
+  'AgriTech & Food Processing': {
+    icon: Leaf,
+    ideas: [
+      'Mobile Soil & Water Testing Lab',
+      'Millet-Based Snack Production Unit',
+      'Ghost Kitchen for Regional Cuisine',
+      'Vermicomposting Organic Fertilizer Production',
+    ],
+  },
+  'Tech & Digital Services': {
+    icon: Laptop,
+    ideas: [
+      'Digital Marketing Agency for Local Businesses',
+      'Hyperlocal Errand & Delivery Service',
+      'Online Handicrafts Marketplace',
+    ],
+  },
+  'Eco-Friendly & Sustainable': {
+    icon: Recycle,
+    ideas: [
+      'Upcycled Fashion & Home Decor',
+      'EV Charging Station (in partnership with a local business)',
+      'Rental Service for Reusable Event Supplies',
+    ],
+  },
+  'Local & Community Services': {
+    icon: Users,
+    ideas: [
+      'Co-working Space in a Tier-2 City',
+      'Subscription-Based Toy & Book Library',
+      'Senior Citizen Care Services (Non-Medical)',
+      'Customized Gifting & Curation Service',
+      'Local Experience & Tourism Curation',
+    ],
+  },
 };
 
 const startupSteps = [
@@ -303,47 +307,41 @@ export default function FinBitesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full">
-                <FileText className="mr-2" />
-                Browse Idea Library
-                <ChevronsUpDown className="ml-auto h-4 w-4" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <Accordion type="single" collapsible className="w-full mt-4">
-                {Object.entries(investmentIdeaCategories).map(
-                  ([category, ideas]) => (
-                    <AccordionItem value={category} key={category}>
-                      <AccordionTrigger>{category}</AccordionTrigger>
-                      <AccordionContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {ideas.map(idea => (
-                            <Link
-                              href={`/investment-ideas/custom?idea=${encodeURIComponent(
-                                idea
-                              )}`}
-                              key={idea}
-                              passHref
-                            >
-                              <Button
-                                variant="ghost"
-                                className="w-full h-full text-left justify-start p-3"
-                              >
-                                <FileText className="mr-3 h-4 w-4 flex-shrink-0" />
-                                <span className="flex-1 text-sm">{idea}</span>
-                              </Button>
-                            </Link>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  )
-                )}
-              </Accordion>
-            </CollapsibleContent>
-          </Collapsible>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Object.entries(investmentIdeaCategories).map(
+              ([category, { icon: Icon, ideas }]) => (
+                <Card key={category} className="flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Icon className="h-6 w-6 text-primary" />
+                      {category}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-1 space-y-2">
+                    {ideas.map(idea => (
+                      <Link
+                        href={`/investment-ideas/custom?idea=${encodeURIComponent(
+                          idea
+                        )}`}
+                        key={idea}
+                        passHref
+                      >
+                        <Button
+                          variant="ghost"
+                          className="w-full h-full text-left justify-start p-3"
+                        >
+                          <FileText className="mr-3 h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                          <span className="flex-1 text-sm font-normal text-muted-foreground hover:text-foreground">
+                            {idea}
+                          </span>
+                        </Button>
+                      </Link>
+                    ))}
+                  </CardContent>
+                </Card>
+              )
+            )}
+          </div>
 
           <div className="space-y-4 pt-6 border-t">
             <h3 className="font-semibold">Analyze Your Own Business Idea</h3>
