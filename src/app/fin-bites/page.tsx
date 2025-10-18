@@ -246,9 +246,9 @@ export default function FinBitesPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Fin Bites</h1>
+          <h1 className="text-3xl font-bold">Brainstorm</h1>
           <p className="text-muted-foreground">
-            Your daily dose of financial wisdom.
+            Explore investment ideas and build your business plan.
           </p>
         </div>
         <Button asChild>
@@ -425,5 +425,3 @@ export default function FinBitesPage() {
     </div>
   );
 }
-
-    

@@ -4,7 +4,6 @@
 import {
   Home,
   Wallet,
-  Newspaper,
   LogOut,
   User,
   BrainCircuit,
@@ -28,7 +27,7 @@ import {
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/transactions', label: 'Transactions', icon: Wallet },
-  { href: '/fin-bites', label: 'Fin Bites', icon: Newspaper },
+  { href: '/fin-bites', label: 'Brainstorm', icon: BrainCircuit },
 ];
 
 export default function Sidebar() {

@@ -97,7 +97,7 @@ function InvestmentIdeaContent() {
         <Button variant="ghost" asChild className="-ml-4">
           <Link href="/fin-bites">
             <ArrowLeft className="mr-2" />
-            Back to Fin Bites
+            Back to Brainstorm
           </Link>
         </Button>
       </div>
