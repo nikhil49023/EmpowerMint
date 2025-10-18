@@ -63,7 +63,7 @@ export default function Sidebar() {
             d="M12 22V12M12 12L3 7L12 2L21 7L12 12Z"
             stroke="currentColor"
             strokeWidth="1.5"
-            strokeLinejoin-="round"
+            strokeLinejoin="round"
           />
           <path
             d="M16.5 4.5L7.5 9.5"
