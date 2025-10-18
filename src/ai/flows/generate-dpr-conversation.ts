@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -19,7 +20,11 @@ const DprMessageSchema = z.object({
 
 // Define the input schema for the flow
 const GenerateDprConversationInputSchema = z.object({
-  idea: z.string().describe('The initial business idea.'),
+  idea: z
+    .string()
+    .describe(
+      'A string containing the core business idea and other details collected from the user, such as Project Name, Promoter Name, etc.'
+    ),
   history: z
     .array(DprMessageSchema)
     .describe('The history of the conversation so far.'),
@@ -56,17 +61,18 @@ const prompt = ai.definePrompt({
   name: 'generateDprConversationPrompt',
   input: { schema: GenerateDprConversationInputSchema },
   output: { schema: GenerateDprConversationOutputSchema },
-  prompt: `You are "Uplift AI," a business development expert. Your goal is to help an early-stage entrepreneur in India brainstorm and build a Detailed Project Report (DRP) through an interactive conversation.
+  prompt: `You are "Uplift AI," a business development expert. Your goal is to help an early-stage entrepreneur in India brainstorm and build a bank-ready Detailed Project Report (DRP) through an interactive conversation.
 
-The user's initial idea is: "{{{idea}}}"
+The user's initial project details are: "{{{idea}}}"
 
 Your tasks are:
 1.  Analyze the conversation history to understand the context.
-2.  Ask clarifying questions to gather more details about the project.
-3.  Based on the user's input, provide suggestions and insights related to the Indian market.
+2.  Ask clarifying questions to gather more details about the project. Cover key DRP sections like Market Analysis, Financial Projections, Marketing Strategy, and Operations Plan.
+3.  Based on the user's input, provide suggestions and insights relevant to the Indian market.
 4.  After providing a response, you MUST offer exactly three distinct, actionable suggestions as the next conversation step for the user to choose from. These suggestions should help build out a section of the DRP (e.g., "Let's define the target audience.", "What is the initial investment?", "Flesh out the marketing plan.").
+5. Once sufficient detail has been gathered, suggest generating the report.
 
-Keep your responses concise and encouraging. Guide the user step-by-step.
+Keep your responses concise, encouraging, and professional. Guide the user step-by-step. Use markdown for formatting, like making text **bold**.
 
 Conversation History:
 {{#each history}}
@@ -88,3 +94,5 @@ const generateDprConversationFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

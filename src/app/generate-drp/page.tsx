@@ -11,9 +11,16 @@ import {
 } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Send, Sparkles, User, Loader2, FileText } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Send, Sparkles, User, Loader2, FileText, Briefcase } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { generateDprConversationAction } from '../actions';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,24 +33,41 @@ type Message = {
   suggestions?: string[];
 };
 
+type ProjectDetails = {
+  projectName: string;
+  yourName: string;
+  businessType: string;
+  companyName: string;
+};
+
 const getUniqueMessageId = () => `msg-${Date.now()}-${Math.random()}`;
 
 function DRPGenerator() {
   const searchParams = useSearchParams();
   const idea = searchParams.get('idea') || 'my business idea';
 
+  const [projectDetails, setProjectDetails] = useState<ProjectDetails>({
+    projectName: idea,
+    yourName: '',
+    businessType: '',
+    companyName: '',
+  });
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
 
-  // Set initial messages on client-side to avoid hydration errors
-  useEffect(() => {
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsFormSubmitted(true);
+    const welcomeMessage = `I have the initial details for project "${projectDetails.projectName}". Let's start building the Detailed Project Report.`;
     const initialMessages: Message[] = [
       {
         id: getUniqueMessageId(),
         role: 'model',
-        text: 'Hello! I am here to help you brainstorm and build a Detailed Project Report (DRP). To start, could you tell me a bit more about your business idea?',
+        text: `Hello! I am here to help you brainstorm and build a Detailed Project Report (DRP) for your project: **${projectDetails.projectName}**. To start, could you tell me a bit more about the business idea?`,
         suggestions: [
           `Let's start with my idea: "${idea}"`,
           'What is a DRP?',
@@ -52,7 +76,7 @@ function DRPGenerator() {
       },
     ];
     setMessages(initialMessages);
-  }, [idea]);
+  };
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
@@ -82,7 +106,6 @@ function DRPGenerator() {
         text: messageText,
       };
 
-      // Clear suggestions from the last AI message and add the new user message
       setMessages(prev => {
         const newHistory = [...prev];
         const lastMessage = newHistory[newHistory.length - 1];
@@ -101,8 +124,11 @@ function DRPGenerator() {
       }));
       conversationHistory.push({ role: 'user', text: messageText });
 
+      // Append project details to the initial idea for better context
+      const fullIdeaContext = `Business Idea: ${idea}. Project Name: ${projectDetails.projectName}. Promoter: ${projectDetails.yourName}. Business Type: ${projectDetails.businessType}. Company: ${projectDetails.companyName}.`;
+
       const result = await generateDprConversationAction({
-        idea,
+        idea: fullIdeaContext,
         history: conversationHistory,
       });
 
@@ -125,10 +151,90 @@ function DRPGenerator() {
 
       setIsLoading(false);
     },
-    [idea, isLoading, messages]
+    [idea, isLoading, messages, projectDetails]
   );
 
   const lastMessage = messages[messages.length - 1];
+
+  if (!isFormSubmitted) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-2xl"
+        >
+          <Card className="glassmorphic">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <FileText /> Project Details
+              </CardTitle>
+              <CardDescription>
+                First, let's gather some basic details for your DPR.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="projectName">Project Name</Label>
+                  <Input
+                    id="projectName"
+                    value={projectDetails.projectName}
+                    onChange={e =>
+                      setProjectDetails({ ...projectDetails, projectName: e.target.value })
+                    }
+                    placeholder="e.g., Eco-Friendly Packaging Solutions"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="yourName">Your Name</Label>
+                    <Input
+                      id="yourName"
+                      value={projectDetails.yourName}
+                      onChange={e =>
+                        setProjectDetails({ ...projectDetails, yourName: e.target.value })
+                      }
+                      placeholder="e.g., Anika Sharma"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="businessType">Business Type</Label>
+                    <Input
+                      id="businessType"
+                      value={projectDetails.businessType}
+                      onChange={e =>
+                        setProjectDetails({ ...projectDetails, businessType: e.target.value })
+                      }
+                      placeholder="e.g., Manufacturing"
+                      required
+                    />
+                  </div>
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name (Optional)</Label>
+                  <Input
+                    id="companyName"
+                    value={projectDetails.companyName}
+                    onChange={e =>
+                      setProjectDetails({ ...projectDetails, companyName: e.target.value })
+                    }
+                    placeholder="e.g., GreenPack Industries"
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  <Briefcase className="mr-2" /> Start Brainstorming
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -137,7 +243,8 @@ function DRPGenerator() {
           <FileText /> Generate Detailed Project Report (DRP)
         </h1>
         <p className="text-muted-foreground">
-          Brainstorm with our AI to build your comprehensive DRP.
+          Brainstorm with our AI to build your comprehensive DRP for{' '}
+          <span className="font-semibold text-primary">{projectDetails.projectName}</span>.
         </p>
       </div>
 
@@ -172,7 +279,7 @@ function DRPGenerator() {
                             : 'bg-muted'
                         }`}
                       >
-                        <p>{message.text}</p>
+                        <p dangerouslySetInnerHTML={{ __html: message.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                       </div>
                       {message.role === 'user' && (
                         <Avatar className="h-8 w-8">
@@ -265,3 +372,5 @@ export default function DRPPage() {
     </Suspense>
   );
 }
+
+    
