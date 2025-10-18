@@ -75,7 +75,14 @@ import {
   query,
   onSnapshot,
   writeBatch,
+  getDocs,
+  doc,
 } from 'firebase/firestore';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const categoryIcons: { [key: string]: React.ElementType } = {
   Groceries: ShoppingBag,
@@ -120,7 +127,9 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (user) {
       setLoadingData(true);
-      const transQuery = query(collection(db, 'users', user.uid, 'transactions'));
+      const transQuery = query(
+        collection(db, 'users', user.uid, 'transactions')
+      );
       const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
 
       const unsubTransactions = onSnapshot(transQuery, snapshot => {
@@ -128,7 +137,7 @@ export default function TransactionsPage() {
           ...(doc.data() as ExtractedTransaction),
         }));
         setTransactions(transData);
-        if(loadingData) setLoadingData(false);
+        if (loadingData) setLoadingData(false);
       });
 
       const unsubBudgets = onSnapshot(budgetQuery, snapshot => {
@@ -139,7 +148,7 @@ export default function TransactionsPage() {
           icon: categoryIcons[doc.data().name] || categoryIcons.Default,
         }));
         setBudgets(budgetsData);
-         if(loadingData) setLoadingData(false);
+        if (loadingData) setLoadingData(false);
       });
 
       return () => {
@@ -173,8 +182,12 @@ export default function TransactionsPage() {
 
   const handleAddBudget = async () => {
     if (!user) {
-       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add a budget.' });
-       return;
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to add a budget.',
+      });
+      return;
     }
     if (!newBudgetName || !newBudgetAmount) {
       toast({
@@ -188,19 +201,27 @@ export default function TransactionsPage() {
       name: newBudgetName,
       amount: parseFloat(newBudgetAmount),
     };
-    try {
-      await addDoc(collection(db, 'users', user.uid, 'budgets'), newBudgetData);
-      setNewBudgetName('');
-      setNewBudgetAmount('');
-      setAddBudgetDialogOpen(false);
-      toast({
-        title: 'Success',
-        description: 'Budget added successfully.',
+
+    const budgetsCollectionRef = collection(db, 'users', user.uid, 'budgets');
+
+    addDoc(budgetsCollectionRef, newBudgetData)
+      .then(() => {
+        setNewBudgetName('');
+        setNewBudgetAmount('');
+        setAddBudgetDialogOpen(false);
+        toast({
+          title: 'Success',
+          description: 'Budget added successfully.',
+        });
+      })
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: budgetsCollectionRef.path,
+          operation: 'create',
+          requestResourceData: newBudgetData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
       });
-    } catch (error) {
-       console.error("Error adding budget: ", error);
-       toast({ variant: 'destructive', title: 'Error', description: 'Failed to add budget.' });
-    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -212,13 +233,15 @@ export default function TransactionsPage() {
 
   const handleClearData = async () => {
     if (!user) return;
-    const transQuery = query(collection(db, 'users', user.uid, 'transactions'));
+    const transQuery = query(
+      collection(db, 'users', user.uid, 'transactions')
+    );
     const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
 
     const batch = writeBatch(db);
     const transSnapshot = await getDocs(transQuery);
     transSnapshot.forEach(doc => batch.delete(doc.ref));
-    
+
     const budgetSnapshot = await getDocs(budgetQuery);
     budgetSnapshot.forEach(doc => batch.delete(doc.ref));
 
@@ -231,9 +254,13 @@ export default function TransactionsPage() {
   };
 
   const handleAddTransaction = async () => {
-     if (!user) {
-       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to add a transaction.' });
-       return;
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to add a transaction.',
+      });
+      return;
     }
     if (
       !newTransaction.description ||
@@ -247,28 +274,44 @@ export default function TransactionsPage() {
       });
       return;
     }
-    try {
-      await addDoc(collection(db, 'users', user.uid, 'transactions'), newTransaction);
-      setNewTransaction({
-        description: '',
-        date: '',
-        type: 'expense',
-        amount: '',
+
+    const transactionsCollectionRef = collection(
+      db,
+      'users',
+      user.uid,
+      'transactions'
+    );
+    addDoc(transactionsCollectionRef, newTransaction)
+      .then(() => {
+        setNewTransaction({
+          description: '',
+          date: '',
+          type: 'expense',
+          amount: '',
+        });
+        setAddTransactionDialogOpen(false);
+        toast({
+          title: 'Success',
+          description: 'Transaction added successfully.',
+        });
+      })
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: transactionsCollectionRef.path,
+          operation: 'create',
+          requestResourceData: newTransaction,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
       });
-      setAddTransactionDialogOpen(false);
-      toast({
-        title: 'Success',
-        description: 'Transaction added successfully.',
-      });
-    } catch (error) {
-      console.error("Error adding transaction: ", error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to add transaction.' });
-    }
   };
 
   const processFile = async (file: File) => {
     if (!user) {
-      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to import transactions.' });
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to import transactions.',
+      });
       return;
     }
     setIsImporting(true);
@@ -283,17 +326,33 @@ export default function TransactionsPage() {
 
         if (result.success) {
           const batch = writeBatch(db);
-          const transactionsCol = collection(db, 'users', user.uid, 'transactions');
+          const transactionsCol = collection(
+            db,
+            'users',
+            user.uid,
+            'transactions'
+          );
           result.data.transactions.forEach(transaction => {
             const docRef = doc(transactionsCol); // Automatically generate unique ID
             batch.set(docRef, transaction);
           });
-          await batch.commit();
 
-          toast({
-            title: 'Import Successful',
-            description: `${result.data.transactions.length} transactions were imported.`,
-          });
+          batch
+            .commit()
+            .then(() => {
+              toast({
+                title: 'Import Successful',
+                description: `${result.data.transactions.length} transactions were imported.`,
+              });
+            })
+            .catch(async serverError => {
+              const permissionError = new FirestorePermissionError({
+                path: transactionsCol.path,
+                operation: 'create',
+                requestResourceData: result.data.transactions, // This is an array, but should give enough context
+              } satisfies SecurityRuleContext);
+              errorEmitter.emit('permission-error', permissionError);
+            });
         } else {
           toast({
             variant: 'destructive',
@@ -404,7 +463,10 @@ export default function TransactionsPage() {
 
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={isImporting || showLoginPrompt}>
+              <Button
+                variant="outline"
+                disabled={isImporting || showLoginPrompt}
+              >
                 {isImporting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -467,73 +529,77 @@ export default function TransactionsPage() {
                   Track and manage your monthly spending.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-8 py-4">
-                 <div className="flex justify-end">
-                    <Dialog open={addBudgetDialogOpen} onOpenChange={setAddBudgetDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <PlusCircle className="mr-2 h-4 w-4" /> Add New Budget
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Add New Budget</DialogTitle>
-                          <DialogDescription>
-                            Create a new budget to track your spending for a category.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">
-                              Name
-                            </Label>
-                            <Input
-                              id="name"
-                              value={newBudgetName}
-                              onChange={e => setNewBudgetName(e.target.value)}
-                              className="col-span-3"
-                              placeholder="e.g., Groceries"
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="amount" className="text-right">
-                              Amount
-                            </Label>
-                            <Input
-                              id="amount"
-                              type="number"
-                              value={newBudgetAmount}
-                              onChange={e => setNewBudgetAmount(e.target.value)}
-                              className="col-span-3"
-                              placeholder="e.g., 5000"
-                            />
-                          </div>
+                <div className="flex justify-end">
+                  <Dialog
+                    open={addBudgetDialogOpen}
+                    onOpenChange={setAddBudgetDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Budget
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add New Budget</DialogTitle>
+                        <DialogDescription>
+                          Create a new budget to track your spending for a
+                          category.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="name" className="text-right">
+                            Name
+                          </Label>
+                          <Input
+                            id="name"
+                            value={newBudgetName}
+                            onChange={e => setNewBudgetName(e.target.value)}
+                            className="col-span-3"
+                            placeholder="e.g., Groceries"
+                          />
                         </div>
-                        <DialogFooter>
-                           <DialogClose asChild>
-                            <Button type="button" variant="secondary">
-                              Cancel
-                            </Button>
-                          </DialogClose>
-                          <Button onClick={handleAddBudget}>Add Budget</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="amount" className="text-right">
+                            Amount
+                          </Label>
+                          <Input
+                            id="amount"
+                            type="number"
+                            value={newBudgetAmount}
+                            onChange={e => setNewBudgetAmount(e.target.value)}
+                            className="col-span-3"
+                            placeholder="e.g., 5000"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button type="button" variant="secondary">
+                            Cancel
+                          </Button>
+                        </DialogClose>
+                        <Button onClick={handleAddBudget}>Add Budget</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 {budgetsWithSpending.length === 0 ? (
-                    <Card className="flex items-center justify-center min-h-[200px] border-dashed shadow-none glassmorphic">
-                      <CardContent className="text-center p-6">
-                        <div className="flex justify-center mb-4">
-                          <PiggyBank className="w-16 h-16 text-muted-foreground" />
-                        </div>
-                        <h2 className="text-xl font-semibold">No Budgets Yet</h2>
-                        <p className="text-muted-foreground mt-2">
-                          Click "Add New Budget" to get started.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ) : (
+                  <Card className="flex items-center justify-center min-h-[200px] border-dashed shadow-none glassmorphic">
+                    <CardContent className="text-center p-6">
+                      <div className="flex justify-center mb-4">
+                        <PiggyBank className="w-16 h-16 text-muted-foreground" />
+                      </div>
+                      <h2 className="text-xl font-semibold">No Budgets Yet</h2>
+                      <p className="text-muted-foreground mt-2">
+                        Click "Add New Budget" to get started.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
                   <motion.div
                     className="grid gap-6 md:grid-cols-2"
                     initial={{ opacity: 0 }}
@@ -566,13 +632,17 @@ export default function TransactionsPage() {
                               <div className="space-y-2">
                                 <Progress value={progress} />
                                 <div className="flex justify-between text-sm">
-                                  <p className="text-muted-foreground">Spent</p>
+                                  <p className="text-muted-foreground">
+                                    Spent
+                                  </p>
                                   <p className="font-medium">
                                     {formatCurrency(budget.spent)}
                                   </p>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                  <p className="text-muted-foreground">Remaining</p>
+                                  <p className="text-muted-foreground">
+                                    Remaining
+                                  </p>
                                   <p
                                     className={`font-medium ${
                                       remaining < 0 ? 'text-destructive' : ''
@@ -592,7 +662,6 @@ export default function TransactionsPage() {
               </div>
             </DialogContent>
           </Dialog>
-
 
           <Dialog
             open={addTransactionDialogOpen}
@@ -713,7 +782,7 @@ export default function TransactionsPage() {
             </TableHeader>
             <TableBody>
               {showLoginPrompt ? (
-                 <TableRow>
+                <TableRow>
                   <TableCell
                     colSpan={4}
                     className="text-center h-24 text-muted-foreground"

@@ -29,7 +29,12 @@ import { FormattedText } from '@/components/financify/formatted-text';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
 
 function InvestmentIdeaContent() {
   const searchParams = useSearchParams();
@@ -57,7 +62,6 @@ function InvestmentIdeaContent() {
         setAnalysis(result.data);
       } else {
         setError(result.error);
-        console.error(result.error);
       }
       setIsLoading(false);
     };
@@ -75,26 +79,33 @@ function InvestmentIdeaContent() {
       return;
     }
     setIsSaving(true);
-    try {
-      await addDoc(collection(db, 'users', user.uid, 'ideas'), {
-        ...analysis,
-        savedAt: serverTimestamp(),
+
+    const ideasCollectionRef = collection(db, 'users', user.uid, 'ideas');
+    const ideaData = {
+      ...analysis,
+      savedAt: serverTimestamp(),
+    };
+
+    addDoc(ideasCollectionRef, ideaData)
+      .then(() => {
+        setIsSaved(true);
+        toast({
+          title: 'Success!',
+          description: 'Your idea has been saved successfully.',
+        });
+      })
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: ideasCollectionRef.path,
+          operation: 'create',
+          requestResourceData: ideaData,
+        } satisfies SecurityRuleContext);
+
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
-      setIsSaved(true);
-      toast({
-        title: 'Success!',
-        description: 'Your idea has been saved successfully.',
-      });
-    } catch (error) {
-      console.error('Error saving idea: ', error);
-      toast({
-        variant: 'destructive',
-        title: 'Save Failed',
-        description: 'There was an error saving your idea.',
-      });
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   const AnalysisCard = ({
