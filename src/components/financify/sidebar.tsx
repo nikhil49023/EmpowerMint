@@ -9,6 +9,7 @@ import {
   Newspaper,
   LogOut,
   User,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -29,7 +30,6 @@ import {
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/transactions', label: 'Transactions', icon: Wallet },
-  { href: '/ai-advisor', label: 'AI Advisor', icon: BrainCircuit },
   { href: '/fin-bites', label: 'Fin Bites', icon: Newspaper },
 ];
 

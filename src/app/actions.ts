@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -12,11 +13,6 @@ import type {
 } from '@/ai/schemas/transactions';
 import { generateFinBite } from '@/ai/flows/generate-fin-bite';
 import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
-import { generateFinancialAdvice } from '@/ai/flows/generate-financial-advice';
-import type {
-  GenerateFinancialAdviceInput,
-  GenerateFinancialAdviceOutput,
-} from '@/ai/flows/generate-financial-advice';
 import { generateDashboardSummary } from '@/ai/flows/generate-dashboard-summary';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
 import { generateInvestmentIdeaAnalysis } from '@/ai/flows/generate-investment-idea-analysis';
@@ -76,24 +72,6 @@ export async function generateFinBiteAction(): Promise<
     return {
       success: false,
       error: 'Failed to generate a Fin Bite. Please try again.',
-    };
-  }
-}
-
-export async function askAIAdvisorAction(
-  input: GenerateFinancialAdviceInput
-): Promise<
-  | { success: true; data: GenerateFinancialAdviceOutput }
-  | { success: false; error: string }
-> {
-  try {
-    const result = await generateFinancialAdvice(input);
-    return { success: true, data: result };
-  } catch (error) {
-    console.error(error);
-    return {
-      success: false,
-      error: 'Failed to get a response. Please try again.',
     };
   }
 }
