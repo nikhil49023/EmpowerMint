@@ -16,7 +16,10 @@ import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
 import { generateDashboardSummary } from '@/ai/flows/generate-dashboard-summary';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
 import { generateInvestmentIdeaAnalysis } from '@/ai/flows/generate-investment-idea-analysis';
-import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
+import type {
+  GenerateInvestmentIdeaAnalysisInput,
+  GenerateInvestmentIdeaAnalysisOutput,
+} from '@/ai/flows/generate-investment-idea-analysis';
 import type { ExtractedTransaction } from './ai/schemas/transactions';
 import { generateDprConversation } from '@/ai/flows/generate-dpr-conversation';
 import type {
@@ -28,6 +31,8 @@ import {
   type GenerateFinancialAdviceInput,
   type GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
+import { db } from '@/lib/firebase-admin';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function generateSuggestionsAction(
   input: GenerateSuggestionsFromPromptInput
@@ -100,19 +105,45 @@ export async function generateDashboardSummaryAction(
 }
 
 export async function generateInvestmentIdeaAnalysisAction(
-  idea: string
+  input: GenerateInvestmentIdeaAnalysisInput
 ): Promise<
   | { success: true; data: GenerateInvestmentIdeaAnalysisOutput }
   | { success: false; error: string }
 > {
   try {
-    const result = await generateInvestmentIdeaAnalysis({ idea });
+    const result = await generateInvestmentIdeaAnalysis(input);
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
     return {
       success: false,
       error: 'Failed to generate investment idea analysis. Please try again.',
+    };
+  }
+}
+
+export async function saveInvestmentIdeaAction(
+  userId: string,
+  idea: GenerateInvestmentIdeaAnalysisOutput
+): Promise<{ success: true } | { success: false; error: string }> {
+  if (!userId || !idea) {
+    return { success: false, error: 'User ID and idea data are required.' };
+  }
+
+  try {
+    const ideasCollectionRef = collection(db, 'users', userId, 'ideas');
+    await addDoc(ideasCollectionRef, {
+      ...idea,
+      savedAt: serverTimestamp(),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving investment idea:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred.';
+    return {
+      success: false,
+      error: `Failed to save investment idea: ${errorMessage}`,
     };
   }
 }

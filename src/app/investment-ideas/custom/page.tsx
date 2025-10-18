@@ -10,14 +10,28 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ArrowLeft, Briefcase, Target, TrendingUp, Shield } from 'lucide-react';
-import { generateInvestmentIdeaAnalysisAction } from '@/app/actions';
+import {
+  ArrowLeft,
+  Briefcase,
+  Target,
+  TrendingUp,
+  Shield,
+  Save,
+  CheckCircle,
+} from 'lucide-react';
+import {
+  generateInvestmentIdeaAnalysisAction,
+  saveInvestmentIdeaAction,
+} from '@/app/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
 import { FormattedText } from '@/components/financify/formatted-text';
+import { auth } from '@/lib/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useToast } from '@/hooks/use-toast';
 
 function InvestmentIdeaContent() {
   const searchParams = useSearchParams();
@@ -25,7 +39,11 @@ function InvestmentIdeaContent() {
   const [analysis, setAnalysis] =
     useState<GenerateInvestmentIdeaAnalysisOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [user] = useAuthState(auth);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -36,7 +54,7 @@ function InvestmentIdeaContent() {
       }
       setIsLoading(true);
       setError(null);
-      const result = await generateInvestmentIdeaAnalysisAction(idea);
+      const result = await generateInvestmentIdeaAnalysisAction({ idea });
       if (result.success) {
         setAnalysis(result.data);
       } else {
@@ -48,6 +66,33 @@ function InvestmentIdeaContent() {
 
     fetchAnalysis();
   }, [idea]);
+
+  const handleSaveIdea = async () => {
+    if (!user || !analysis) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'You must be logged in to save an idea.',
+      });
+      return;
+    }
+    setIsSaving(true);
+    const result = await saveInvestmentIdeaAction(user.uid, analysis);
+    setIsSaving(false);
+    if (result.success) {
+      setIsSaved(true);
+      toast({
+        title: 'Idea Saved!',
+        description: `"${analysis.title}" has been saved to your ideas.`,
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: result.error,
+      });
+    }
+  };
 
   const AnalysisCard = ({
     icon,
@@ -93,7 +138,7 @@ function InvestmentIdeaContent() {
 
   return (
     <div className="space-y-8">
-       <div>
+      <div className="flex justify-between items-center">
         <Button variant="ghost" asChild className="-ml-4">
           <Link href="/brainstorm">
             <ArrowLeft className="mr-2" />
@@ -121,6 +166,26 @@ function InvestmentIdeaContent() {
               </>
             )}
           </CardHeader>
+          {!isLoading && analysis && (
+            <CardContent>
+              <Button
+                onClick={handleSaveIdea}
+                disabled={isSaving || isSaved}
+              >
+                {isSaved ? (
+                  <>
+                    <CheckCircle className="mr-2" /> Idea Saved
+                  </>
+                ) : isSaving ? (
+                  'Saving...'
+                ) : (
+                  <>
+                    <Save className="mr-2" /> Save Idea for Later
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          )}
         </Card>
       </motion.div>
 
@@ -178,11 +243,10 @@ function InvestmentIdeaContent() {
   );
 }
 
-
 export default function CustomInvestmentIdeaPage() {
   return (
     <Suspense fallback={<p>Loading analysis...</p>}>
       <InvestmentIdeaContent />
     </Suspense>
-  )
+  );
 }

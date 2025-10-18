@@ -8,6 +8,7 @@ import {
   User,
   BrainCircuit,
   Rocket,
+  Lightbulb,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/transactions', label: 'Transactions', icon: Wallet },
   { href: '/brainstorm', label: 'Brainstorm', icon: BrainCircuit },
+  { href: '/my-ideas', label: 'My Ideas', icon: Lightbulb },
   { href: '/launchpad', label: 'Launchpad', icon: Rocket },
 ];
 
