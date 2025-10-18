@@ -37,7 +37,7 @@ export type GenerateDprConversationInput = z.infer<
 const GenerateDprConversationOutputSchema = z.object({
   response: z
     .string()
-    .describe('The AI\'s response in the conversation.'),
+    .describe("The AI's response in the conversation."),
   suggestions: z
     .array(z.string())
     .optional()
@@ -70,7 +70,7 @@ Your tasks are:
 2.  Ask clarifying questions to gather more details about the project. Cover key DRP sections like Market Analysis, Financial Projections, Marketing Strategy, and Operations Plan.
 3.  Based on the user's input, provide suggestions and insights relevant to the Indian market.
 4.  After providing a response, you MUST offer exactly three distinct, actionable suggestions as the next conversation step for the user to choose from. These suggestions should help build out a section of the DRP (e.g., "Let's define the target audience.", "What is the initial investment?", "Flesh out the marketing plan.").
-5. Once sufficient detail has been gathered, suggest generating the report.
+5.  Once sufficient detail has been gathered across the key sections, suggest generating the report as one of the options. For example: "I think we have enough information to create a draft. Shall we generate the report now?".
 
 Keep your responses concise, encouraging, and professional. Guide the user step-by-step. Use markdown for formatting, like making text **bold**.
 
@@ -94,5 +94,3 @@ const generateDprConversationFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
