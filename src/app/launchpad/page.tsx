@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -18,6 +17,7 @@ import {
   ExternalLink,
   MapPin,
   Sparkles,
+  Globe,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -38,7 +38,7 @@ const startupSteps = [
     icon: Building,
     title: '3. Register Your Business',
     description:
-      'Choose a business structure (Sole Proprietorship, LLP, Pvt. Ltd.) and complete the legal registration process.',
+      'Choose a business structure (Sole Proprietorship, LLP, Pvt. Ltd.) and complete the legal registration process. Check for state-specific portals like APMSME ONE.',
   },
   {
     icon: Banknote,
@@ -122,6 +122,39 @@ export default function LaunchpadPage() {
           Your guide to starting and growing your enterprise in India.
         </p>
       </div>
+       <Card className="glassmorphic">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe />
+            State-Specific Portals
+          </CardTitle>
+          <CardDescription>
+            Access resources and schemes from your state government.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+           <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">APMSME ONE</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <p className="text-muted-foreground text-sm">
+                    A dedicated portal for Micro, Small and Medium Enterprises in Andhra Pradesh, offering a range of services and support.
+                  </p>
+                </CardContent>
+                <CardContent>
+                  <a
+                    href="http://www.apmsmeone.in/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
+                  >
+                    Visit Portal <ExternalLink className="h-4 w-4" />
+                  </a>
+                </CardContent>
+              </Card>
+        </CardContent>
+      </Card>
 
       <Card className="glassmorphic">
         <CardHeader>
