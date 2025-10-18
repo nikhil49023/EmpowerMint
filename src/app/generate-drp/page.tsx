@@ -7,6 +7,7 @@ import {
   useEffect,
   type ElementRef,
   Suspense,
+  useCallback,
 } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -14,42 +15,44 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Send, Sparkles, User, Loader2, FileText } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { askAIAdvisorAction } from '../actions';
+import { generateDprConversationAction } from '../actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Message = {
   id: string;
+  role: 'user' | 'model';
   text: string;
-  sender: 'user' | 'ai';
+  suggestions?: string[];
 };
 
 const getUniqueMessageId = () => `msg-${Date.now()}-${Math.random()}`;
 
 function DRPGenerator() {
   const searchParams = useSearchParams();
-  const idea = searchParams.get('idea');
+  const idea = searchParams.get('idea') || 'my business idea';
 
-  const initialMessages: Message[] = [
-    {
-      id: getUniqueMessageId(),
-      text: 'Discuss and brainstorm about your project to generate a DRP.',
-      sender: 'ai',
-    },
-  ];
-
-  if (idea) {
-    initialMessages.push({
-      id: getUniqueMessageId(),
-      text: `Let's start with your idea: "${idea}"`,
-      sender: 'ai',
-    });
-  }
-
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
+
+  // Set initial messages on client-side to avoid hydration errors
+  useEffect(() => {
+    const initialMessages: Message[] = [
+      {
+        id: getUniqueMessageId(),
+        role: 'model',
+        text: 'Hello! I am here to help you brainstorm and build a Detailed Project Report (DRP). To start, could you tell me a bit more about your business idea?',
+        suggestions: [
+          `Let's start with my idea: "${idea}"`,
+          'What is a DRP?',
+          'How does this work?',
+        ],
+      },
+    ];
+    setMessages(initialMessages);
+  }, [idea]);
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
@@ -69,41 +72,63 @@ function DRPGenerator() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  const handleSendMessage = useCallback(
+    async (messageText: string) => {
+      if (!messageText.trim() || isLoading) return;
 
-    const newUserMessage: Message = {
-      id: getUniqueMessageId(),
-      text: input,
-      sender: 'user',
-    };
-
-    setMessages(prev => [...prev, newUserMessage]);
-    setInput('');
-    setIsLoading(true);
-
-    // This is where you would eventually call a new Genkit flow for DRP generation
-    const result = await askAIAdvisorAction({ query: input });
-
-    if (result.success) {
-      const newAiMessage: Message = {
+      const newUserMessage: Message = {
         id: getUniqueMessageId(),
-        text: result.data.advice, // Replace with DRP-specific response
-        sender: 'ai',
+        role: 'user',
+        text: messageText,
       };
-      setMessages(prev => [...prev, newAiMessage]);
-    } else {
-      const errorAiMessage: Message = {
-        id: getUniqueMessageId(),
-        text: "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment.",
-        sender: 'ai',
-      };
-      setMessages(prev => [...prev, errorAiMessage]);
-    }
 
-    setIsLoading(false);
-  };
+      // Clear suggestions from the last AI message and add the new user message
+      setMessages(prev => {
+        const newHistory = [...prev];
+        const lastMessage = newHistory[newHistory.length - 1];
+        if (lastMessage && lastMessage.role === 'model') {
+          delete lastMessage.suggestions;
+        }
+        return [...newHistory, newUserMessage];
+      });
+
+      setInput('');
+      setIsLoading(true);
+
+      const conversationHistory = messages.map(m => ({
+        role: m.role,
+        text: m.text,
+      }));
+      conversationHistory.push({ role: 'user', text: messageText });
+
+      const result = await generateDprConversationAction({
+        idea,
+        history: conversationHistory,
+      });
+
+      if (result.success) {
+        const newAiMessage: Message = {
+          id: getUniqueMessageId(),
+          role: 'model',
+          text: result.data.response,
+          suggestions: result.data.suggestions,
+        };
+        setMessages(prev => [...prev, newAiMessage]);
+      } else {
+        const errorAiMessage: Message = {
+          id: getUniqueMessageId(),
+          role: 'model',
+          text: "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment.",
+        };
+        setMessages(prev => [...prev, errorAiMessage]);
+      }
+
+      setIsLoading(false);
+    },
+    [idea, isLoading, messages]
+  );
+
+  const lastMessage = messages[messages.length - 1];
 
   return (
     <div className="flex flex-col h-full">
@@ -130,10 +155,10 @@ function DRPGenerator() {
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.3 }}
                       className={`flex items-start gap-3 ${
-                        message.sender === 'user' ? 'justify-end' : ''
+                        message.role === 'user' ? 'justify-end' : ''
                       }`}
                     >
-                      {message.sender === 'ai' && (
+                      {message.role === 'model' && (
                         <Avatar className="h-8 w-8 bg-primary/20 text-primary">
                           <AvatarFallback>
                             <Sparkles className="h-5 w-5" />
@@ -142,14 +167,14 @@ function DRPGenerator() {
                       )}
                       <div
                         className={`rounded-lg p-3 max-w-md text-sm ${
-                          message.sender === 'user'
+                          message.role === 'user'
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted'
                         }`}
                       >
                         <p>{message.text}</p>
                       </div>
-                      {message.sender === 'user' && (
+                      {message.role === 'user' && (
                         <Avatar className="h-8 w-8">
                           <AvatarFallback>
                             <User className="h-5 w-5" />
@@ -180,23 +205,54 @@ function DRPGenerator() {
             </ScrollArea>
           </CardContent>
         </Card>
-        <form onSubmit={handleSendMessage} className="relative">
-          <Input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder="Tell me about your project..."
-            className="pr-12 h-12"
-            disabled={isLoading}
-          />
-          <Button
-            type="submit"
-            size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9"
-            disabled={isLoading || !input.trim()}
+        <div className="space-y-2">
+          {lastMessage?.role === 'model' && lastMessage.suggestions && (
+            <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-wrap gap-2 justify-end"
+              >
+                {lastMessage.suggestions.map((suggestion, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSendMessage(suggestion)}
+                    disabled={isLoading}
+                  >
+                    {suggestion}
+                  </Button>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          )}
+
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              handleSendMessage(input);
+            }}
+            className="relative"
           >
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+            <Input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="Tell me about your project..."
+              className="pr-12 h-12"
+              disabled={isLoading}
+            />
+            <Button
+              type="submit"
+              size="icon"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9"
+              disabled={isLoading || !input.trim()}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );

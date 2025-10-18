@@ -22,6 +22,11 @@ import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboa
 import { generateInvestmentIdeaAnalysis } from '@/ai/flows/generate-investment-idea-analysis';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
 import type { ExtractedTransaction } from './ai/schemas/transactions';
+import { generateDprConversation } from '@/ai/flows/generate-dpr-conversation';
+import type {
+  GenerateDprConversationInput,
+  GenerateDprConversationOutput,
+} from '@/ai/flows/generate-dpr-conversation';
 
 export async function generateSuggestionsAction(
   input: GenerateSuggestionsFromPromptInput
@@ -125,6 +130,24 @@ export async function generateInvestmentIdeaAnalysisAction(
     return {
       success: false,
       error: 'Failed to generate investment idea analysis. Please try again.',
+    };
+  }
+}
+
+export async function generateDprConversationAction(
+  input: GenerateDprConversationInput
+): Promise<
+  | { success: true; data: GenerateDprConversationOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateDprConversation(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: 'Failed to get a response. Please try again.',
     };
   }
 }
