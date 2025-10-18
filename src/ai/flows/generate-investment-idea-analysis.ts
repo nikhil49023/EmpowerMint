@@ -11,7 +11,6 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 
 const GenerateInvestmentIdeaAnalysisInputSchema = z.object({
@@ -59,8 +58,6 @@ const prompt = ai.definePrompt({
   name: 'generateInvestmentIdeaAnalysisPrompt',
   input: { schema: GenerateInvestmentIdeaAnalysisInputSchema },
   output: { schema: GenerateInvestmentIdeaAnalysisOutputSchema },
-  // IMPORTANT: Replace this with the name of your fine-tuned model from Google AI Studio.
-  model: googleAI.model('tunedModels/your-model-name-123'),
   prompt: `You are "Uplift AI," a specialized financial mentor for early-stage entrepreneurs in India.
 
   Your task is to provide a detailed, structured, and organized analysis of the following business idea:
