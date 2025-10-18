@@ -31,7 +31,7 @@ import {
   type GenerateFinancialAdviceInput,
   type GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
-import { db } from '@/lib/firebase-admin';
+import { getDb } from '@/lib/firebase-admin';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export async function generateSuggestionsAction(
@@ -131,6 +131,7 @@ export async function saveInvestmentIdeaAction(
   }
 
   try {
+    const db = getDb();
     const ideasCollectionRef = collection(db, 'users', userId, 'ideas');
     await addDoc(ideasCollectionRef, {
       ...idea,
