@@ -104,18 +104,6 @@ export default function BrainstormPage() {
     router.push(`/investment-ideas/custom?idea=${encodeURIComponent(userIdea)}`);
   };
 
-  const handleGenerateDRP = () => {
-    if (!userIdea.trim()) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please enter an idea to generate a DRP.',
-      });
-      return;
-    }
-    router.push(`/generate-drp?idea=${encodeURIComponent(userIdea)}`);
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-start">
@@ -247,13 +235,6 @@ export default function BrainstormPage() {
             <div className="flex flex-wrap gap-2">
               <Button onClick={handleAnalyzeIdea} disabled={!userIdea.trim()}>
                 <Send className="mr-2" /> Get Insights
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleGenerateDRP}
-                disabled={!userIdea.trim()}
-              >
-                <FileText className="mr-2" /> Generate DRP
               </Button>
             </div>
           </div>
