@@ -7,6 +7,7 @@ import Sidebar from '@/components/financify/sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { Inter } from 'next/font/google';
+import AIAdvisorFab from '@/components/financify/ai-advisor-fab';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -54,6 +55,7 @@ export default function RootLayout({
             </AnimatePresence>
           </main>
         </div>
+        <AIAdvisorFab />
         <Toaster />
       </body>
     </html>

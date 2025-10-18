@@ -4,12 +4,10 @@
 import {
   Home,
   Wallet,
-  PiggyBank,
-  BrainCircuit,
   Newspaper,
   LogOut,
   User,
-  FileText,
+  BrainCircuit,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
