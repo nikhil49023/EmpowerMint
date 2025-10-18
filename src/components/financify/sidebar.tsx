@@ -9,6 +9,7 @@ import {
   Newspaper,
   LogOut,
   User,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -32,6 +33,7 @@ const navItems = [
   { href: '/budgets', label: 'Budgets', icon: PiggyBank },
   { href: '/ai-advisor', label: 'AI Advisor', icon: BrainCircuit },
   { href: '/fin-bites', label: 'Fin Bites', icon: Newspaper },
+  { href: '/generate-drp', label: 'Generate DRP', icon: FileText },
 ];
 
 export default function Sidebar() {
@@ -55,11 +57,16 @@ export default function Sidebar() {
         >
           <path
             d="M12 2L3 7V17L12 22L21 17V7L12 2Z"
-            fill="currentColor"
             stroke="currentColor"
-            strokeWidth="0"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
           />
-          <path d="M7.5 10.5L12 13L16.5 10.5L12 8L7.5 10.5Z" fill="white" />
+          <path
+            d="M12 22V12M12 12L3 7L12 2L21 7L12 12Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
         </svg>
         <h1 className="text-xl font-bold">Uplift AI</h1>
       </div>
@@ -71,7 +78,7 @@ export default function Sidebar() {
             asChild
             className={cn(
               'w-full justify-start text-muted-foreground hover:text-primary',
-              pathname === item.href &&
+              pathname.startsWith(item.href) &&
                 'bg-accent text-accent-foreground hover:bg-accent/80 hover:text-accent-foreground'
             )}
           >

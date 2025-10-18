@@ -226,9 +226,7 @@ export default function FinBitesPage() {
       });
       return;
     }
-    // For now, this will also navigate to the custom idea page.
-    // This can be changed later to point to a different flow or page.
-    router.push(`/investment-ideas/custom?idea=${encodeURIComponent(userIdea)}`);
+    router.push(`/generate-drp?idea=${encodeURIComponent(userIdea)}`);
   };
 
   return (
@@ -410,5 +408,3 @@ export default function FinBitesPage() {
     </div>
   );
 }
-
-    
