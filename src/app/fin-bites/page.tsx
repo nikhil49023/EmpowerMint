@@ -16,6 +16,7 @@ import {
   Laptop,
   Recycle,
   Users,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -307,31 +316,48 @@ export default function FinBitesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {Object.entries(investmentIdeaCategories).map(
               ([category, { icon: Icon, ideas }]) => (
-                <Card key={category} className="flex flex-col p-4">
-                  <CardTitle className="flex items-center gap-2 text-base mb-3">
-                    <Icon className="h-5 w-5 text-primary" />
-                    {category}
-                  </CardTitle>
-                  <ul className="space-y-2">
-                    {ideas.map(idea => (
-                      <li key={idea}>
-                        <Link
-                          href={`/investment-ideas/custom?idea=${encodeURIComponent(
-                            idea
-                          )}`}
+                <Dialog key={category}>
+                  <DialogTrigger asChild>
+                    <Card className="group cursor-pointer hover:border-primary transition-colors flex flex-col justify-between text-center p-6 glassmorphic">
+                      <div className="flex-1 flex flex-col items-center justify-center">
+                        <Icon className="h-10 w-10 text-primary mb-4" />
+                        <CardTitle className="text-lg">{category}</CardTitle>
+                      </div>
+                      <Button variant="link" className="mt-4 text-primary">
+                        <Eye className="mr-2" /> View More
+                      </Button>
+                    </Card>
+                  </DialogTrigger>
+                  <DialogContent className="glassmorphic">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-3 text-xl">
+                        <Icon className="h-6 w-6 text-primary" />
+                        {category}
+                      </DialogTitle>
+                      <DialogDescription>
+                        Here are some business ideas in the {category.toLowerCase()} sector.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-3 py-4">
+                      {ideas.map(idea => (
+                         <Link
+                          key={idea}
+                          href={`/investment-ideas/custom?idea=${encodeURIComponent(idea)}`}
                           passHref
-                          className="flex items-start gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
+                          className="block p-4 rounded-lg bg-background/50 hover:bg-accent hover:text-accent-foreground transition-colors"
                         >
-                          <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                           <span className="flex-1 group-hover:underline">{idea}</span>
+                          <div className="flex items-start gap-3">
+                            <FileText className="h-5 w-5 mt-1 flex-shrink-0 text-primary" />
+                            <span className="flex-1 font-medium">{idea}</span>
+                          </div>
                         </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
+                      ))}
+                    </div>
+                  </DialogContent>
+                </Dialog>
               )
             )}
           </div>
@@ -399,3 +425,5 @@ export default function FinBitesPage() {
     </div>
   );
 }
+
+    
