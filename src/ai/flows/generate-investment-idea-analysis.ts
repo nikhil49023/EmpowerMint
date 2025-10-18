@@ -11,7 +11,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { googleAI } from '@genkit-ai/googleai';
+import { googleAI } from '@genkit-ai/google-genai';
 import { z } from 'genkit';
 
 const GenerateInvestmentIdeaAnalysisInputSchema = z.object({
@@ -72,7 +72,7 @@ const prompt = ai.definePrompt({
   3.  **Investment Strategy**: Detail the required initial investment. Include estimates for equipment, raw materials, location (if applicable), and initial operational costs. Be specific about what an entrepreneur needs to get started.
   4.  **Target Audience**: Describe the ideal customer for this business. Outline a basic marketing and distribution strategy suitable for an early-stage venture in India.
   5.  **Return on Investment (ROI)**: Provide a realistic projection of potential revenue and profit. Explain the factors that influence profitability and a possible timeline to break even and achieve profitability.
-  6.  **Future Proofing**: Discuss the long-term viability of the business. Cover aspects like scalability, potential for product diversification, market trends, and competitive landscape.
+  6.  **Future Proofing**: Discuss the long-term viability of the business. Cover aspects like scalability, potential for product diversification, market trends, and a competitive landscape.
 
   Your tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. 
   
