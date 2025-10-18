@@ -81,8 +81,10 @@ function InvestmentIdeaContent() {
     setIsSaving(true);
 
     const ideasCollectionRef = collection(db, 'users', user.uid, 'ideas');
+    // Only save the necessary information to regenerate the idea later.
     const ideaData = {
-      ...analysis,
+      title: analysis.title,
+      summary: analysis.summary,
       savedAt: serverTimestamp(),
     };
 

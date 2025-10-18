@@ -122,6 +122,8 @@ export async function generateInvestmentIdeaAnalysisAction(
   }
 }
 
+// This server action is no longer used, as writes are handled on the client.
+// It is kept here for reference but can be removed in the future.
 export async function saveInvestmentIdeaAction(
   userId: string,
   idea: GenerateInvestmentIdeaAnalysisOutput
@@ -134,7 +136,8 @@ export async function saveInvestmentIdeaAction(
     const db = getDb();
     const ideasCollectionRef = collection(db, 'users', userId, 'ideas');
     await addDoc(ideasCollectionRef, {
-      ...idea,
+      title: idea.title,
+      summary: idea.summary,
       savedAt: serverTimestamp(),
     });
     return { success: true };
