@@ -9,6 +9,7 @@ import {
   BrainCircuit,
   Rocket,
   Lightbulb,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -31,6 +32,7 @@ const navItems = [
   { href: '/transactions', label: 'Transactions', icon: Wallet },
   { href: '/brainstorm', label: 'Brainstorm', icon: BrainCircuit },
   { href: '/launchpad', label: 'Launchpad', icon: Rocket },
+  { href: '/application-tracker', label: 'App Tracker', icon: FileText },
 ];
 
 export default function Sidebar() {
