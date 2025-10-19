@@ -2,14 +2,15 @@
 'use client';
 
 import { Suspense } from 'react';
-import { redirect, useSearchParams } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 function PaperPlateManufacturingRedirect() {
-  const searchParams = useSearchParams();
-  const idea = searchParams.get('idea') || 'Paper Plate Manufacturing Business';
+  const idea = 'Paper Plate Manufacturing Business';
 
+  // Redirect to the custom idea page with the idea as a query parameter
   redirect(`/investment-ideas/custom?idea=${encodeURIComponent(idea)}`);
-  return null;
+
+  return null; // This component will not render anything
 }
 
 export default function InvestmentIdeaPage() {

@@ -129,9 +129,10 @@ export default function MyIdeasPage() {
                 <CardContent>
                   <Button asChild variant="outline" className="w-full">
                     <Link
-                      href={`/investment-ideas/custom?idea=${encodeURIComponent(
-                        idea.title
-                      )}`}
+                      href={{
+                        pathname: '/investment-ideas/custom',
+                        query: { idea: idea.title },
+                      }}
                     >
                       {translations.myIdeas.viewAnalysis}
                     </Link>
