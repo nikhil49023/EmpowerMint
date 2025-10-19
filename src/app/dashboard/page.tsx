@@ -8,8 +8,6 @@ import {
   TrendingDown,
   Lightbulb,
   Loader2,
-  ExternalLink,
-  Copy,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -18,8 +16,6 @@ import { generateDashboardSummaryAction } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
@@ -32,9 +28,6 @@ export default function DashboardPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [greeting, setGreeting] = useState('');
-  const { toast } = useToast();
-
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
     const hours = new Date().getHours();
@@ -102,16 +95,6 @@ export default function DashboardPage() {
       currency: 'INR',
     }).format(amount);
   };
-  
-  const copyToClipboard = () => {
-    if (projectId) {
-      navigator.clipboard.writeText(projectId);
-      toast({
-        title: "Copied!",
-        description: "Project ID copied to clipboard.",
-      });
-    }
-  };
 
   return (
     <div className="space-y-8">
@@ -119,35 +102,6 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">{greeting}</p>
       </div>
-      
-       <Card className="glassmorphic">
-        <CardHeader>
-          <CardTitle>Your Firebase Backend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Your app is connected to a unique Firebase project. Use the Project ID below to access your backend console.
-          </p>
-          <div className="flex items-center gap-4 p-3 rounded-md bg-muted">
-            <div className="flex-1">
-              <p className="text-xs font-semibold text-muted-foreground">PROJECT ID</p>
-              <p className="font-mono text-lg">{projectId || 'Loading...'}</p>
-            </div>
-            <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-              <Copy className="h-5 w-5" />
-            </Button>
-          </div>
-           <Button asChild className="mt-4">
-              <a
-                href={`https://console.firebase.google.com/project/${projectId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open Firebase Console <ExternalLink className="ml-2" />
-              </a>
-            </Button>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="glassmorphic h-full">
