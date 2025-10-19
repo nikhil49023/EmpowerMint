@@ -76,11 +76,6 @@ export default function Sidebar() {
       icon: BrainCircuit,
     },
     { href: '/launchpad', label: translations.sidebar.launchpad, icon: Rocket },
-    {
-      href: '/application-tracker',
-      label: translations.sidebar.applicationTracker,
-      icon: FileText,
-    },
   ];
 
   const handleLogout = () => {
