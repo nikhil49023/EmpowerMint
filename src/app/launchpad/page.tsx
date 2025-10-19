@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { useLanguage } from '@/hooks/use-language';
+import Link from 'next/link';
 
 const PortalCard = ({
   title,
@@ -88,7 +89,15 @@ export default function LaunchpadPage() {
     {
       icon: Lightbulb,
       title: translations.launchpad.startupJourney.step1.title,
-      description: translations.launchpad.startupJourney.step1.description,
+      description: (
+        <>
+          {translations.launchpad.startupJourney.step1.description} Use the{' '}
+          <Link href="/brainstorm" className="text-primary underline">
+            Brainstorm
+          </Link>{' '}
+          feature to get started.
+        </>
+      ),
     },
     {
       icon: FileText,
