@@ -1,18 +1,38 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write to their own document in the users collection
+
+    // Helper function to check if the user is the owner of the data
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for the 'users' collection
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Any authenticated user can create their own user document
+      allow create: if request.auth != null;
+      
+      // Only the owner can read, update, or delete their own user document
+      allow read, update, delete: if isOwner(userId);
 
-      // Users can manage their own transactions
+      // Rules for the 'transactions' subcollection
       match /transactions/{transactionId} {
-        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+        // Only the owner of the user document can manage their transactions
+        allow read, write, delete: if isOwner(userId);
       }
-
-      // Users can manage their own budgets
+      
+      // Rules for the 'budgets' subcollection
       match /budgets/{budgetId} {
-        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+          // Only the owner of the user document can manage their budgets
+          allow read, write, delete: if isOwner(userId);
+      }
+      
+      // Rules for the 'ideas' subcollection
+      match /ideas/{ideaId} {
+        // Only the owner of the user document can manage their ideas
+        allow read, write, delete: if isOwner(userId);
       }
     }
   }
