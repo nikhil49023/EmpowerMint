@@ -30,14 +30,10 @@ import {
   type GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
 import {
-  generateFullDpr,
-  type GenerateFullDprInput,
-  type GenerateFullDprOutput,
-} from '@/ai/flows/generate-full-dpr';
-import {
-  generateFinBite,
-  type GenerateFinBiteOutput,
-} from '@/ai/flows/generate-fin-bite';
+  generateDprSection,
+  type GenerateDprSectionInput,
+  type GenerateDprSectionOutput,
+} from '@/ai/flows/generate-dpr-section';
 import { getDb } from '@/lib/firebase-admin';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -118,21 +114,6 @@ export async function generateInvestmentIdeaAnalysisAction(
   }
 }
 
-export async function generateFinBiteAction(): Promise<
-  | { success: true; data: GenerateFinBiteOutput }
-  | { success: false; error: string }
-> {
-  try {
-    const result = await generateFinBite();
-    return { success: true, data: result };
-  } catch (error) {
-    console.error(error);
-    return {
-      success: false,
-      error: 'Failed to generate Fin Bite. Please try again.',
-    };
-  }
-}
 
 export async function saveFeedbackAction(input: {
   message: string;
@@ -211,20 +192,20 @@ export async function askAIAdvisorAction(
   }
 }
 
-export async function generateFullDprAction(
-  input: GenerateFullDprInput
+export async function generateDprSectionAction(
+  input: GenerateDprSectionInput
 ): Promise<
-  | { success: true; data: GenerateFullDprOutput }
+  | { success: true; data: GenerateDprSectionOutput }
   | { success: false; error: string }
 > {
   try {
-    const result = await generateFullDpr(input);
+    const result = await generateDprSection(input);
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
     return {
       success: false,
-      error: 'Failed to generate DPR. Please try again.',
+      error: 'Failed to generate DPR section. Please try again.',
     };
   }
 }

@@ -7,19 +7,16 @@ import {
   TrendingDown,
   Lightbulb,
   Loader2,
-  Newspaper,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   generateDashboardSummaryAction,
-  generateFinBiteAction,
 } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
-import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
@@ -36,9 +33,7 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<GenerateDashboardSummaryOutput | null>(
     null
   );
-  const [finBite, setFinBite] = useState<GenerateFinBiteOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingFinBite, setIsLoadingFinBite] = useState(true);
   const [greeting, setGreeting] = useState('');
   const { translations } = useLanguage();
 
@@ -102,19 +97,9 @@ export default function DashboardPage() {
     }
   }, [transactions, user, loadingAuth, translations]);
 
-  const fetchFinBite = useCallback(async () => {
-    setIsLoadingFinBite(true);
-    const result = await generateFinBiteAction();
-    if (result.success) {
-      setFinBite(result.data);
-    }
-    setIsLoadingFinBite(false);
-  }, []);
-
   useEffect(() => {
     fetchSummary();
-    fetchFinBite();
-  }, [fetchSummary, fetchFinBite]);
+  }, [fetchSummary]);
 
   const formatCurrency = (amount: number | undefined) => {
     if (amount === undefined) {
@@ -200,7 +185,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-1">
         <Card className="glassmorphic">
           <CardHeader>
             <CardTitle>{translations.dashboard.suggestionsTitle}</CardTitle>
@@ -219,40 +204,6 @@ export default function DashboardPage() {
                   </span>
                   <div className="flex-1">
                     <AlertDescription>{summary?.suggestion}</AlertDescription>
-                  </div>
-                </div>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="glassmorphic">
-          <CardHeader>
-            <CardTitle>{translations.brainstorm.schemeTitle}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {isLoadingFinBite ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            ) : (
-              <Alert className="border-0 p-0 bg-transparent">
-                <div className="flex items-start gap-3">
-                  <span className="p-2 bg-accent rounded-full">
-                    <Newspaper className="w-4 h-4 text-accent-foreground" />
-                  </span>
-                  <div className="flex-1">
-                    {finBite ? (
-                      <>
-                        <AlertTitle>{finBite.title}</AlertTitle>
-                        <AlertDescription>{finBite.summary}</AlertDescription>
-                      </>
-                    ) : (
-                      <AlertDescription>
-                        Could not load Fin Bite.
-                      </AlertDescription>
-                    )}
                   </div>
                 </div>
               </Alert>
