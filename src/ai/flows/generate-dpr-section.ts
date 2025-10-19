@@ -1,60 +1,62 @@
 
 'use server';
-
 /**
  * @fileOverview A Genkit flow for generating a single section of a Detailed Project Report (DPR).
  *
- * - generateDprSection - A function that generates or revises a single DPR section.
+ * - generateDprSection - A function that generates content for a specific DPR section.
+ * - GenerateDprSectionInput - The input type for the generateDprSection function.
+ * - GenerateDprSectionOutput - The return type for the generateDprSection function.
  */
 
 import { ai } from '@/ai/genkit';
 import {
   GenerateDprSectionInputSchema,
-  type GenerateDprSectionInput,
   GenerateDprSectionOutputSchema,
+  type GenerateDprSectionInput,
   type GenerateDprSectionOutput,
 } from '@/ai/schemas/dpr';
 
-// Export the main function that the server action will call
 export async function generateDprSection(
   input: GenerateDprSectionInput
 ): Promise<GenerateDprSectionOutput> {
   return generateDprSectionFlow(input);
 }
 
-// Define the prompt for the AI model
 const prompt = ai.definePrompt({
   name: 'generateDprSectionPrompt',
   input: { schema: GenerateDprSectionInputSchema },
   output: { schema: GenerateDprSectionOutputSchema },
-  prompt: `You are "FIn-Box," an expert business consultant helping an entrepreneur in India build a bank-ready Detailed Project Report (DPR).
+  prompt: `You are an expert consultant hired to write a bank-ready Detailed Project Report (DPR) for an entrepreneur in India.
+Your current task is to generate the content for a specific section of the DPR.
 
-The user's overall project details are: "{{{idea}}}"
+**Promoter's Name:** {{{promoterName}}}
+**Core Business Idea:** "{{{idea}}}"
 
 {{#if previousSections}}
-We have already completed the following sections:
+**Previously Completed Sections (for context):**
 {{#each previousSections}}
-### {{this.title}}
-{{{this.content}}}
----
+- **{{@key}}**: {{this}}
 {{/each}}
 {{/if}}
 
-Your current task is to **generate the content for the "{{sectionTitle}}" section**.
+{{#if revisionRequest}}
+**User Revision Request:**
+You have already generated a draft for the "{{targetSection}}" section. The user has requested the following changes:
+- **User Feedback:** "{{revisionRequest.feedback}}"
+- **Original Text:** "{{revisionRequest.originalText}}"
 
-Analyze the conversation history and the previously completed sections to generate a detailed, comprehensive, and professionally written draft for the "{{sectionTitle}}" section. The content should be suitable for a formal bank loan application in India.
+Your task is to **REVISE** the original text based on the user's feedback. Generate a new version of the "{{targetSection}}" section that incorporates their changes. Do not repeat the feedback. Only provide the revised content for the section.
+{{else}}
+**Current Task:**
+Generate the content for the **"{{targetSection}}"** section of the DPR.
 
-After generating the section content, provide a concise follow-up question to the user. The question should be something like: "Here is a draft for the {{sectionTitle}}. Please review it. Are there any changes you'd like to make, or shall we proceed to the next section?"
+Make the content detailed, professional, and suitable for a banking audience. Use markdown for formatting, like **bolding** key terms.
+{{/if}}
 
-Conversation History:
-{{#each history}}
-- {{this.role}}: {{this.text}}
-{{/each}}
-
-Based on all the information above, generate the content for the "{{sectionTitle}}" section and the follow-up question.`,
+Please generate only the content for the "{{targetSection}}" section.
+`,
 });
 
-// Define the main Genkit flow
 const generateDprSectionFlow = ai.defineFlow(
   {
     name: 'generateDprSectionFlow',
@@ -66,3 +68,5 @@ const generateDprSectionFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

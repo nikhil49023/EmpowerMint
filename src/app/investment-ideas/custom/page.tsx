@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
+import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { FormattedText } from '@/components/financify/formatted-text';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -202,7 +202,7 @@ function InvestmentIdeaContent() {
                   )}
                 </Button>
                 <Button asChild>
-                  <Link href={`/generate-drp?idea=${encodeURIComponent(analysis.title)}`}>
+                  <Link href={`/generate-drp?idea=${encodeURIComponent(analysis.title)}&name=${encodeURIComponent(user?.displayName || '')}`}>
                     <FileText className="mr-2" />
                     Generate DPR
                   </Link>

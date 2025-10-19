@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
+import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
   FirestorePermissionError,

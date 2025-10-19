@@ -12,42 +12,12 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-
-const GenerateInvestmentIdeaAnalysisInputSchema = z.object({
-  idea: z.string().describe('The business investment idea to be analyzed.'),
-});
-export type GenerateInvestmentIdeaAnalysisInput = z.infer<
-  typeof GenerateInvestmentIdeaAnalysisInputSchema
->;
-
-const GenerateInvestmentIdeaAnalysisOutputSchema = z.object({
-  title: z.string().describe('The title of the business idea.'),
-  summary: z.string().describe('A brief summary of the business idea.'),
-  investmentStrategy: z
-    .string()
-    .describe(
-      'A detailed investment strategy, including initial capital, equipment, and operational costs.'
-    ),
-  targetAudience: z
-    .string()
-    .describe(
-      'A description of the target audience and marketing strategy for the business.'
-    ),
-  roi: z
-    .string()
-    .describe(
-      'An analysis of the potential Return on Investment (ROI), including revenue projections and profitability.'
-    ),
-  futureProofing: z
-    .string()
-    .describe(
-      'An analysis of the future-proofing of the business, including scalability, competition, and market trends.'
-    ),
-});
-export type GenerateInvestmentIdeaAnalysisOutput = z.infer<
-  typeof GenerateInvestmentIdeaAnalysisOutputSchema
->;
+import {
+  GenerateInvestmentIdeaAnalysisInputSchema,
+  GenerateInvestmentIdeaAnalysisOutputSchema,
+  type GenerateInvestmentIdeaAnalysisInput,
+  type GenerateInvestmentIdeaAnalysisOutput,
+} from '@/ai/schemas/investment-idea-analysis';
 
 export async function generateInvestmentIdeaAnalysis(
   input: GenerateInvestmentIdeaAnalysisInput
@@ -74,9 +44,7 @@ const prompt = ai.definePrompt({
 
   Your tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. 
   
-  **Formatting instructions**:
-  - Use simple, easy-to-understand language.
-  - Use markdown to **bold** important keywords and phrases.
+  Use simple, easy-to-understand language and **bold** important keywords and phrases.
 
   Ensure the output is in the specified JSON format.`,
 });

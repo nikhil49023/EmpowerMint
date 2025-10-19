@@ -27,9 +27,13 @@ type Message = {
   sender: 'user' | 'ai';
 };
 
+type AIAdvisorChatProps = {
+  initialMessage?: string;
+};
+
 const getUniqueMessageId = () => `msg-${Date.now()}-${Math.random()}`;
 
-export default function AIAdvisorChat() {
+export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,20 +43,34 @@ export default function AIAdvisorChat() {
   const { translations } = useLanguage();
   const pathname = usePathname();
 
-  const useTransactionContext = !pathname.includes('/dpr-report');
+  const useTransactionContext = !pathname.includes('/generate-drp');
 
   useEffect(() => {
-    // Generate the welcome message on the client-side to avoid hydration mismatch
-    if (messages.length === 0) {
-      const welcomeMessage: Message = {
-        id: getUniqueMessageId(),
-        text: translations.aiAdvisor.welcome,
-        sender: 'ai',
-      };
-      setMessages([welcomeMessage]);
+    const welcomeMessage: Message = {
+      id: getUniqueMessageId(),
+      text: translations.aiAdvisor.welcome,
+      sender: 'ai',
+    };
+
+    const initialUserMessage: Message | null = initialMessage
+      ? {
+          id: getUniqueMessageId(),
+          text: initialMessage,
+          sender: 'user',
+        }
+      : null;
+
+    const messageList = [welcomeMessage];
+    if (initialUserMessage) {
+      messageList.push(initialUserMessage);
+    }
+    setMessages(messageList);
+
+    if (initialUserMessage) {
+      handleSendMessage(undefined, initialUserMessage.text);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [translations]);
+  }, [translations, initialMessage]);
 
   useEffect(() => {
     if (user && useTransactionContext) {
@@ -97,22 +115,28 @@ export default function AIAdvisorChat() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  const handleSendMessage = async (
+    e?: React.FormEvent,
+    messageText?: string
+  ) => {
+    e?.preventDefault();
+    const queryText = messageText || input;
+    if (!queryText.trim() || isLoading) return;
 
-    const newUserMessage: Message = {
-      id: getUniqueMessageId(),
-      text: input,
-      sender: 'user',
-    };
+    if (!messageText) {
+      const newUserMessage: Message = {
+        id: getUniqueMessageId(),
+        text: queryText,
+        sender: 'user',
+      };
+      setMessages(prev => [...prev, newUserMessage]);
+    }
 
-    setMessages(prev => [...prev, newUserMessage]);
     setInput('');
     setIsLoading(true);
 
     const result = await askAIAdvisorAction({
-      query: input,
+      query: queryText,
       transactions: useTransactionContext ? transactions : [],
     });
 
