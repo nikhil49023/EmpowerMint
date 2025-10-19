@@ -139,7 +139,7 @@ function DPRReportContent() {
       parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
     } catch (e) {
         console.error("Failed to parse financial section content:", e);
-        return <Section title={title} content={`Error displaying financial data. Content was not valid JSON:\n\n${content}`} isLoading={false} />;
+        return <Section title={title} content={`Error displaying financial data. The content was not in the expected JSON format and could not be parsed.\n\nRaw content:\n${content}`} isLoading={false} />;
     }
 
     return (
@@ -312,5 +312,3 @@ export default function DPRReportPage() {
     </Suspense>
   );
 }
-
-    

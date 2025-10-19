@@ -66,7 +66,7 @@ Make the content detailed, professional, and suitable for a banking audience. Fo
 
 {{#if (eq targetSection "Financial Projections")}}
 **SPECIAL INSTRUCTIONS FOR FINANCIAL PROJECTIONS:**
-Your output for the 'content' field MUST be a single, valid, stringified JSON object. Do NOT include any markdown or other text outside of the JSON structure.
+Your output for the 'content' field MUST be a single, valid, stringified JSON object. Do NOT include any markdown, introductory text, or anything outside of the JSON structure. The entire 'content' output must be parsable with JSON.parse().
 The JSON object must have the following structure:
 {
   "summaryText": "A brief summary of the financial outlook.",
