@@ -133,9 +133,14 @@ function DPRReportContent() {
     if (!content)
       return <Section title={title} content="Not generated." isLoading={false} />;
 
-    // The content for financial projections might be a string, so we need to parse it.
-    const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
-
+    let parsedContent;
+    try {
+      // The content for financial projections might be a string, so we need to parse it.
+      parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+    } catch (e) {
+        console.error("Failed to parse financial section content:", e);
+        return <Section title={title} content={`Error displaying financial data. Content was not valid JSON:\n\n${content}`} isLoading={false} />;
+    }
 
     return (
       <Card className="glassmorphic print:shadow-none print:border-none">

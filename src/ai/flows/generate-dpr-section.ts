@@ -64,7 +64,25 @@ Generate the content for the **"{{targetSection}}"** section of the DPR.
 Make the content detailed, professional, and suitable for a banking audience. Follow all formatting instructions.
 {{/if}}
 
-Please generate only the content for the "{{targetSection}}" section.
+{{#if (eq targetSection "Financial Projections")}}
+**SPECIAL INSTRUCTIONS FOR FINANCIAL PROJECTIONS:**
+Your output for the 'content' field MUST be a single, valid, stringified JSON object. Do NOT include any markdown or other text outside of the JSON structure.
+The JSON object must have the following structure:
+{
+  "summaryText": "A brief summary of the financial outlook.",
+  "projectCost": "Breakdown of total project costs in markdown.",
+  "meansOfFinance": "How the project will be financed (equity, debt) in markdown.",
+  "costBreakdown": [ { "name": "Item 1", "value": 100000 }, { "name": "Item 2", "value": 200000 } ],
+  "yearlyProjections": [ { "year": "Year 1", "sales": 500000, "profit": 50000 }, { "year": "Year 2", "sales": 1000000, "profit": 200000 } ],
+  "profitabilityAnalysis": "Analysis of profitability in markdown.",
+  "cashFlowStatement": "Projected cash flow statement in markdown.",
+  "loanRepaymentSchedule": "Loan repayment schedule in markdown.",
+  "breakEvenAnalysis": "Break-even point analysis in markdown."
+}
+Generate detailed, credible data for all fields within this JSON structure.
+{{else}}
+Please generate only the content for the "{{targetSection}}" section as a markdown-formatted string.
+{{/if}}
 `,
 });
 
