@@ -34,7 +34,7 @@ import {
   type GenerateDprSectionInput,
   type GenerateDprSectionOutput,
 } from '@/ai/flows/generate-dpr-section';
-import { getDb } from '@/lib/firebase-admin';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
@@ -126,27 +126,21 @@ export async function saveFeedbackAction(input: {
   }
 
   try {
-    const db = getDb();
     const feedbackCollectionRef = collection(db, 'feedback');
     const feedbackData = {
       ...input,
       createdAt: serverTimestamp(),
     };
 
-    addDoc(feedbackCollectionRef, feedbackData).catch(async serverError => {
-      const permissionError = new FirestorePermissionError({
-        path: feedbackCollectionRef.path,
-        operation: 'create',
-        requestResourceData: feedbackData,
-      } satisfies SecurityRuleContext);
-      errorEmitter.emit('permission-error', permissionError);
-      // Also throw to reject the promise for the client-side action handler
-      throw permissionError;
-    });
+    // Note: The `.catch` logic for permission errors will only work on the client-side.
+    // In a server action, the error will be caught by the try/catch block.
+    await addDoc(feedbackCollectionRef, feedbackData);
 
     return { success: true };
   } catch (error) {
     console.error('Error saving feedback:', error);
+    // You could potentially check for Firestore permission errors here
+    // but the error object might not be as rich as the one from the client.
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred.';
     return {
@@ -155,6 +149,7 @@ export async function saveFeedbackAction(input: {
     };
   }
 }
+
 
 export async function generateDprConversationAction(
   input: GenerateDprConversationInput

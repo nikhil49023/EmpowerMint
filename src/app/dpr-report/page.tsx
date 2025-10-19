@@ -3,8 +3,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { generateFullDprAction } from '@/app/actions';
-import { type GenerateFullDprOutput } from '@/ai/flows/generate-full-dpr';
+import { type GenerateDprSectionOutput } from '@/ai/flows/generate-dpr-section'; // Using this as a proxy for section content
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
@@ -34,36 +33,83 @@ import {
   ProjectCostPieChart,
 } from '@/components/financify/dpr-charts';
 
+// A mock structure for the full report for display purposes.
+// In a real implementation, this data would be passed from the generate-drp page,
+// possibly through a state management library or temporary server storage.
+type FullDprReport = {
+  executiveSummary: string;
+  projectIntroduction: string;
+  promoterDetails: string;
+  businessModel: string;
+  marketAnalysis: string;
+  locationAndSite: string;
+  technicalFeasibility: string;
+  implementationSchedule: string;
+  financialProjections: {
+    summaryText: string;
+    projectCost: string;
+    meansOfFinance: string;
+    costBreakdown: { name: string; value: number }[];
+    yearlyProjections: { year: string; sales: number; profit: number }[];
+    profitabilityAnalysis: string;
+    cashFlowStatement: string;
+    loanRepaymentSchedule: string;
+    breakEvenAnalysis: string;
+  };
+  swotAnalysis: string;
+  regulatoryCompliance: string;
+  riskAssessment: string;
+  annexures: string;
+};
+
+
 function DPRReportContent() {
   const searchParams = useSearchParams();
   const idea = searchParams.get('idea');
   const [user, loadingAuth] = useAuthState(auth);
-  const [report, setReport] = useState<GenerateFullDprOutput | null>(null);
+  const [report, setReport] = useState<FullDprReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { translations } = useLanguage();
 
   useEffect(() => {
     if (!idea) {
-      setError('Business idea not provided.');
+      setError('Business idea context not provided.');
       setIsLoading(false);
       return;
     }
-
-    const fetchReport = async () => {
+    
+    // In a real app, you'd fetch the compiled report data here based on the context/ID
+    // from the `idea` search param. For now, we'll simulate it.
+    const fetchReport = () => {
       setIsLoading(true);
       setError(null);
-      const result = await generateFullDprAction({
-        idea,
-        userName: user?.displayName,
-        userEmail: user?.email,
+      // This is a mock. The real implementation would fetch the generated sections.
+      setReport({
+        executiveSummary: "This is a placeholder for the generated executive summary based on the interactive session.",
+        projectIntroduction: "Placeholder for Project Introduction & Objective.",
+        promoterDetails: `Placeholder for Promoter Profile based on the user's details.`,
+        businessModel: "Placeholder for Business Model & Project Details.",
+        marketAnalysis: "Placeholder for Market Analysis.",
+        locationAndSite: "Placeholder for Location and Site Analysis.",
+        technicalFeasibility: "Placeholder for Technical Feasibility & Infrastructure.",
+        implementationSchedule: "Placeholder for Implementation Schedule & Project Timeline.",
+        financialProjections: {
+          summaryText: "Placeholder for financial summary.",
+          projectCost: "Placeholder for project cost.",
+          meansOfFinance: "Placeholder for means of finance.",
+          costBreakdown: [{name: 'Machinery', value: 400000}, {name: 'Working Capital', value: 300000}],
+          yearlyProjections: [{year: 'Year 1', sales: 500000, profit: 100000}, {year: 'Year 2', sales: 700000, profit: 150000}],
+          profitabilityAnalysis: "Placeholder for profitability analysis.",
+          cashFlowStatement: "Placeholder for cash flow statement.",
+          loanRepaymentSchedule: "Placeholder for loan repayment schedule.",
+          breakEvenAnalysis: "Placeholder for break-even analysis.",
+        },
+        swotAnalysis: "Placeholder for SWOT Analysis.",
+        regulatoryCompliance: "Placeholder for Regulatory & Statutory Compliance.",
+        riskAssessment: "Placeholder for Risk Assessment & Mitigation Strategy.",
+        annexures: "Placeholder for Annexures. This section would list attached documents.",
       });
-
-      if (result.success) {
-        setReport(result.data);
-      } else {
-        setError(result.error);
-      }
       setIsLoading(false);
     };
 
@@ -141,13 +187,13 @@ function DPRReportContent() {
             Detailed Project Report
           </h1>
           <p className="text-muted-foreground max-w-2xl truncate">
-            AI-generated report for: {idea}
+            Final compiled report for your business idea.
           </p>
         </div>
         <Button variant="ghost" asChild className="-ml-4">
-          <Link href="/brainstorm">
+          <Link href="/generate-drp">
             <ArrowLeft className="mr-2" />
-            Back to Brainstorm
+            Back to Generator
           </Link>
         </Button>
       </div>
@@ -181,7 +227,7 @@ function DPRReportContent() {
       {error && (
         <Card className="text-center py-10 bg-destructive/10 border-destructive">
           <CardHeader>
-            <CardTitle>Error Generating Report</CardTitle>
+            <CardTitle>Error Loading Report</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-destructive">{error}</p>
