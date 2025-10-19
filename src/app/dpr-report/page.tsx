@@ -14,26 +14,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormattedText } from '@/components/financify/formatted-text';
 import Link from 'next/link';
+import { FinancialProjectionsBarChart, ProjectCostPieChart } from '@/components/financify/dpr-charts';
 
-// Mock data structure, this would be populated from the generation process
-const mockReport = {
-  'Executive Summary': 'A brief summary of the business venture...',
-  'Project Introduction & Objective': 'Detailed introduction...',
-  'Promoter/Entrepreneur Profile': 'Details about the promoter...',
-  'Business Model & Project Details': 'Description of the business model...',
-  'Market Analysis': 'Analysis of the target market...',
-  'Location and Site Analysis': 'Details on the business location...',
-  'Technical Feasibility & Infrastructure': 'Technical aspects of the project...',
-  'Implementation Schedule & Project Timeline': 'Timeline for project execution...',
-  'Financial Projections': 'Detailed financial data and charts will be here.',
-  'SWOT Analysis': 'Strengths, Weaknesses, Opportunities, Threats...',
-  'Regulatory & Statutory Compliance': 'Legal and regulatory requirements...',
-  'Risk Assessment & Mitigation Strategy': 'Potential risks and how to mitigate them...',
-  'Annexures': 'Supporting documents and references...',
+
+type ReportData = {
+  [key: string]: any;
 };
-
-type ReportData = typeof mockReport;
-
 
 function DPRReportContent() {
   const router = useRouter();
@@ -51,13 +37,14 @@ function DPRReportContent() {
         setError('Failed to load the generated report data.');
       }
     } else {
+      // For development, if no data, use mock. In production, show error.
       setError('No report data found. Please generate the DPR first.');
     }
     setIsLoading(false);
 
     // Clean up localStorage after loading
     return () => {
-      localStorage.removeItem('finalDPR');
+      // localStorage.removeItem('finalDPR'); // Keep it for refresh
     };
   }, []);
 
@@ -72,7 +59,7 @@ function DPRReportContent() {
     isLoading,
   }: {
     title: string;
-    content?: string;
+    content?: any;
     isLoading: boolean;
   }) => (
     <Card className="glassmorphic print:shadow-none print:border-none">
@@ -92,6 +79,45 @@ function DPRReportContent() {
       </CardContent>
     </Card>
   );
+
+  const FinancialSection = ({ title, content, isLoading }: { title: string; content?: any; isLoading: boolean }) => {
+    if (isLoading) {
+      return (
+        <Card className="glassmorphic">
+          <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
+          <CardContent><Skeleton className="h-48 w-full" /></CardContent>
+        </Card>
+      );
+    }
+    if (!content) return <Section title={title} content="Not generated." isLoading={false} />;
+
+    return (
+      <Card className="glassmorphic print:shadow-none print:border-none">
+        <CardHeader><CardTitle>{title}</CardTitle></CardHeader>
+        <CardContent className="space-y-6">
+          <FormattedText text={content.summaryText} />
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-2">Project Cost Breakdown</h4>
+            <ProjectCostPieChart data={content.costBreakdown} />
+            <FormattedText text={content.projectCost} />
+          </div>
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-2">Yearly Projections</h4>
+            <FinancialProjectionsBarChart data={content.yearlyProjections} />
+          </div>
+
+          <div><h4 className="font-semibold text-lg">Means of Finance</h4><FormattedText text={content.meansOfFinance} /></div>
+          <div><h4 className="font-semibold text-lg">Profitability Analysis</h4><FormattedText text={content.profitabilityAnalysis} /></div>
+          <div><h4 className="font-semibold text-lg">Cash Flow Statement</h4><FormattedText text={content.cashFlowStatement} /></div>
+          <div><h4 className="font-semibold text-lg">Loan Repayment Schedule</h4><FormattedText text={content.loanRepaymentSchedule} /></div>
+          <div><h4 className="font-semibold text-lg">Break-Even Analysis</h4><FormattedText text={content.breakEvenAnalysis} /></div>
+        </CardContent>
+      </Card>
+    );
+  };
+
 
   return (
     <div className="space-y-8 @container">
@@ -147,7 +173,7 @@ function DPRReportContent() {
           onClick={handleExport}
           disabled={isLoading || !!error}
         >
-          <FileDown className="mr-2" /> Export to PDF (₹50)
+          <FileDown className="mr-2" /> Export to PDF
         </Button>
       </div>
 
@@ -166,15 +192,26 @@ function DPRReportContent() {
       )}
 
       <div id="print-section" className="space-y-6">
-        {report &&
-          Object.entries(report).map(([title, content], index) => (
-            <Section
-              key={index}
-              title={`${index + 1}. ${title}`}
-              content={content}
-              isLoading={isLoading}
-            />
+        {isLoading &&
+          dprChapterTitles.map((title, index) => (
+            <Section key={index} title={`${index + 1}. ${title}`} isLoading={true} />
           ))}
+        
+        {report &&
+          Object.entries(report).map(([title, content]) => {
+             if (title === 'Financial Projections') {
+              return <FinancialSection key={title} title={`9. ${title}`} content={content} isLoading={isLoading} />;
+            }
+            const index = dprChapterTitles.indexOf(title);
+            return (
+              <Section
+                key={title}
+                title={`${index + 1}. ${title}`}
+                content={content}
+                isLoading={isLoading}
+              />
+            )
+          })}
       </div>
     </div>
   );
@@ -197,5 +234,3 @@ export default function DPRReportPage() {
     </Suspense>
   );
 }
-
-    
