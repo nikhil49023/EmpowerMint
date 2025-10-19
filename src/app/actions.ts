@@ -31,6 +31,11 @@ import {
   type GenerateFinancialAdviceInput,
   type GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
+import {
+  generateFullDpr,
+  type GenerateFullDprInput,
+  type GenerateFullDprOutput,
+} from '@/ai/flows/generate-full-dpr';
 import { getDb } from '@/lib/firebase-admin';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -183,6 +188,24 @@ export async function askAIAdvisorAction(
     return {
       success: false,
       error: 'Failed to get a response from the AI Advisor.',
+    };
+  }
+}
+
+export async function generateFullDprAction(
+  input: GenerateFullDprInput
+): Promise<
+  | { success: true; data: GenerateFullDprOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateFullDpr(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: 'Failed to generate DPR. Please try again.',
     };
   }
 }

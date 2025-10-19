@@ -1,0 +1,238 @@
+
+'use client';
+
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { generateFullDprAction } from '@/app/actions';
+import { type GenerateFullDprOutput } from '@/ai/flows/generate-full-dpr';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
+import { Button } from '@/components/ui/button';
+import {
+  FileText,
+  FileDown,
+  MessageSquare,
+  Loader2,
+  ArrowLeft,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { FormattedText } from '@/components/financify/formatted-text';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import AIAdvisorChat from '@/components/financify/ai-advisor-chat';
+import Link from 'next/link';
+import { useLanguage } from '@/hooks/use-language';
+
+function DPRReportContent() {
+  const searchParams = useSearchParams();
+  const idea = searchParams.get('idea');
+  const [user, loadingAuth] = useAuthState(auth);
+  const [report, setReport] = useState<GenerateFullDprOutput | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { translations } = useLanguage();
+
+  useEffect(() => {
+    if (!idea) {
+      setError('Business idea not provided.');
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchReport = async () => {
+      setIsLoading(true);
+      setError(null);
+      const result = await generateFullDprAction({
+        idea,
+        userName: user?.displayName,
+        userEmail: user?.email,
+      });
+
+      if (result.success) {
+        setReport(result.data);
+      } else {
+        setError(result.error);
+      }
+      setIsLoading(false);
+    };
+
+    if (!loadingAuth) {
+      fetchReport();
+    }
+  }, [idea, user, loadingAuth]);
+
+  const handleExport = () => {
+    window.print();
+  };
+
+  const Section = ({
+    title,
+    content,
+    isLoading,
+  }: {
+    title: string;
+    content?: string;
+    isLoading: boolean;
+  }) => (
+    <Card className="glassmorphic print:shadow-none print:border-none">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ) : (
+          <FormattedText text={content || ''} />
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <div className="space-y-8 @container">
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #print-section,
+          #print-section * {
+            visibility: visible;
+          }
+          #print-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+          }
+          .no-print {
+            display: none;
+          }
+        }
+      `}</style>
+
+      <div className="flex justify-between items-start no-print">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <FileText />
+            Detailed Project Report
+          </h1>
+          <p className="text-muted-foreground">
+            AI-generated report for: {idea}
+          </p>
+        </div>
+        <Button variant="ghost" asChild className="-ml-4">
+          <Link href="/brainstorm">
+            <ArrowLeft className="mr-2" />
+            Back to Brainstorm
+          </Link>
+        </Button>
+      </div>
+
+      <div className="flex gap-2 no-print">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button disabled={isLoading || !!error}>
+              <MessageSquare className="mr-2" /> Edit with AI Advisor
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
+            <SheetHeader className="p-6 pb-2">
+              <SheetTitle>{translations.aiAdvisor.title}</SheetTitle>
+              <SheetDescription>
+                {translations.aiAdvisor.description}
+              </SheetDescription>
+            </SheetHeader>
+            <AIAdvisorChat />
+          </SheetContent>
+        </Sheet>
+        <Button
+          variant="outline"
+          onClick={handleExport}
+          disabled={isLoading || !!error}
+        >
+          <FileDown className="mr-2" /> Export to PDF
+        </Button>
+      </div>
+
+      {error && (
+        <Card className="text-center py-10 bg-destructive/10 border-destructive">
+          <CardHeader>
+            <CardTitle>Error Generating Report</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-destructive">{error}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div id="print-section" className="space-y-6">
+        <Section
+          title="1. Executive Summary"
+          content={report?.executiveSummary}
+          isLoading={isLoading}
+        />
+        <Section
+          title="2. Promoter/Owner Details"
+          content={report?.promoterDetails}
+          isLoading={isLoading}
+        />
+        <Section
+          title="3. Business Profile"
+          content={report?.businessProfile}
+          isLoading={isLoading}
+        />
+        <Section
+          title="4. Market Analysis"
+          content={report?.marketAnalysis}
+          isLoading={isLoading}
+        />
+        <Section
+          title="5. Technical/Operational Plan"
+          content={report?.operationalPlan}
+          isLoading={isLoading}
+        />
+        <Section
+          title="6. Legal & Statutory Requirements"
+          content={report?.legalRequirements}
+          isLoading={isLoading}
+        />
+        <Section
+          title="7. Financial Projections"
+          content={report?.financialProjections}
+          isLoading={isLoading}
+        />
+        <Section
+          title="8. SWOT Analysis"
+          content={report?.swotAnalysis}
+          isLoading={isLoading}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default function DPRReportPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      }
+    >
+      <DPRReportContent />
+    </Suspense>
+  );
+}
