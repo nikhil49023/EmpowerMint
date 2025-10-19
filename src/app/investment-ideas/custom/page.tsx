@@ -104,7 +104,6 @@ function InvestmentIdeaContent() {
           operation: 'create',
           requestResourceData: ideaData,
         } satisfies SecurityRuleContext);
-
         errorEmitter.emit('permission-error', permissionError);
       })
       .finally(() => {
