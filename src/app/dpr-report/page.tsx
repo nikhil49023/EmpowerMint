@@ -29,6 +29,10 @@ import {
 import AIAdvisorChat from '@/components/financify/ai-advisor-chat';
 import Link from 'next/link';
 import { useLanguage } from '@/hooks/use-language';
+import {
+  FinancialProjectionsBarChart,
+  ProjectCostPieChart,
+} from '@/components/financify/dpr-charts';
 
 function DPRReportContent() {
   const searchParams = useSearchParams();
@@ -119,6 +123,9 @@ function DPRReportContent() {
           .no-print {
             display: none;
           }
+          .print-break-before {
+            page-break-before: always;
+          }
         }
       `}</style>
 
@@ -208,11 +215,38 @@ function DPRReportContent() {
           content={report?.legalRequirements}
           isLoading={isLoading}
         />
-        <Section
-          title="7. Financial Projections"
-          content={report?.financialProjections}
-          isLoading={isLoading}
-        />
+
+        <Card className="glassmorphic print:shadow-none print:border-none print-break-before">
+          <CardHeader>
+            <CardTitle>7. Financial Projections</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            ) : (
+              report?.financialProjections && (
+                <div className="space-y-8">
+                  <FormattedText text={report.financialProjections.summaryText} />
+
+                  <div>
+                    <h4 className="font-semibold text-lg mb-4">Project Cost Breakdown</h4>
+                    <ProjectCostPieChart data={report.financialProjections.costBreakdown} />
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-lg mb-4">Sales & Profit Projections (3-5 Years)</h4>
+                    <FinancialProjectionsBarChart data={report.financialProjections.yearlyProjections} />
+                  </div>
+                </div>
+              )
+            )}
+          </CardContent>
+        </Card>
+
         <Section
           title="8. SWOT Analysis"
           content={report?.swotAnalysis}

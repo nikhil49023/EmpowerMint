@@ -26,7 +26,11 @@ const GenerateFullDprOutputSchema = z.object({
   marketAnalysis: z.string().describe('Analysis of the target market, customer profile, local demand, competition, and marketing strategy.'),
   operationalPlan: z.string().describe('Description of the production process, required machinery, raw materials, location, and workforce.'),
   legalRequirements: z.string().describe('A list of required licenses, registrations, and compliances (e.g., GST, MSME).'),
-  financialProjections: z.string().describe('Analysis of total project cost, funding requirements, cost breakup, and expected sales and profits.'),
+  financialProjections: z.object({
+    summaryText: z.string().describe('A text summary analyzing total project cost, funding, costs, and profit projections.'),
+    costBreakdown: z.array(z.object({ name: z.string(), value: z.number() })).describe('An array of objects representing the project cost breakdown for a pie chart. Example: [{ "name": "Machinery", "value": 500000 }, { "name": "Working Capital", "value": 200000 }]'),
+    yearlyProjections: z.array(z.object({ year: z.string(), sales: z.number(), profit: z.number() })).describe('An array of objects for projected sales and profit over 3-5 years. Example: [{ "year": "Year 1", "sales": 1000000, "profit": 200000 }]'),
+  }).describe('Detailed financial projections including text summary and data for charts.'),
   swotAnalysis: z.string().describe('An analysis of the Strengths, Weaknesses, Opportunities, and Threats for the business.'),
 });
 export type GenerateFullDprOutput = z.infer<typeof GenerateFullDprOutputSchema>;
@@ -56,7 +60,10 @@ Generate a detailed report covering the following sections. Be thorough and prac
 4.  **Market Analysis**: Identify the target market and customer profile. Analyze local demand and competition. Propose a practical marketing and sales strategy for an early-stage business in India.
 5.  **Technical/Operational Plan**: Describe the operational workflow. List potential machinery, equipment, and raw materials needed. Suggest location requirements and estimate the initial workforce.
 6.  **Legal & Statutory Requirements**: List the essential licenses and registrations required to operate this business in India (e.g., GST Registration, MSME/Udyam Registration, FSSAI license if applicable, etc.).
-7.  **Financial Projections**: Estimate the total project cost (Fixed Assets + Working Capital). Outline potential funding sources (own contribution vs. loan). Provide a high-level breakup of capital and operating costs. Project expected sales and a path to profitability.
+7.  **Financial Projections**: This section is critical.
+    - First, provide a **text summary** analyzing the total project cost, funding sources, a high-level cost breakup, and projected sales and profitability.
+    - Second, provide a structured JSON array for the **cost breakdown** suitable for a pie chart. Use realistic categories like 'Machinery & Equipment', 'Raw Materials (First Batch)', 'Rent Deposit', 'Working Capital', etc. All values must be numbers.
+    - Third, provide a structured JSON array for **yearly projections** (3 to 5 years) suitable for a bar chart. Include 'year', 'sales' (revenue), and 'profit'. All values must be numbers.
 8.  **SWOT Analysis**: Conduct a SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) for the business idea.
 
 Your output must be in the specified JSON format.
