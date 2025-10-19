@@ -359,8 +359,11 @@ export default function LaunchpadPage() {
     },
   ];
 
-  const plugin = React.useRef(
+  const clustersPlugin = React.useRef(
     Autoplay({ delay: 2000, stopOnInteraction: false, stopOnMouseEnter: true })
+  );
+  const schemesPlugin = React.useRef(
+    Autoplay({ delay: 2500, stopOnInteraction: false, stopOnMouseEnter: true })
   );
 
   return (
@@ -448,10 +451,10 @@ export default function LaunchpadPage() {
                 align: 'start',
                 loop: true,
               }}
-              plugins={[plugin.current]}
+              plugins={[clustersPlugin.current]}
               className="w-full"
-              onMouseEnter={plugin.current.stop}
-              onMouseLeave={plugin.current.reset}
+              onMouseEnter={clustersPlugin.current.stop}
+              onMouseLeave={clustersPlugin.current.reset}
             >
               <CarouselContent>
                 {msmeClusters.map((cluster, index) => (
@@ -493,15 +496,15 @@ export default function LaunchpadPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <Carousel
+            <Carousel
               opts={{
                 align: 'start',
                 loop: true,
               }}
-              plugins={[plugin.current]}
+              plugins={[schemesPlugin.current]}
               className="w-full"
-              onMouseEnter={plugin.current.stop}
-              onMouseLeave={plugin.current.reset}
+              onMouseEnter={schemesPlugin.current.stop}
+              onMouseLeave={schemesPlugin.current.reset}
             >
               <CarouselContent>
                 {govtSchemes.map((scheme, index) => (
@@ -522,8 +525,8 @@ export default function LaunchpadPage() {
                             {scheme.description}
                           </p>
                         </CardContent>
-                         <CardContent>
-                           <Button asChild variant="link" className="p-0">
+                        <CardContent>
+                          <Button asChild variant="link" className="p-0">
                             <a
                               href={scheme.url}
                               target="_blank"
@@ -573,5 +576,3 @@ export default function LaunchpadPage() {
     </div>
   );
 }
-
-    
