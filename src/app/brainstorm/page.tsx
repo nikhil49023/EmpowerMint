@@ -4,14 +4,8 @@
 import { useState } from 'react';
 import {
   FileText,
-  Newspaper,
   Send,
   Lightbulb,
-  Building,
-  Banknote,
-  Rocket,
-  Megaphone,
-  ExternalLink,
   Leaf,
   Laptop,
   Recycle,
@@ -23,7 +17,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -36,7 +29,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';

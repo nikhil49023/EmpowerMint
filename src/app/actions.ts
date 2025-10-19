@@ -34,6 +34,10 @@ import {
   type GenerateFullDprInput,
   type GenerateFullDprOutput,
 } from '@/ai/flows/generate-full-dpr';
+import {
+  generateFinBite,
+  type GenerateFinBiteOutput,
+} from '@/ai/flows/generate-fin-bite';
 import { getDb } from '@/lib/firebase-admin';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -114,6 +118,22 @@ export async function generateInvestmentIdeaAnalysisAction(
   }
 }
 
+export async function generateFinBiteAction(): Promise<
+  | { success: true; data: GenerateFinBiteOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateFinBite();
+    return { success: true, data: result };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: 'Failed to generate Fin Bite. Please try again.',
+    };
+  }
+}
+
 export async function saveFeedbackAction(input: {
   message: string;
   userId?: string;
@@ -154,7 +174,6 @@ export async function saveFeedbackAction(input: {
     };
   }
 }
-
 
 export async function generateDprConversationAction(
   input: GenerateDprConversationInput

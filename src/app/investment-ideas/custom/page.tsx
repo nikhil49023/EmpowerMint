@@ -85,7 +85,8 @@ function InvestmentIdeaContent() {
 
     const ideasCollectionRef = collection(db, 'users', user.uid, 'ideas');
     const ideaData = {
-      ...analysis,
+      title: analysis.title,
+      summary: analysis.summary,
       savedAt: serverTimestamp(),
     };
 

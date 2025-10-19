@@ -9,8 +9,6 @@ import {
   BrainCircuit,
   Rocket,
   Globe,
-  Star,
-  FileText,
   MessageSquare,
   Lightbulb,
 } from 'lucide-react';
@@ -76,10 +74,16 @@ export default function Sidebar() {
       label: translations.sidebar.brainstorm,
       icon: BrainCircuit,
     },
+    {
+      href: '/my-ideas',
+      label: translations.myIdeas.title,
+      icon: Lightbulb,
+    },
     { href: '/launchpad', label: translations.sidebar.launchpad, icon: Rocket },
   ];
 
   const handleLogout = () => {
+    auth.signOut();
     router.push('/');
   };
 

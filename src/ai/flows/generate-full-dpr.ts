@@ -65,7 +65,6 @@ const prompt = ai.definePrompt({
 
   Generate the full DPR based on the provided output schema. Each section must be thoroughly detailed.
   `,
-  model: 'tunedModels/your-custom-dpr-model-id',
 });
 
 const generateFullDprFlow = ai.defineFlow(

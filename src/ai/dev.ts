@@ -11,3 +11,5 @@ import '@/ai/flows/generate-investment-idea-analysis';
 import '@/ai/flows/generate-dpr-conversation';
 import '@/ai/flows/generate-financial-advice';
 import '@/ai/flows/generate-full-dpr';
+import '@/ai/flows/generate-fin-bite';
+
