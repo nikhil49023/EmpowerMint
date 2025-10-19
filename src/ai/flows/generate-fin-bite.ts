@@ -34,6 +34,7 @@ const generateFinBitePrompt = ai.definePrompt({
   2.  **Summary**: A brief, easy-to-understand summary of its key benefits for an early-stage entrepreneur.
 
   The information must be up-to-date and factual. Your tone should be informative and encouraging. Ensure the output is in the specified JSON format.`,
+  model: 'googleai/gemini-2.5-flash-nano',
 });
 
 const generateFinBiteFlow = ai.defineFlow(
