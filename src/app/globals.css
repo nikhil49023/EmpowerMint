@@ -70,6 +70,6 @@
 
 @layer components {
   .glassmorphic {
-    @apply bg-white/50 backdrop-blur-lg border rounded-xl shadow-sm md:rounded-2xl md:p-2;
+    @apply bg-white/50 backdrop-blur-lg border rounded-xl shadow-sm md:rounded-2xl;
   }
 }
