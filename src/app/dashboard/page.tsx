@@ -19,6 +19,11 @@ import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboa
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
 
 export default function DashboardPage() {
   const [user, loadingAuth] = useAuthState(auth);
@@ -43,12 +48,22 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       const q = query(collection(db, 'users', user.uid, 'transactions'));
-      const unsubscribe = onSnapshot(q, querySnapshot => {
-        const transactionsData = querySnapshot.docs.map(
-          doc => doc.data() as ExtractedTransaction
-        );
-        setTransactions(transactionsData);
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        querySnapshot => {
+          const transactionsData = querySnapshot.docs.map(
+            doc => doc.data() as ExtractedTransaction
+          );
+          setTransactions(transactionsData);
+        },
+        async serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: q.path,
+            operation: 'list',
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+        }
+      );
       return () => unsubscribe();
     } else if (!loadingAuth) {
       setIsLoading(false);
@@ -57,7 +72,7 @@ export default function DashboardPage() {
 
   const fetchSummary = useCallback(async () => {
     if (transactions.length === 0 && !loadingAuth && user) {
-       setSummary({
+      setSummary({
         totalIncome: 0,
         totalExpenses: 0,
         savingsRate: 0,
@@ -86,9 +101,7 @@ export default function DashboardPage() {
 
   const formatCurrency = (amount: number | undefined) => {
     if (amount === undefined) {
-      return (
-        <Skeleton className="h-8 w-32" />
-      );
+      return <Skeleton className="h-8 w-32" />;
     }
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -113,7 +126,11 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {isLoading ? <Skeleton className="h-8 w-36" /> : formatCurrency(summary?.totalExpenses)}
+              {isLoading ? (
+                <Skeleton className="h-8 w-36" />
+              ) : (
+                formatCurrency(summary?.totalExpenses)
+              )}
             </div>
             <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
@@ -127,21 +144,29 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-               {isLoading ? <Skeleton className="h-8 w-36" /> : formatCurrency(summary?.totalIncome)}
+              {isLoading ? (
+                <Skeleton className="h-8 w-36" />
+              ) : (
+                formatCurrency(summary?.totalIncome)
+              )}
             </div>
             <p className="text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
       </div>
-      
+
       <Card className="glassmorphic">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium">Savings Rate</CardTitle>
           <PiggyBank className="w-5 h-5 text-primary" />
         </CardHeader>
         <CardContent>
-           <div className="text-3xl font-bold">
-            {isLoading ? <Skeleton className="h-8 w-20" /> : `${summary?.savingsRate ?? 0}%`}
+          <div className="text-3xl font-bold">
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              `${summary?.savingsRate ?? 0}%`
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             Of your income this month

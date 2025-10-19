@@ -132,24 +132,44 @@ export default function TransactionsPage() {
       );
       const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
 
-      const unsubTransactions = onSnapshot(transQuery, snapshot => {
-        const transData = snapshot.docs.map(doc => ({
-          ...(doc.data() as ExtractedTransaction),
-        }));
-        setTransactions(transData);
-        if (loadingData) setLoadingData(false);
-      });
+      const unsubTransactions = onSnapshot(
+        transQuery,
+        snapshot => {
+          const transData = snapshot.docs.map(doc => ({
+            ...(doc.data() as ExtractedTransaction),
+          }));
+          setTransactions(transData);
+          if (loadingData) setLoadingData(false);
+        },
+        async serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: transQuery.path,
+            operation: 'list',
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+        }
+      );
 
-      const unsubBudgets = onSnapshot(budgetQuery, snapshot => {
-        const budgetsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Budget, 'id' | 'spent' | 'icon'>),
-          spent: 0, // Will be calculated in useMemo
-          icon: categoryIcons[doc.data().name] || categoryIcons.Default,
-        }));
-        setBudgets(budgetsData);
-        if (loadingData) setLoadingData(false);
-      });
+      const unsubBudgets = onSnapshot(
+        budgetQuery,
+        snapshot => {
+          const budgetsData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...(doc.data() as Omit<Budget, 'id' | 'spent' | 'icon'>),
+            spent: 0, // Will be calculated in useMemo
+            icon: categoryIcons[doc.data().name] || categoryIcons.Default,
+          }));
+          setBudgets(budgetsData);
+          if (loadingData) setLoadingData(false);
+        },
+        async serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: budgetQuery.path,
+            operation: 'list',
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+        }
+      );
 
       return () => {
         unsubTransactions();

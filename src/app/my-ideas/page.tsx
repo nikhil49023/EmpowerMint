@@ -17,6 +17,11 @@ import Link from 'next/link';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/flows/generate-investment-idea-analysis';
+import { errorEmitter } from '@/firebase/error-emitter';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
 
 type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
   id: string;
@@ -37,14 +42,24 @@ export default function MyIdeasPage() {
         collection(db, 'users', user.uid, 'ideas'),
         orderBy('savedAt', 'desc')
       );
-      const unsubscribe = onSnapshot(ideasQuery, snapshot => {
-        const ideasData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as SavedIdea[];
-        setIdeas(ideasData);
-        setLoadingIdeas(false);
-      });
+      const unsubscribe = onSnapshot(
+        ideasQuery,
+        snapshot => {
+          const ideasData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as SavedIdea[];
+          setIdeas(ideasData);
+          setLoadingIdeas(false);
+        },
+        async serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: ideasQuery.path,
+            operation: 'list',
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+        }
+      );
       return () => unsubscribe();
     } else if (!loadingAuth) {
       setLoadingIdeas(false);

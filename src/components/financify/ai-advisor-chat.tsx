@@ -13,6 +13,11 @@ import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
 
 type Message = {
   id: string;
@@ -46,12 +51,22 @@ export default function AIAdvisorChat() {
   useEffect(() => {
     if (user) {
       const q = query(collection(db, 'users', user.uid, 'transactions'));
-      const unsubscribe = onSnapshot(q, querySnapshot => {
-        const transactionsData = querySnapshot.docs.map(
-          doc => doc.data() as ExtractedTransaction
-        );
-        setTransactions(transactionsData);
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        querySnapshot => {
+          const transactionsData = querySnapshot.docs.map(
+            doc => doc.data() as ExtractedTransaction
+          );
+          setTransactions(transactionsData);
+        },
+        async serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: q.path,
+            operation: 'list',
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+        }
+      );
       return () => unsubscribe();
     }
   }, [user]);
