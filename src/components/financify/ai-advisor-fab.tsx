@@ -12,8 +12,11 @@ import {
 import { Button } from '../ui/button';
 import { MessageSquare } from 'lucide-react';
 import AIAdvisorChat from './ai-advisor-chat';
+import { useLanguage } from '@/hooks/use-language';
 
 export default function AIAdvisorFab() {
+  const { translations } = useLanguage();
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -26,9 +29,9 @@ export default function AIAdvisorFab() {
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-lg p-0 flex flex-col">
         <SheetHeader className="p-6 pb-2">
-          <SheetTitle>AI Financial Advisor</SheetTitle>
+          <SheetTitle>{translations.aiAdvisor.title}</SheetTitle>
           <SheetDescription>
-            Your personal guide to financial clarity. Ask me anything!
+            {translations.aiAdvisor.description}
           </SheetDescription>
         </SheetHeader>
         <AIAdvisorChat />

@@ -24,6 +24,7 @@ import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
+import { useLanguage } from '@/hooks/use-language';
 
 export default function DashboardPage() {
   const [user, loadingAuth] = useAuthState(auth);
@@ -33,17 +34,18 @@ export default function DashboardPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [greeting, setGreeting] = useState('');
+  const { translations } = useLanguage();
 
   useEffect(() => {
     const hours = new Date().getHours();
     if (hours < 12) {
-      setGreeting('Good Morning, there!');
+      setGreeting(translations.dashboard.greeting.morning);
     } else if (hours < 18) {
-      setGreeting('Good Afternoon, there!');
+      setGreeting(translations.dashboard.greeting.afternoon);
     } else {
-      setGreeting('Good Evening, there!');
+      setGreeting(translations.dashboard.greeting.evening);
     }
-  }, []);
+  }, [translations]);
 
   useEffect(() => {
     if (user) {
@@ -76,8 +78,7 @@ export default function DashboardPage() {
         totalIncome: 0,
         totalExpenses: 0,
         savingsRate: 0,
-        suggestion:
-          'Start by adding some transactions to see your financial summary.',
+        suggestion: translations.dashboard.defaultSuggestion,
       });
       setIsLoading(false);
       return;
@@ -93,7 +94,7 @@ export default function DashboardPage() {
       }
       setIsLoading(false);
     }
-  }, [transactions, user, loadingAuth]);
+  }, [transactions, user, loadingAuth, translations]);
 
   useEffect(() => {
     fetchSummary();
@@ -112,14 +113,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-bold">{translations.dashboard.title}</h1>
         <p className="text-muted-foreground">{greeting}</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="glassmorphic h-full">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Your Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">{translations.dashboard.yourExpenses}</CardTitle>
             <div className="p-2 bg-red-100 rounded-md">
               <TrendingDown className="w-4 h-4 text-red-600" />
             </div>
@@ -132,12 +133,12 @@ export default function DashboardPage() {
                 formatCurrency(summary?.totalExpenses)
               )}
             </div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">{translations.dashboard.thisMonth}</p>
           </CardContent>
         </Card>
         <Card className="glassmorphic h-full">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Your Income</CardTitle>
+            <CardTitle className="text-sm font-medium">{translations.dashboard.yourIncome}</CardTitle>
             <div className="p-2 bg-green-100 rounded-md">
               <TrendingUp className="w-4 h-4 text-green-600" />
             </div>
@@ -150,14 +151,14 @@ export default function DashboardPage() {
                 formatCurrency(summary?.totalIncome)
               )}
             </div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">{translations.dashboard.thisMonth}</p>
           </CardContent>
         </Card>
       </div>
 
       <Card className="glassmorphic">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium">Savings Rate</CardTitle>
+          <CardTitle className="text-sm font-medium">{translations.dashboard.savingsRate}</CardTitle>
           <PiggyBank className="w-5 h-5 text-primary" />
         </CardHeader>
         <CardContent>
@@ -169,14 +170,14 @@ export default function DashboardPage() {
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Of your income this month
+            {translations.dashboard.savingsRateDescription}
           </p>
         </CardContent>
       </Card>
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Personalized Suggestions</h2>
+          <h2 className="text-xl font-semibold">{translations.dashboard.suggestionsTitle}</h2>
           <Settings className="w-5 h-5 text-muted-foreground cursor-pointer" />
         </div>
         <Card className="glassmorphic">

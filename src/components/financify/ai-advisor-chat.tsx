@@ -18,6 +18,7 @@ import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
+import { useLanguage } from '@/hooks/use-language';
 
 type Message = {
   id: string;
@@ -34,19 +35,20 @@ export default function AIAdvisorChat() {
   const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
   const [user, loadingAuth] = useAuthState(auth);
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
+  const { translations } = useLanguage();
 
   useEffect(() => {
     // Generate the welcome message on the client-side to avoid hydration mismatch
     if (messages.length === 0) {
       const welcomeMessage: Message = {
         id: getUniqueMessageId(),
-        text: "Hello! I'm your AI Financial Advisor. Ask me anything about personal finance, budgeting, or investing.",
+        text: translations.aiAdvisor.welcome,
         sender: 'ai',
       };
       setMessages([welcomeMessage]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [translations]);
 
   useEffect(() => {
     if (user) {
@@ -117,7 +119,7 @@ export default function AIAdvisorChat() {
     } else {
       const errorAiMessage: Message = {
         id: getUniqueMessageId(),
-        text: "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment.",
+        text: translations.aiAdvisor.error,
         sender: 'ai',
       };
       setMessages(prev => [...prev, errorAiMessage]);
@@ -192,7 +194,7 @@ export default function AIAdvisorChat() {
           <Input
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Ask about saving for retirement..."
+            placeholder={translations.aiAdvisor.inputPlaceholder}
             className="pr-12 h-12"
             disabled={isLoading || (!user && !loadingAuth)}
           />

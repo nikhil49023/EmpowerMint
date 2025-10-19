@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { generateDprConversationAction } from '../actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useLanguage } from '@/hooks/use-language';
 
 type Message = {
   id: string;
@@ -45,6 +46,7 @@ const getUniqueMessageId = () => `msg-${Date.now()}-${Math.random()}`;
 function DRPGenerator() {
   const searchParams = useSearchParams();
   const idea = searchParams.get('idea') || 'my business idea';
+  const { translations } = useLanguage();
 
   const [projectDetails, setProjectDetails] = useState<ProjectDetails>({
     projectName: idea,
@@ -62,16 +64,15 @@ function DRPGenerator() {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
-    const welcomeMessage = `I have the initial details for project "${projectDetails.projectName}". Let's start building the Detailed Project Report.`;
     const initialMessages: Message[] = [
       {
         id: getUniqueMessageId(),
         role: 'model',
-        text: `Hello! I am here to help you brainstorm and build a Detailed Project Report (DRP) for your project: **${projectDetails.projectName}**. To start, could you tell me a bit more about the business idea?`,
+        text: translations.generateDRP.chat.welcome.replace('{projectName}', projectDetails.projectName),
         suggestions: [
-          `Let's start with my idea: "${idea}"`,
-          'What is a DRP?',
-          'How does this work?',
+          translations.generateDRP.chat.welcomeSuggestion1.replace('{idea}', idea),
+          translations.generateDRP.chat.welcomeSuggestion2,
+          translations.generateDRP.chat.welcomeSuggestion3,
         ],
       },
     ];
@@ -124,7 +125,6 @@ function DRPGenerator() {
       }));
       conversationHistory.push({ role: 'user', text: messageText });
 
-      // Append project details to the initial idea for better context
       const fullIdeaContext = `Business Idea: ${idea}. Project Name: ${projectDetails.projectName}. Promoter: ${projectDetails.yourName}. Business Type: ${projectDetails.businessType}. Company: ${projectDetails.companyName}.`;
 
       const result = await generateDprConversationAction({
@@ -144,14 +144,14 @@ function DRPGenerator() {
         const errorAiMessage: Message = {
           id: getUniqueMessageId(),
           role: 'model',
-          text: "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment.",
+          text: translations.generateDRP.chat.error,
         };
         setMessages(prev => [...prev, errorAiMessage]);
       }
 
       setIsLoading(false);
     },
-    [idea, isLoading, messages, projectDetails]
+    [idea, isLoading, messages, projectDetails, translations]
   );
 
   const lastMessage = messages[messages.length - 1];
@@ -168,65 +168,65 @@ function DRPGenerator() {
           <Card className="glassmorphic">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-2xl">
-                <FileText /> Project Details
+                <FileText /> {translations.generateDRP.form.title}
               </CardTitle>
               <CardDescription>
-                First, let's gather some basic details for your DPR.
+                {translations.generateDRP.form.description}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleFormSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="projectName">Project Name</Label>
+                  <Label htmlFor="projectName">{translations.generateDRP.form.projectNameLabel}</Label>
                   <Input
                     id="projectName"
                     value={projectDetails.projectName}
                     onChange={e =>
                       setProjectDetails({ ...projectDetails, projectName: e.target.value })
                     }
-                    placeholder="e.g., Eco-Friendly Packaging Solutions"
+                    placeholder={translations.generateDRP.form.projectNamePlaceholder}
                     required
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="yourName">Your Name</Label>
+                    <Label htmlFor="yourName">{translations.generateDRP.form.yourNameLabel}</Label>
                     <Input
                       id="yourName"
                       value={projectDetails.yourName}
                       onChange={e =>
                         setProjectDetails({ ...projectDetails, yourName: e.target.value })
                       }
-                      placeholder="e.g., Anika Sharma"
+                      placeholder={translations.generateDRP.form.yourNamePlaceholder}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="businessType">Business Type</Label>
+                    <Label htmlFor="businessType">{translations.generateDRP.form.businessTypeLabel}</Label>
                     <Input
                       id="businessType"
                       value={projectDetails.businessType}
                       onChange={e =>
                         setProjectDetails({ ...projectDetails, businessType: e.target.value })
                       }
-                      placeholder="e.g., Manufacturing"
+                      placeholder={translations.generateDRP.form.businessTypePlaceholder}
                       required
                     />
                   </div>
                 </div>
                  <div className="space-y-2">
-                  <Label htmlFor="companyName">Company Name (Optional)</Label>
+                  <Label htmlFor="companyName">{translations.generateDRP.form.companyNameLabel}</Label>
                   <Input
                     id="companyName"
                     value={projectDetails.companyName}
                     onChange={e =>
                       setProjectDetails({ ...projectDetails, companyName: e.target.value })
                     }
-                    placeholder="e.g., GreenPack Industries"
+                    placeholder={translations.generateDRP.form.companyNamePlaceholder}
                   />
                 </div>
                 <Button type="submit" className="w-full">
-                  <Briefcase className="mr-2" /> Start Brainstorming
+                  <Briefcase className="mr-2" /> {translations.generateDRP.form.startBrainstorming}
                 </Button>
               </form>
             </CardContent>
@@ -240,11 +240,10 @@ function DRPGenerator() {
     <div className="flex flex-col h-full">
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <FileText /> Generate Detailed Project Report (DRP)
+          <FileText /> {translations.generateDRP.title}
         </h1>
         <p className="text-muted-foreground">
-          Brainstorm with our AI to build your comprehensive DRP for{' '}
-          <span className="font-semibold text-primary">{projectDetails.projectName}</span>.
+          {translations.generateDRP.description.replace('{projectName}', projectDetails.projectName)}
         </p>
       </div>
 
@@ -346,7 +345,7 @@ function DRPGenerator() {
             <Input
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Tell me about your project..."
+              placeholder={translations.generateDRP.chat.inputPlaceholder}
               className="pr-12 h-12"
               disabled={isLoading}
             />
@@ -366,11 +365,10 @@ function DRPGenerator() {
 }
 
 export default function DRPPage() {
+  const { translations } = useLanguage();
   return (
-    <Suspense fallback={<p>Loading DRP Generator...</p>}>
+    <Suspense fallback={<p>{translations.generateDRP.loading}</p>}>
       <DRPGenerator />
     </Suspense>
   );
 }
-
-    

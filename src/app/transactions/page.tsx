@@ -83,6 +83,7 @@ import {
   type SecurityRuleContext,
 } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { useLanguage } from '@/hooks/use-language';
 
 const categoryIcons: { [key: string]: React.ElementType } = {
   Groceries: ShoppingBag,
@@ -105,6 +106,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const { translations } = useLanguage();
 
   const [newTransaction, setNewTransaction] = useState({
     description: '',
@@ -205,7 +207,7 @@ export default function TransactionsPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'You must be logged in to add a budget.',
+        description: translations.transactions.toasts.errorLoginToAddBudget,
       });
       return;
     }
@@ -213,7 +215,7 @@ export default function TransactionsPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please fill out all fields.',
+        description: translations.transactions.toasts.errorFillFields,
       });
       return;
     }
@@ -231,7 +233,7 @@ export default function TransactionsPage() {
         setAddBudgetDialogOpen(false);
         toast({
           title: 'Success',
-          description: 'Budget added successfully.',
+          description: translations.transactions.toasts.successAddBudget,
         });
       })
       .catch(async serverError => {
@@ -269,7 +271,7 @@ export default function TransactionsPage() {
 
     toast({
       title: 'Success',
-      description: 'All transaction and budget data has been cleared.',
+      description: translations.transactions.toasts.successClearData,
     });
   };
 
@@ -278,7 +280,7 @@ export default function TransactionsPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'You must be logged in to add a transaction.',
+        description: translations.transactions.toasts.errorLoginToAdd,
       });
       return;
     }
@@ -290,7 +292,7 @@ export default function TransactionsPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please fill out all fields.',
+        description: translations.transactions.toasts.errorFillFields,
       });
       return;
     }
@@ -312,7 +314,7 @@ export default function TransactionsPage() {
         setAddTransactionDialogOpen(false);
         toast({
           title: 'Success',
-          description: 'Transaction added successfully.',
+          description: translations.transactions.toasts.successAddTransaction,
         });
       })
       .catch(async serverError => {
@@ -330,7 +332,7 @@ export default function TransactionsPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'You must be logged in to import transactions.',
+        description: translations.transactions.toasts.errorLoginToImport,
       });
       return;
     }
@@ -362,7 +364,7 @@ export default function TransactionsPage() {
             .then(() => {
               toast({
                 title: 'Import Successful',
-                description: `${result.data.transactions.length} transactions were imported.`,
+                description: `${result.data.transactions.length} ${translations.transactions.toasts.importSuccess}`,
               });
             })
             .catch(async serverError => {
@@ -376,7 +378,7 @@ export default function TransactionsPage() {
         } else {
           toast({
             variant: 'destructive',
-            title: 'Import Failed',
+            title: translations.transactions.toasts.importFailed,
             description: result.error,
           });
         }
@@ -387,7 +389,7 @@ export default function TransactionsPage() {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to read the uploaded file.',
+          description: translations.transactions.toasts.errorReadingFile,
         });
         setIsImporting(false);
       };
@@ -396,7 +398,7 @@ export default function TransactionsPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'An unexpected error occurred during file processing.',
+        description: translations.transactions.toasts.errorProcessingFile,
       });
       setIsImporting(false);
     }
@@ -452,30 +454,29 @@ export default function TransactionsPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Transactions</h1>
+          <h1 className="text-3xl font-bold">{translations.transactions.title}</h1>
           <p className="text-muted-foreground">
-            View and manage your financial transactions.
+            {translations.transactions.description}
           </p>
         </div>
         <div className="flex gap-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" disabled={showLoginPrompt}>
-                <Trash2 className="mr-2 h-4 w-4" /> Clear All Data
+                <Trash2 className="mr-2 h-4 w-4" /> {translations.transactions.clearAllData}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogTitle>{translations.transactions.clearDataDialog.title}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete all
-                  your transaction and budget data from the database.
+                  {translations.transactions.clearDataDialog.description}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{translations.transactions.clearDataDialog.cancel}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleClearData}>
-                  Continue
+                  {translations.transactions.clearDataDialog.continue}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -492,14 +493,14 @@ export default function TransactionsPage() {
                 ) : (
                   <Upload className="mr-2 h-4 w-4" />
                 )}
-                Import
+                {translations.transactions.import}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Import Transactions</DialogTitle>
+                <DialogTitle>{translations.transactions.importDialog.title}</DialogTitle>
                 <DialogDescription>
-                  Upload a document to automatically extract transactions.
+                  {translations.transactions.importDialog.description}
                 </DialogDescription>
               </DialogHeader>
               <div
@@ -525,11 +526,11 @@ export default function TransactionsPage() {
                   <FileUp className="w-8 h-8" />
                   <p>
                     {isDragging
-                      ? 'Drop the file here'
-                      : 'Drag & drop a file or click to select'}
+                      ? translations.transactions.importDialog.dropHere
+                      : translations.transactions.importDialog.dragDrop}
                   </p>
                   <p className="text-xs">
-                    Supports PDF, DOC, DOCX, TXT, and CSV files.
+                    {translations.transactions.importDialog.fileTypes}
                   </p>
                 </div>
               </div>
@@ -539,14 +540,14 @@ export default function TransactionsPage() {
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" disabled={showLoginPrompt}>
-                <PiggyBank className="mr-2 h-4 w-4" /> View Budgets
+                <PiggyBank className="mr-2 h-4 w-4" /> {translations.transactions.viewBudgets}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl">
               <DialogHeader>
-                <DialogTitle>Your Budgets</DialogTitle>
+                <DialogTitle>{translations.transactions.budgetsDialog.title}</DialogTitle>
                 <DialogDescription>
-                  Track and manage your monthly spending.
+                  {translations.transactions.budgetsDialog.description}
                 </DialogDescription>
               </DialogHeader>
 
@@ -558,33 +559,32 @@ export default function TransactionsPage() {
                   >
                     <DialogTrigger asChild>
                       <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Budget
+                        <PlusCircle className="mr-2 h-4 w-4" /> {translations.transactions.budgetsDialog.addNewBudget}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Add New Budget</DialogTitle>
+                        <DialogTitle>{translations.transactions.addBudgetDialog.title}</DialogTitle>
                         <DialogDescription>
-                          Create a new budget to track your spending for a
-                          category.
+                          {translations.transactions.addBudgetDialog.description}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="name" className="text-right">
-                            Name
+                            {translations.transactions.addBudgetDialog.nameLabel}
                           </Label>
                           <Input
                             id="name"
                             value={newBudgetName}
                             onChange={e => setNewBudgetName(e.target.value)}
                             className="col-span-3"
-                            placeholder="e.g., Groceries"
+                            placeholder={translations.transactions.addBudgetDialog.namePlaceholder}
                           />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                           <Label htmlFor="amount" className="text-right">
-                            Amount
+                            {translations.transactions.addBudgetDialog.amountLabel}
                           </Label>
                           <Input
                             id="amount"
@@ -592,17 +592,17 @@ export default function TransactionsPage() {
                             value={newBudgetAmount}
                             onChange={e => setNewBudgetAmount(e.target.value)}
                             className="col-span-3"
-                            placeholder="e.g., 5000"
+                            placeholder={translations.transactions.addBudgetDialog.amountPlaceholder}
                           />
                         </div>
                       </div>
                       <DialogFooter>
                         <DialogClose asChild>
                           <Button type="button" variant="secondary">
-                            Cancel
+                            {translations.transactions.addBudgetDialog.cancel}
                           </Button>
                         </DialogClose>
-                        <Button onClick={handleAddBudget}>Add Budget</Button>
+                        <Button onClick={handleAddBudget}>{translations.transactions.addBudgetDialog.addBudget}</Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -613,9 +613,9 @@ export default function TransactionsPage() {
                       <div className="flex justify-center mb-4">
                         <PiggyBank className="w-16 h-16 text-muted-foreground" />
                       </div>
-                      <h2 className="text-xl font-semibold">No Budgets Yet</h2>
+                      <h2 className="text-xl font-semibold">{translations.transactions.budgetsDialog.noBudgetsTitle}</h2>
                       <p className="text-muted-foreground mt-2">
-                        Click "Add New Budget" to get started.
+                        {translations.transactions.budgetsDialog.noBudgetsDescription}
                       </p>
                     </CardContent>
                   </Card>
@@ -653,7 +653,7 @@ export default function TransactionsPage() {
                                 <Progress value={progress} />
                                 <div className="flex justify-between text-sm">
                                   <p className="text-muted-foreground">
-                                    Spent
+                                    {translations.transactions.budgetsDialog.spent}
                                   </p>
                                   <p className="font-medium">
                                     {formatCurrency(budget.spent)}
@@ -661,7 +661,7 @@ export default function TransactionsPage() {
                                 </div>
                                 <div className="flex justify-between text-sm">
                                   <p className="text-muted-foreground">
-                                    Remaining
+                                    {translations.transactions.budgetsDialog.remaining}
                                   </p>
                                   <p
                                     className={`font-medium ${
@@ -689,20 +689,20 @@ export default function TransactionsPage() {
           >
             <DialogTrigger asChild>
               <Button disabled={showLoginPrompt}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add Transaction
+                <PlusCircle className="mr-2 h-4 w-4" /> {translations.transactions.addTransaction}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add New Transaction</DialogTitle>
+                <DialogTitle>{translations.transactions.addTransactionDialog.title}</DialogTitle>
                 <DialogDescription>
-                  Enter the details of your new transaction manually.
+                  {translations.transactions.addTransactionDialog.description}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="description" className="text-right">
-                    Description
+                    {translations.transactions.addTransactionDialog.descriptionLabel}
                   </Label>
                   <Input
                     id="description"
@@ -718,7 +718,7 @@ export default function TransactionsPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="date" className="text-right">
-                    Date
+                    {translations.transactions.addTransactionDialog.dateLabel}
                   </Label>
                   <Input
                     id="date"
@@ -731,6 +731,11 @@ export default function TransactionsPage() {
                             ...newTransaction,
                             date: date.toLocaleDateString('en-GB'),
                           });
+                        } else {
+                           setNewTransaction({
+                            ...newTransaction,
+                            date: '',
+                          });
                         }
                       }
                     }}
@@ -739,7 +744,7 @@ export default function TransactionsPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="type" className="text-right">
-                    Type
+                    {translations.transactions.addTransactionDialog.typeLabel}
                   </Label>
                   <Select
                     value={newTransaction.type}
@@ -748,17 +753,17 @@ export default function TransactionsPage() {
                     }
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder={translations.transactions.addTransactionDialog.typePlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="expense">Expense</SelectItem>
-                      <SelectItem value="income">Income</SelectItem>
+                      <SelectItem value="expense">{translations.transactions.addTransactionDialog.expense}</SelectItem>
+                      <SelectItem value="income">{translations.transactions.addTransactionDialog.income}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="amount" className="text-right">
-                    Amount
+                    {translations.transactions.addTransactionDialog.amountLabel}
                   </Label>
                   <Input
                     id="amount"
@@ -770,17 +775,17 @@ export default function TransactionsPage() {
                       })
                     }
                     className="col-span-3"
-                    placeholder="INR 100.00"
+                    placeholder={translations.transactions.addTransactionDialog.amountPlaceholder}
                   />
                 </div>
               </div>
               <DialogFooter>
                 <DialogClose asChild>
                   <Button type="button" variant="secondary">
-                    Cancel
+                    {translations.transactions.addTransactionDialog.cancel}
                   </Button>
                 </DialogClose>
-                <Button onClick={handleAddTransaction}>Add Transaction</Button>
+                <Button onClick={handleAddTransaction}>{translations.transactions.addTransactionDialog.addTransaction}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -789,17 +794,17 @@ export default function TransactionsPage() {
 
       <Card className="glassmorphic">
         <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
-          <CardDescription>A list of your recent transactions.</CardDescription>
+          <CardTitle>{translations.transactions.history.title}</CardTitle>
+          <CardDescription>{translations.transactions.history.description}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-2/5">Description</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="w-2/5">{translations.transactions.history.tableDescription}</TableHead>
+                <TableHead>{translations.transactions.history.tableDate}</TableHead>
+                <TableHead>{translations.transactions.history.tableType}</TableHead>
+                <TableHead className="text-right">{translations.transactions.history.tableAmount}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -809,7 +814,7 @@ export default function TransactionsPage() {
                     colSpan={4}
                     className="text-center h-24 text-muted-foreground"
                   >
-                    Please log in to view and manage your transactions.
+                    {translations.transactions.history.loginPrompt}
                   </TableCell>
                 </TableRow>
               ) : transactions.length > 0 ? (
@@ -847,7 +852,7 @@ export default function TransactionsPage() {
                     colSpan={4}
                     className="text-center h-24 text-muted-foreground"
                   >
-                    No transactions to display.
+                    {translations.transactions.history.noTransactions}
                   </TableCell>
                 </TableRow>
               )}

@@ -13,5 +13,293 @@
     "description": "You will be redirected to the login page.",
     "cancel": "Cancel",
     "confirm": "Logout"
+  },
+  "loginPage": {
+    "title": "Welcome to FIn-Box",
+    "description": "Enter your credentials to access your dashboard.",
+    "signUpTitle": "Create an Account",
+    "signUpDescription": "Enter your details to get started.",
+    "error": {
+      "userNotFound": "No user found with this email.",
+      "wrongPassword": "Incorrect password. Please try again.",
+      "emailInUse": "This email is already registered. Please log in.",
+      "weakPassword": "Password should be at least 6 characters long.",
+      "unexpected": "An unexpected error occurred."
+    },
+    "nameLabel": "Name",
+    "namePlaceholder": "John Doe",
+    "ageLabel": "Age",
+    "occupationLabel": "Occupation",
+    "occupationPlaceholder": "Select occupation",
+    "publicSector": "Public Sector",
+    "privateSector": "Private Sector",
+    "student": "Student",
+    "selfEmployed": "Self-employed",
+    "other": "Other",
+    "annualIncomeLabel": "Annual Income (INR)",
+    "stateLabel": "State",
+    "statePlaceholder": "Select state",
+    "districtLabel": "District",
+    "districtPlaceholder": "Pune",
+    "emailLabel": "Email",
+    "emailPlaceholder": "user@example.com",
+    "passwordLabel": "Password",
+    "loginButton": "Login",
+    "signUpButton": "Sign Up",
+    "continueWith": "Or continue with",
+    "googleSignIn": "Sign in with Google",
+    "haveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "accountCreated": "Account Created",
+    "welcome": "Welcome! Redirecting you to the dashboard."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "greeting": {
+      "morning": "Good Morning, there!",
+      "afternoon": "Good Afternoon, there!",
+      "evening": "Good Evening, there!"
+    },
+    "yourExpenses": "Your Expenses",
+    "thisMonth": "This month",
+    "yourIncome": "Your Income",
+    "savingsRate": "Savings Rate",
+    "savingsRateDescription": "Of your income this month",
+    "suggestionsTitle": "Personalized Suggestions",
+    "defaultSuggestion": "Start by adding some transactions to see your financial summary."
+  },
+  "transactions": {
+    "title": "Transactions",
+    "description": "View and manage your financial transactions.",
+    "clearAllData": "Clear All Data",
+    "clearDataDialog": {
+      "title": "Are you absolutely sure?",
+      "description": "This action cannot be undone. This will permanently delete all your transaction and budget data from the database.",
+      "cancel": "Cancel",
+      "continue": "Continue"
+    },
+    "import": "Import",
+    "importDialog": {
+      "title": "Import Transactions",
+      "description": "Upload a document to automatically extract transactions.",
+      "dragDrop": "Drag & drop a file or click to select",
+      "dropHere": "Drop the file here",
+      "fileTypes": "Supports PDF, DOC, DOCX, TXT, and CSV files."
+    },
+    "viewBudgets": "View Budgets",
+    "budgetsDialog": {
+      "title": "Your Budgets",
+      "description": "Track and manage your monthly spending.",
+      "addNewBudget": "Add New Budget",
+      "noBudgetsTitle": "No Budgets Yet",
+      "noBudgetsDescription": "Click \"Add New Budget\" to get started.",
+      "spent": "Spent",
+      "remaining": "Remaining"
+    },
+    "addBudgetDialog": {
+      "title": "Add New Budget",
+      "description": "Create a new budget to track your spending for a category.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g., Groceries",
+      "amountLabel": "Amount",
+      "amountPlaceholder": "e.g., 5000",
+      "addBudget": "Add Budget",
+      "cancel": "Cancel"
+    },
+    "addTransaction": "Add Transaction",
+    "addTransactionDialog": {
+      "title": "Add New Transaction",
+      "description": "Enter the details of your new transaction manually.",
+      "descriptionLabel": "Description",
+      "dateLabel": "Date",
+      "typeLabel": "Type",
+      "typePlaceholder": "Select type",
+      "expense": "Expense",
+      "income": "Income",
+      "amountLabel": "Amount",
+      "amountPlaceholder": "INR 100.00",
+      "addTransaction": "Add Transaction",
+      "cancel": "Cancel"
+    },
+    "history": {
+      "title": "Transaction History",
+      "description": "A list of your recent transactions.",
+      "tableDescription": "Description",
+      "tableDate": "Date",
+      "tableType": "Type",
+      "tableAmount": "Amount",
+      "loginPrompt": "Please log in to view and manage your transactions.",
+      "noTransactions": "No transactions to display."
+    },
+    "toasts": {
+      "errorLoginToAdd": "You must be logged in to add a transaction.",
+      "errorFillFields": "Please fill out all fields.",
+      "successAddTransaction": "Transaction added successfully.",
+      "errorLoginToImport": "You must be logged in to import transactions.",
+      "importSuccess": "transactions were imported.",
+      "importFailed": "Import Failed",
+      "errorReadingFile": "Failed to read the uploaded file.",
+      "errorProcessingFile": "An unexpected error occurred during file processing.",
+      "errorLoginToAddBudget": "You must be logged in to add a budget.",
+      "successAddBudget": "Budget added successfully.",
+      "successClearData": "All transaction and budget data has been cleared."
+    }
+  },
+  "brainstorm": {
+    "title": "Brainstorm",
+    "description": "Explore investment ideas and build your business plan.",
+    "mySavedIdeas": "My Saved Ideas",
+    "schemeTitle": "Startup India Seed Fund Scheme",
+    "schemeSummary": "This scheme provides financial assistance to startups for proof of concept, prototype development, product trials, market entry, and commercialization. It helps bridge the gap between idea and venture.",
+    "ideasTitle": "Investment Ideas",
+    "ideasDescription": "Explore our curated library of startup ideas or enter your own below to get AI-powered insights.",
+    "viewMore": "View More",
+    "ideaCategoryDialog": {
+      "description": "Here are some business ideas in the {category} sector."
+    },
+    "analyzeOwnIdea": "Analyze Your Own Business Idea",
+    "ideaPlaceholder": "Describe your business idea, e.g., 'A cloud kitchen for healthy salads in metropolitan cities...'",
+    "getInsights": "Get Insights",
+    "errorEnterIdea": "Please enter an idea to analyze."
+  },
+  "myIdeas": {
+    "title": "My Saved Ideas",
+    "description": "A collection of all your brilliant business ideas.",
+    "loginPrompt": "Please log in to see your saved ideas.",
+    "loginButton": "Login",
+    "noIdeas": "You haven't saved any ideas yet.",
+    "startBrainstorming": "Start Brainstorming",
+    "viewAnalysis": "View Analysis"
+  },
+  "investmentIdea": {
+    "backToBrainstorm": "Back to Brainstorm",
+    "addToMyIdeas": "Add to My Ideas",
+    "ideaSaved": "Idea Saved",
+    "saving": "Saving...",
+    "investmentStrategy": "Investment Strategy",
+    "targetAudience": "Target Audience",
+    "roi": "Return on Investment (ROI)",
+    "futureProofing": "Future Proofing",
+    "errorNoIdea": "No investment idea provided.",
+    "errorOccurred": "An error occurred",
+    "errorLoginToSave": "You must be logged in to save an idea.",
+    "_TITLE": "Success!",
+    "ideaSavedSuccess": "Your idea has been saved successfully.",
+    "loading": "Loading analysis..."
+  },
+  "generateDRP": {
+    "title": "Generate Detailed Project Report (DRP)",
+    "description": "Brainstorm with our AI to build your comprehensive DRP for {projectName}.",
+    "form": {
+      "title": "Project Details",
+      "description": "First, let's gather some basic details for your DPR.",
+      "projectNameLabel": "Project Name",
+      "projectNamePlaceholder": "e.g., Eco-Friendly Packaging Solutions",
+      "yourNameLabel": "Your Name",
+      "yourNamePlaceholder": "e.g., Anika Sharma",
+      "businessTypeLabel": "Business Type",
+      "businessTypePlaceholder": "e.g., Manufacturing",
+      "companyNameLabel": "Company Name (Optional)",
+      "companyNamePlaceholder": "e.g., GreenPack Industries",
+      "startBrainstorming": "Start Brainstorming"
+    },
+    "chat": {
+      "inputPlaceholder": "Tell me about your project...",
+      "welcome": "Hello! I am here to help you brainstorm and build a Detailed Project Report (DRP) for your project: **{projectName}**. To start, could you tell me a bit more about the business idea?",
+      "welcomeSuggestion1": "Let's start with my idea: \"{idea}\"",
+      "welcomeSuggestion2": "What is a DRP?",
+      "welcomeSuggestion3": "How does this work?",
+      "error": "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment."
+    },
+    "loading": "Loading DRP Generator..."
+  },
+  "launchpad": {
+    "title": "Founder's Launchpad",
+    "description": "Your guide to starting and growing your enterprise in India.",
+    "statePortals": {
+      "title": "State-Specific Portals",
+      "description": "Access resources and schemes from your state government.",
+      "apmsmeone": {
+        "title": "APMSME ONE",
+        "description": "A dedicated portal for Micro, Small and Medium Enterprises in Andhra Pradesh, offering a range of services and support."
+      },
+      "loginToPortal": "Login to Portal"
+    },
+    "govtSchemes": {
+      "title": "Key Government Schemes",
+      "description": "Leverage these government initiatives to fuel your growth.",
+      "seedFund": {
+        "title": "Startup India Seed Fund Scheme",
+        "summary": "Provides financial assistance to startups for proof of concept, prototype development, product trials, and market entry."
+      },
+      "mudra": {
+        "title": "MUDRA Loans (PMMY)",
+        "summary": "Offers loans up to ₹10 lakh to non-corporate, non-farm small/micro-enterprises. Ideal for initial funding needs."
+      },
+      "cgtmse": {
+        "title": "Credit Guarantee Scheme (CGTMSE)",
+        "summary": "Facilitates collateral-free credit for Micro and Small Enterprises from financial institutions."
+      },
+      "aim": {
+        "title": "Atal Innovation Mission (AIM)",
+        "summary": "Promotes a culture of innovation and entrepreneurship through various initiatives, including incubation centers."
+      },
+      "learnMore": "Learn More"
+    },
+    "startupHubs": {
+      "title": "Major Startup Hubs",
+      "description": "Discover the top ecosystems for entrepreneurs in India.",
+      "bengaluru": {
+        "name": "Bengaluru, Karnataka",
+        "description": "India's Silicon Valley, known for its strong tech ecosystem, access to venture capital, and a large talent pool."
+      },
+      "delhi": {
+        "name": "Delhi-NCR",
+        "description": "A diverse startup hub with a large consumer market, strong B2B opportunities, and a mix of various industries."
+      },
+      "mumbai": {
+        "name": "Mumbai, Maharashtra",
+        "description": "The financial capital of India, offering great access to funding, and a thriving fintech and media-tech scene."
+      },
+      "hyderabad": {
+        "name": "Hyderabad, Telangana",
+        "description": "A rapidly growing hub with strong government support, a focus on life sciences, and emerging technologies."
+      }
+    },
+    "startupJourney": {
+      "title": "Your Startup Journey",
+      "description": "A step-by-step guide to launching your business.",
+      "step1": {
+        "title": "1. Idea & Validation",
+        "description": "Define your business idea and validate its market potential. Research your target audience and competitors."
+      },
+      "step2": {
+        "title": "2. Business Plan (DRP)",
+        "description": "Create a Detailed Project Report (DRP). Use our \"Brainstorm\" feature to get AI-powered assistance in building your plan."
+      },
+      "step3": {
+        "title": "3. Register Your Business",
+        "description": "Choose a business structure (Sole Proprietorship, LLP, Pvt. Ltd.) and complete the legal registration process. Check for state-specific portals like APMSME ONE."
+      },
+      "step4": {
+        "title": "4. Funding & Finance",
+        "description": "Explore funding options like bootstrapping, angel investors, venture capital, or government schemes."
+      },
+      "step5": {
+        "title": "5. Build & Launch",
+        "description": "Develop your Minimum Viable Product (MVP), set up your operations, and officially launch your business."
+      },
+      "step6": {
+        "title": "6. Market & Grow",
+        "description": "Implement your marketing strategy to attract customers and scale your operations for growth."
+      }
+    }
+  },
+  "aiAdvisor": {
+    "title": "AI Financial Advisor",
+    "description": "Your personal guide to financial clarity. Ask me anything!",
+    "welcome": "Hello! I'm your AI Financial Advisor. Ask me anything about personal finance, budgeting, or investing.",
+    "inputPlaceholder": "Ask about saving for retirement...",
+    "error": "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment."
   }
 }

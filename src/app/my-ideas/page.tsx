@@ -22,6 +22,7 @@ import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
+import { useLanguage } from '@/hooks/use-language';
 
 type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
   id: string;
@@ -35,6 +36,7 @@ export default function MyIdeasPage() {
   const [user, loadingAuth] = useAuthState(auth);
   const [ideas, setIdeas] = useState<SavedIdea[]>([]);
   const [loadingIdeas, setLoadingIdeas] = useState(true);
+  const { translations } = useLanguage();
 
   useEffect(() => {
     if (user) {
@@ -77,9 +79,9 @@ export default function MyIdeasPage() {
   if (!user) {
     return (
       <div className="text-center">
-        <p>Please log in to see your saved ideas.</p>
+        <p>{translations.myIdeas.loginPrompt}</p>
         <Button asChild className="mt-4">
-          <Link href="/">Login</Link>
+          <Link href="/">{translations.myIdeas.loginButton}</Link>
         </Button>
       </div>
     );
@@ -89,10 +91,10 @@ export default function MyIdeasPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Lightbulb /> My Saved Ideas
+          <Lightbulb /> {translations.myIdeas.title}
         </h1>
         <p className="text-muted-foreground">
-          A collection of all your brilliant business ideas.
+          {translations.myIdeas.description}
         </p>
       </div>
 
@@ -100,10 +102,10 @@ export default function MyIdeasPage() {
         <Card className="text-center py-10 glassmorphic">
           <CardContent>
             <p className="text-muted-foreground">
-              You haven't saved any ideas yet.
+              {translations.myIdeas.noIdeas}
             </p>
             <Button asChild className="mt-4">
-              <Link href="/brainstorm">Start Brainstorming</Link>
+              <Link href="/brainstorm">{translations.myIdeas.startBrainstorming}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -131,7 +133,7 @@ export default function MyIdeasPage() {
                         idea.title
                       )}`}
                     >
-                      View Analysis
+                      {translations.myIdeas.viewAnalysis}
                     </Link>
                   </Button>
                 </CardContent>

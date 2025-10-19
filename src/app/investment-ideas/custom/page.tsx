@@ -35,6 +35,7 @@ import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
+import { useLanguage } from '@/hooks/use-language';
 
 function InvestmentIdeaContent() {
   const searchParams = useSearchParams();
@@ -47,11 +48,12 @@ function InvestmentIdeaContent() {
   const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
   const { toast } = useToast();
+  const { translations } = useLanguage();
 
   useEffect(() => {
     const fetchAnalysis = async () => {
       if (!idea) {
-        setError('No investment idea provided.');
+        setError(translations.investmentIdea.errorNoIdea);
         setIsLoading(false);
         return;
       }
@@ -67,21 +69,20 @@ function InvestmentIdeaContent() {
     };
 
     fetchAnalysis();
-  }, [idea]);
+  }, [idea, translations]);
 
   const handleSaveIdea = async () => {
     if (!user || !analysis) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'You must be logged in to save an idea.',
+        description: translations.investmentIdea.errorLoginToSave,
       });
       return;
     }
     setIsSaving(true);
 
     const ideasCollectionRef = collection(db, 'users', user.uid, 'ideas');
-    // Only save the necessary information to regenerate the idea later.
     const ideaData = {
       title: analysis.title,
       summary: analysis.summary,
@@ -92,8 +93,8 @@ function InvestmentIdeaContent() {
       .then(() => {
         setIsSaved(true);
         toast({
-          title: 'Success!',
-          description: 'Your idea has been saved successfully.',
+          title: translations.investmentIdea._TITLE,
+          description: translations.investmentIdea.ideaSavedSuccess,
         });
       })
       .catch(async serverError => {
@@ -146,7 +147,7 @@ function InvestmentIdeaContent() {
   if (error) {
     return (
       <div className="text-center py-10">
-        <p className="text-destructive font-semibold">An error occurred</p>
+        <p className="text-destructive font-semibold">{translations.investmentIdea.errorOccurred}</p>
         <p className="text-muted-foreground mt-2">{error}</p>
       </div>
     );
@@ -158,7 +159,7 @@ function InvestmentIdeaContent() {
         <Button variant="ghost" asChild className="-ml-4">
           <Link href="/brainstorm">
             <ArrowLeft className="mr-2" />
-            Back to Brainstorm
+            {translations.investmentIdea.backToBrainstorm}
           </Link>
         </Button>
       </div>
@@ -190,13 +191,13 @@ function InvestmentIdeaContent() {
               >
                 {isSaved ? (
                   <>
-                    <CheckCircle className="mr-2" /> Idea Saved
+                    <CheckCircle className="mr-2" /> {translations.investmentIdea.ideaSaved}
                   </>
                 ) : isSaving ? (
-                  'Saving...'
+                  translations.investmentIdea.saving
                 ) : (
                   <>
-                    <Save className="mr-2" /> Add to My Ideas
+                    <Save className="mr-2" /> {translations.investmentIdea.addToMyIdeas}
                   </>
                 )}
               </Button>
@@ -213,7 +214,7 @@ function InvestmentIdeaContent() {
         >
           <AnalysisCard
             icon={Briefcase}
-            title="Investment Strategy"
+            title={translations.investmentIdea.investmentStrategy}
             content={analysis?.investmentStrategy}
             isLoading={isLoading}
           />
@@ -225,7 +226,7 @@ function InvestmentIdeaContent() {
         >
           <AnalysisCard
             icon={Target}
-            title="Target Audience"
+            title={translations.investmentIdea.targetAudience}
             content={analysis?.targetAudience}
             isLoading={isLoading}
           />
@@ -237,7 +238,7 @@ function InvestmentIdeaContent() {
         >
           <AnalysisCard
             icon={TrendingUp}
-            title="Return on Investment (ROI)"
+            title={translations.investmentIdea.roi}
             content={analysis?.roi}
             isLoading={isLoading}
           />
@@ -249,7 +250,7 @@ function InvestmentIdeaContent() {
         >
           <AnalysisCard
             icon={Shield}
-            title="Future Proofing"
+            title={translations.investmentIdea.futureProofing}
             content={analysis?.futureProofing}
             isLoading={isLoading}
           />
@@ -260,8 +261,9 @@ function InvestmentIdeaContent() {
 }
 
 export default function CustomInvestmentIdeaPage() {
+  const { translations } = useLanguage();
   return (
-    <Suspense fallback={<p>Loading analysis...</p>}>
+    <Suspense fallback={<p>{translations.investmentIdea.loading}</p>}>
       <InvestmentIdeaContent />
     </Suspense>
   );

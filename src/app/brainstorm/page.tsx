@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/hooks/use-language';
 
 const investmentIdeaCategories = {
   'AgriTech & Food Processing': {
@@ -80,24 +81,24 @@ const investmentIdeaCategories = {
   },
 };
 
-const staticFinBite = {
-  title: 'Startup India Seed Fund Scheme',
-  summary:
-    'This scheme provides financial assistance to startups for proof of concept, prototype development, product trials, market entry, and commercialization. It helps bridge the gap between idea and venture.',
-  link: 'https://www.startupindia.gov.in/content/sih/en/funding/schemes/seed-fund-scheme.html',
-};
-
 export default function BrainstormPage() {
   const { toast } = useToast();
   const [userIdea, setUserIdea] = useState('');
   const router = useRouter();
+  const { translations } = useLanguage();
 
+  const staticFinBite = {
+    title: translations.brainstorm.schemeTitle,
+    summary: translations.brainstorm.schemeSummary,
+    link: 'https://www.startupindia.gov.in/content/sih/en/funding/schemes/seed-fund-scheme.html',
+  };
+  
   const handleAnalyzeIdea = () => {
     if (!userIdea.trim()) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please enter an idea to analyze.',
+        description: translations.brainstorm.errorEnterIdea,
       });
       return;
     }
@@ -108,15 +109,15 @@ export default function BrainstormPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold">Brainstorm</h1>
+          <h1 className="text-3xl font-bold">{translations.brainstorm.title}</h1>
           <p className="text-muted-foreground">
-            Explore investment ideas and build your business plan.
+            {translations.brainstorm.description}
           </p>
         </div>
         <Button asChild>
           <Link href="/my-ideas">
             <Lightbulb className="mr-2" />
-            My Saved Ideas
+            {translations.brainstorm.mySavedIdeas}
           </Link>
         </Button>
       </div>
@@ -168,13 +169,12 @@ export default function BrainstormPage() {
                 <path d="m6.5 11.5-3-3 2.5-5 3.5 2.5-3 2.5" />
                 <path d="m17.5 11.5 3-3-2.5-5-3.5 2.5 3 2.5" />
               </svg>
-              Investment Ideas
+              {translations.brainstorm.ideasTitle}
             </h2>
             <Badge variant="outline">Beta</Badge>
           </div>
           <CardDescription>
-            Explore our curated library of startup ideas or enter your own
-            below to get AI-powered insights.
+            {translations.brainstorm.ideasDescription}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -189,7 +189,7 @@ export default function BrainstormPage() {
                         <CardTitle className="text-lg">{category}</CardTitle>
                       </div>
                       <Button variant="link" className="mt-4 text-primary">
-                        <Eye className="mr-2" /> View More
+                        <Eye className="mr-2" /> {translations.brainstorm.viewMore}
                       </Button>
                     </Card>
                   </DialogTrigger>
@@ -200,7 +200,7 @@ export default function BrainstormPage() {
                         {category}
                       </DialogTitle>
                       <DialogDescription>
-                        Here are some business ideas in the {category.toLowerCase()} sector.
+                        {translations.brainstorm.ideaCategoryDialog.description.replace('{category}', category.toLowerCase())}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3 py-4">
@@ -225,16 +225,16 @@ export default function BrainstormPage() {
           </div>
 
           <div className="space-y-4 pt-6 border-t">
-            <h3 className="font-semibold">Analyze Your Own Business Idea</h3>
+            <h3 className="font-semibold">{translations.brainstorm.analyzeOwnIdea}</h3>
             <Textarea
-              placeholder="Describe your business idea, e.g., 'A cloud kitchen for healthy salads in metropolitan cities...'"
+              placeholder={translations.brainstorm.ideaPlaceholder}
               value={userIdea}
               onChange={e => setUserIdea(e.target.value)}
               rows={3}
             />
             <div className="flex flex-wrap gap-2">
               <Button onClick={handleAnalyzeIdea} disabled={!userIdea.trim()}>
-                <Send className="mr-2" /> Get Insights
+                <Send className="mr-2" /> {translations.brainstorm.getInsights}
               </Button>
             </div>
           </div>
