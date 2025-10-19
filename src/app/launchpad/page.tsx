@@ -159,36 +159,6 @@ export default function LaunchpadPage() {
 
       <Card className="glassmorphic">
         <CardHeader>
-          <CardTitle>Your Startup Journey</CardTitle>
-          <CardDescription>
-            A step-by-step guide to launching your business.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {startupSteps.map((step, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="flex items-start gap-4"
-            >
-              <div className="p-3 bg-accent rounded-full">
-                <step.icon className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold">{step.title}</h3>
-                <p className="text-muted-foreground text-sm">
-                  {step.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card className="glassmorphic">
-        <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles />
             Key Government Schemes
@@ -253,6 +223,36 @@ export default function LaunchpadPage() {
               <p className="text-muted-foreground text-sm">
                 {hub.description}
               </p>
+            </motion.div>
+          ))}
+        </CardContent>
+      </Card>
+      
+      <Card className="glassmorphic">
+        <CardHeader>
+          <CardTitle>Your Startup Journey</CardTitle>
+          <CardDescription>
+            A step-by-step guide to launching your business.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {startupSteps.map((step, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className="flex items-start gap-4"
+            >
+              <div className="p-3 bg-accent rounded-full">
+                <step.icon className="h-6 w-6 text-accent-foreground" />
+              </div>
+              <div>
+                <h3 className="font-semibold">{step.title}</h3>
+                <p className="text-muted-foreground text-sm">
+                  {step.description}
+                </p>
+              </div>
             </motion.div>
           ))}
         </CardContent>
