@@ -110,84 +110,6 @@ function DPRReportContent() {
     </Card>
   );
 
-  const FinancialSection = ({
-    title,
-    content,
-    isLoading,
-  }: {
-    title: string;
-    content?: any;
-    isLoading: boolean;
-  }) => {
-    if (isLoading) {
-      return (
-        <Card className="glassmorphic">
-          <CardHeader>
-            <CardTitle>{title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-48 w-full" />
-          </CardContent>
-        </Card>
-      );
-    }
-    if (!content)
-      return <Section title={title} content="Not generated." isLoading={false} />;
-
-    let parsedContent;
-    try {
-      // The content for financial projections might be a string, so we need to parse it.
-      parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
-    } catch (e) {
-        console.error("Failed to parse financial section content:", e);
-        // Fallback: If parsing fails, treat content as plain text and render it using the standard Section component.
-        return <Section title={title} content={`Error displaying structured financial data. The content was not in the expected JSON format and could not be parsed. Displaying raw content instead:\n\n${content}`} isLoading={false} />;
-    }
-
-    return (
-      <Card className="glassmorphic print:shadow-none print:border-none print-break-before">
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <FormattedText text={parsedContent.summaryText} />
-
-          <div className="print-break-after">
-            <h4 className="font-semibold text-lg mb-2">Project Cost Breakdown</h4>
-            <ProjectCostPieChart data={parsedContent.costBreakdown} />
-            <FormattedText text={parsedContent.projectCost} />
-          </div>
-
-          <div className="print-break-after">
-            <h4 className="font-semibold text-lg mb-2">Yearly Projections</h4>
-            <FinancialProjectionsBarChart data={parsedContent.yearlyProjections} />
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-lg">Means of Finance</h4>
-            <FormattedText text={parsedContent.meansOfFinance} />
-          </div>
-          <div>
-            <h4 className="font-semibold text-lg">Profitability Analysis</h4>
-            <FormattedText text={parsedContent.profitabilityAnalysis} />
-          </div>
-          <div>
-            <h4 className="font-semibold text-lg">Cash Flow Statement</h4>
-            <FormattedText text={parsedContent.cashFlowStatement} />
-          </div>
-          <div>
-            <h4 className="font-semibold text-lg">Loan Repayment Schedule</h4>
-            <FormattedText text={parsedContent.loanRepaymentSchedule} />
-          </div>
-          <div>
-            <h4 className="font-semibold text-lg">Break-Even Analysis</h4>
-            <FormattedText text={parsedContent.breakEvenAnalysis} />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
   return (
     <div className="space-y-8 @container">
       <style jsx global>{`
@@ -272,19 +194,12 @@ function DPRReportContent() {
 
         {report &&
           dprChapterTitles.map((title, index) => {
-            const key = Object.keys(report).find(k => k.toLowerCase().replace(/ /g, '') === title.toLowerCase().replace(/ /g, '')) || title;
+            const key =
+              Object.keys(report).find(
+                k => k.toLowerCase().replace(/ /g, '') === title.toLowerCase().replace(/ /g, '')
+              ) || title;
             const content = report[key];
-            
-            if (title === 'Financial Projections') {
-              return (
-                <FinancialSection
-                  key={key}
-                  title={`${index + 1}. ${title}`}
-                  content={content}
-                  isLoading={isLoading}
-                />
-              );
-            }
+
             return (
               <Section
                 key={key}

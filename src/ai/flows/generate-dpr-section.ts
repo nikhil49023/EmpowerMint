@@ -59,13 +59,10 @@ You have already generated a draft for the "{{targetSection}}" section. The user
 Your task is to **REVISE** the original text based on the user's feedback. Generate a new version of the "{{targetSection}}" section that incorporates their changes. Do not repeat the feedback. Only provide the revised content for the section, following all formatting instructions.
 {{else}}
 **Current Task:**
-Generate the content for the **"{{targetSection}}"** section of the DPR.
-
-Make the content detailed, professional, and suitable for a banking audience. Follow all formatting instructions.
+Generate the content for the **"{{targetSection}}"** section of the DPR. Make the content detailed, professional, and suitable for a banking audience. Follow all formatting instructions.
 {{/if}}
 
-{{#if (eq targetSection "Financial Projections")}}
-**SPECIAL INSTRUCTIONS FOR FINANCIAL PROJECTIONS:**
+**If the "{{targetSection}}" is "Financial Projections", you MUST follow these special instructions:**
 Your output for the 'content' field MUST be a single, valid, stringified JSON object. Do NOT include any markdown, introductory text, code fences (\`\`\`), or anything outside of the pure JSON structure. The entire 'content' output must be parsable with JSON.parse().
 The JSON object must have the following structure:
 {
@@ -80,9 +77,8 @@ The JSON object must have the following structure:
   "breakEvenAnalysis": "Break-even point analysis in markdown format."
 }
 Generate detailed, credible data for all fields within this JSON structure.
-{{else}}
-Please generate only the content for the "{{targetSection}}" section as a markdown-formatted string.
-{{/if}}
+
+**Otherwise, for all other sections,** please generate only the content for the "{{targetSection}}" section as a markdown-formatted string.
 `,
 });
 
