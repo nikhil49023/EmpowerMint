@@ -42,6 +42,8 @@ import {
 import { useLanguage } from '@/hooks/use-language';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import Autoplay from 'embla-carousel-autoplay';
+import React from 'react';
 
 const PortalCard = ({
   title,
@@ -288,20 +290,26 @@ export default function LaunchpadPage() {
         'Units handling value-added food products, packaging, and export.',
     },
   ];
+  
+  const plugin = React.useRef(
+    Autoplay({ delay: 2000, stopOnInteraction: false, stopOnMouseEnter: true })
+  );
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-          <Rocket className="h-8 w-8" />
-          {translations.launchpad.title}
-        </h1>
-        <p className="text-muted-foreground">
-          {translations.launchpad.description}
-        </p>
+    <div className="space-y-8 md:space-y-12">
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <Rocket className="h-8 w-8" />
+            {translations.launchpad.title}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {translations.launchpad.description}
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="glassmorphic lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
@@ -312,7 +320,7 @@ export default function LaunchpadPage() {
               {translations.launchpad.statePortals.description}
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <PortalCard
               title={translations.launchpad.statePortals.apmsmeone.title}
               description={
@@ -345,8 +353,8 @@ export default function LaunchpadPage() {
                   <step.icon className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">{step.title}</h3>
-                  <p className="text-muted-foreground text-sm">
+                  <h3 className="font-semibold text-lg">{step.title}</h3>
+                  <p className="text-muted-foreground">
                     {step.description}
                   </p>
                 </div>
@@ -370,9 +378,11 @@ export default function LaunchpadPage() {
             <Carousel
               opts={{
                 align: 'start',
-                loop: true,
               }}
+              plugins={[plugin.current]}
               className="w-full"
+              onMouseEnter={plugin.current.stop}
+              onMouseLeave={plugin.current.reset}
             >
               <CarouselContent>
                 {msmeClusters.map((cluster, index) => (
@@ -399,8 +409,6 @@ export default function LaunchpadPage() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="hidden sm:flex" />
-              <CarouselNext className="hidden sm:flex" />
             </Carousel>
           </CardContent>
         </Card>
@@ -436,5 +444,3 @@ export default function LaunchpadPage() {
     </div>
   );
 }
-
-    
