@@ -76,7 +76,6 @@ export default function Sidebar() {
       label: translations.sidebar.brainstorm,
       icon: BrainCircuit,
     },
-     { href: '/my-ideas', label: 'My Ideas', icon: Lightbulb },
     { href: '/launchpad', label: translations.sidebar.launchpad, icon: Rocket },
   ];
 
