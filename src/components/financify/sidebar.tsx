@@ -199,7 +199,7 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
         </DropdownMenu>
         <Button
           variant="ghost"
-          className="w-full justify-start text-muted-foreground font-normal"
+          className="w-full justify-start text-muted-foreground font-normal hover:text-primary hover:bg-primary/10"
         >
           <User className="mr-3 h-5 w-5" />
           {translations.sidebar.myProfile}
@@ -211,7 +211,7 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
           <DialogTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground font-normal"
+              className="w-full justify-start text-muted-foreground font-normal hover:text-primary hover:bg-primary/10"
             >
               <MessageSquare className="mr-3 h-5 w-5" />
               {translations.sidebar.giveFeedback}
