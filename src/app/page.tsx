@@ -32,6 +32,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useLanguage } from '@/hooks/use-language';
+import { errorEmitter } from '@/firebase/error-emitter';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
 
 const indianStates = [
   'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
@@ -68,14 +73,11 @@ export default function LoginPage() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-
-      // Check if user exists in Firestore
       const userDocRef = doc(db, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        // New user, save their data
-        await setDoc(userDocRef, {
+        const newUser = {
           name: user.displayName || '',
           email: user.email,
           age: '',
@@ -83,13 +85,21 @@ export default function LoginPage() {
           annualIncome: '',
           state: '',
           district: '',
-        });
-        toast({
-          title: translations.loginPage.accountCreated,
-          description: translations.loginPage.welcome,
+        };
+        setDoc(userDocRef, newUser).catch(async serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'create',
+            requestResourceData: newUser,
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
         });
       }
 
+      toast({
+        title: translations.loginPage.accountCreated,
+        description: translations.loginPage.welcome,
+      });
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -106,10 +116,24 @@ export default function LoginPage() {
           password
         );
         const user = userCredential.user;
+        const userDocRef = doc(db, 'users', user.uid);
+        const newUser = {
+          name,
+          age,
+          occupation,
+          annualIncome,
+          state,
+          district,
+          email: user.email,
+        };
 
-        // Save additional user info to Firestore
-        await setDoc(doc(db, 'users', user.uid), {
-          name, age, occupation, annualIncome, state, district, email: user.email,
+        setDoc(userDocRef, newUser).catch(async serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'create',
+            requestResourceData: newUser,
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
         });
 
         toast({
@@ -264,3 +288,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
