@@ -37,6 +37,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from '@/components/ui/carousel';
 import { useLanguage } from '@/hooks/use-language';
 import Link from 'next/link';
@@ -46,7 +48,10 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, SecurityRuleContext } from '@/firebase/errors';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
 
 
 const PortalCard = ({
@@ -140,17 +145,23 @@ export default function LaunchpadPage() {
         })) as Feedback[];
         setFeedback(feedbackData);
         setIsLoadingFeedback(false);
-    }, (error) => {
+    }, async (error) => {
         console.error("Error fetching feedback: ", error);
         const permissionError = new FirestorePermissionError({
-            path: feedbackQuery.path,
+            path: 'feedback', // Simplified path for collection queries
             operation: 'list'
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         setIsLoadingFeedback(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      try {
+        unsubscribe();
+      } catch (e) {
+        console.error("Error unsubscribing from feedback listener:", e);
+      }
+    };
   }, []);
 
   const startupSteps = [
