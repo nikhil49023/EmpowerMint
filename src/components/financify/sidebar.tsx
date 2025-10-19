@@ -52,7 +52,11 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { saveFeedbackAction } from '@/app/actions';
 
-export default function Sidebar() {
+type SidebarProps = {
+  onLinkClick?: () => void;
+};
+
+export default function Sidebar({ onLinkClick }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, translations } = useLanguage();
@@ -115,8 +119,14 @@ export default function Sidebar() {
     }
   };
 
+  const handleLinkClick = () => {
+    if (onLinkClick) {
+      onLinkClick();
+    }
+  };
+
   return (
-    <aside className="w-64 flex-shrink-0 bg-white border-r flex flex-col">
+    <aside className="w-64 flex-shrink-0 bg-card border-r flex flex-col">
       <div className="p-6 flex items-center gap-2">
         <svg
           width="40"
@@ -158,6 +168,7 @@ export default function Sidebar() {
               pathname.startsWith(item.href) &&
                 'bg-accent text-accent-foreground hover:bg-accent/80 hover:text-accent-foreground'
             )}
+            onClick={handleLinkClick}
           >
             <Link href={item.href}>
               <item.icon className="mr-3 h-5 w-5" />

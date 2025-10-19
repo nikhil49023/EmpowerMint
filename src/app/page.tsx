@@ -37,6 +37,7 @@ import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const indianStates = [
   'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
@@ -169,8 +170,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background py-12">
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-md glassmorphic">
+      <ScrollArea className="h-[85vh] sm:h-auto">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-primary">
@@ -187,7 +189,7 @@ export default function LoginPage() {
               : translations.loginPage.description}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-6">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -199,7 +201,7 @@ export default function LoginPage() {
                 <Label htmlFor="name">{translations.loginPage.nameLabel}</Label>
                 <Input id="name" placeholder={translations.loginPage.namePlaceholder} required={isSignUp} value={name} onChange={e => setName(e.target.value)} suppressHydrationWarning />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="age">{translations.loginPage.ageLabel}</Label>
                   <Input id="age" type="number" placeholder="25" required={isSignUp} value={age} onChange={e => setAge(e.target.value)} suppressHydrationWarning />
@@ -224,7 +226,7 @@ export default function LoginPage() {
                 <Label htmlFor="annualIncome">{translations.loginPage.annualIncomeLabel}</Label>
                 <Input id="annualIncome" type="number" placeholder="500000" required={isSignUp} value={annualIncome} onChange={e => setAnnualIncome(e.target.value)} suppressHydrationWarning />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="state">{translations.loginPage.stateLabel}</Label>
                   <Select onValueChange={setState} value={state}>
@@ -256,7 +258,7 @@ export default function LoginPage() {
             <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} suppressHydrationWarning />
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        <CardFooter className="flex flex-col gap-4 px-6 pb-6">
           <Button className="w-full" onClick={handleAuthAction} suppressHydrationWarning>
             {isSignUp ? translations.loginPage.signUpButton : translations.loginPage.loginButton}
           </Button>
@@ -284,9 +286,8 @@ export default function LoginPage() {
             </Button>
           </p>
         </CardFooter>
+      </ScrollArea>
       </Card>
     </div>
   );
 }
-
-    

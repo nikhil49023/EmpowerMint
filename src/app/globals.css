@@ -4,27 +4,27 @@
 
 @layer base {
   :root {
-    --background: 240 25% 98%;
+    --background: 220 20% 97%;
     --foreground: 224 71% 4%;
-    --card: 0 0% 100%;
+    --card: 240 10% 100%;
     --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
-    --primary: 345 95% 68%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 224 71% 4%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 345 95% 95%;
-    --accent-foreground: 345 95% 68%;
+    --accent: 25 95% 53%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 345 95% 68%;
-    --chart-1: 345 95% 68%;
-    --chart-2: 27 80% 51%;
+    --ring: 217 91% 60%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 25 95% 53%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
@@ -32,27 +32,27 @@
   }
 
   .dark {
-    --background: 240 25% 98%;
+    --background: 220 20% 97%;
     --foreground: 224 71% 4%;
-    --card: 0 0% 100%;
+    --card: 240 10% 100%;
     --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
-    --primary: 345 95% 68%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 224 71% 4%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 345 95% 95%;
-    --accent-foreground: 345 95% 68%;
+    --accent: 25 95% 53%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 345 95% 68%;
-    --chart-1: 345 95% 68%;
-    --chart-2: 27 80% 51%;
+    --ring: 217 91% 60%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 25 95% 53%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
@@ -70,6 +70,6 @@
 
 @layer components {
   .glassmorphic {
-    @apply bg-card/60 backdrop-blur-lg border-white/20;
+    @apply bg-white/50 backdrop-blur-lg border rounded-xl shadow-sm;
   }
 }
