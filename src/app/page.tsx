@@ -229,7 +229,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <CardTitle className="text-2xl">
-            {isSignUp ? 'Create an Account' : 'Welcome to Uplift AI'}
+            {isSignUp ? 'Create an Account' : 'Welcome to FIn-Box'}
           </CardTitle>
           <CardDescription>
             {isSignUp

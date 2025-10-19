@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Uplift AI</title>
+        <title>FIn-Box</title>
         <meta name="description" content="Your personal finance dashboard." />
       </head>
       <body className={`${inter.variable} font-body antialiased`}>

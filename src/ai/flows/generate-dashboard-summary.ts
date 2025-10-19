@@ -35,7 +35,7 @@ const prompt = ai.definePrompt({
   name: 'generateDashboardSummaryPrompt',
   input: { schema: GenerateDashboardSummaryInputSchema },
   output: { schema: GenerateDashboardSummaryOutputSchema },
-  prompt: `You are "Uplift AI," a financial analyst. Your task is to analyze a list of financial transactions and provide a summary.
+  prompt: `You are "FIn-Box," a financial analyst. Your task is to analyze a list of financial transactions and provide a summary.
 
   Based on the provided transactions, calculate the following:
   1.  **Total Income**: Sum of all 'income' type transactions.

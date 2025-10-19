@@ -72,7 +72,7 @@ export default function Sidebar() {
             strokeLinejoin="round"
           />
         </svg>
-        <h1 className="text-xl font-bold">Uplift AI</h1>
+        <h1 className="text-xl font-bold">FIn-Box</h1>
       </div>
       <nav className="flex-1 px-4 py-2 space-y-1">
         {navItems.map(item => (

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -26,7 +27,7 @@ export async function generateFinBite(): Promise<GenerateFinBiteOutput> {
 const generateFinBitePrompt = ai.definePrompt({
   name: 'generateFinBitePrompt',
   output: { schema: GenerateFinBiteOutputSchema },
-  prompt: `You are "Uplift AI," a specialized financial mentor. Your task is to provide the latest, most relevant update on a startup scheme or policy from the Indian central government, RBI, or Startup India.
+  prompt: `You are "FIn-Box," a specialized financial mentor. Your task is to provide the latest, most relevant update on a startup scheme or policy from the Indian central government, RBI, or Startup India.
 
   Generate a concise bulletin that includes:
   1.  **Title**: The name of the scheme or policy.

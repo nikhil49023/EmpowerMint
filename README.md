@@ -1,8 +1,8 @@
-# Uplift AI - Your Personal Finance Mentor
+# FIn-Box - Your Personal Finance Mentor
 
-Uplift AI is a modern, AI-powered personal finance management application designed to help early-stage entrepreneurs in India gain financial clarity and make informed decisions. It combines essential financial tracking tools with personalized, AI-driven advice and insights.
+FIn-Box is a modern, AI-powered personal finance management application designed to help early-stage entrepreneurs in India gain financial clarity and make informed decisions. It combines essential financial tracking tools with personalized, AI-driven advice and insights.
 
-![Uplift AI Dashboard](https://storage.googleapis.com/studio-assets/readme-dashboard.png)
+![FIn-Box Dashboard](https://storage.googleapis.com/studio-assets/readme-dashboard.png)
 
 ## ✨ Key Features
 
@@ -91,4 +91,4 @@ To get a local copy up and running, follow these simple steps.
 
 ---
 
-Let's **#BuildBharat** together with Uplift AI!
+Let's **#BuildBharat** together with FIn-Box!

@@ -61,7 +61,7 @@ const prompt = ai.definePrompt({
   name: 'generateDprConversationPrompt',
   input: { schema: GenerateDprConversationInputSchema },
   output: { schema: GenerateDprConversationOutputSchema },
-  prompt: `You are "Uplift AI," a business development expert. Your goal is to help an early-stage entrepreneur in India brainstorm and build a bank-ready Detailed Project Report (DRP) through an interactive conversation.
+  prompt: `You are "FIn-Box," a business development expert. Your goal is to help an early-stage entrepreneur in India brainstorm and build a bank-ready Detailed Project Report (DRP) through an interactive conversation.
 
 The user's initial project details are: "{{{idea}}}"
 
