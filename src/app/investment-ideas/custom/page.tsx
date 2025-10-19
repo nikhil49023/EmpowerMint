@@ -65,6 +65,17 @@ function InvestmentIdeaContent() {
   const { toast } = useToast();
   const { translations } = useLanguage();
 
+  const handleGenerateDpr = () => {
+    if (!analysis || !user) return;
+    // Store the analysis in localStorage to pass it to the next page
+    localStorage.setItem('dprAnalysis', JSON.stringify(analysis));
+    router.push(
+      `/generate-drp?idea=${encodeURIComponent(
+        analysis.title
+      )}&name=${encodeURIComponent(user?.displayName || '')}`
+    );
+  };
+
   const saveAnalysis = useCallback(
     async (analysisToSave: GenerateInvestmentIdeaAnalysisOutput) => {
       if (!user) return;
@@ -260,15 +271,9 @@ function InvestmentIdeaContent() {
                       </>
                     )}
                   </Button>
-                  <Button asChild>
-                    <Link
-                      href={`/generate-drp?idea=${encodeURIComponent(
-                        analysis.title
-                      )}&name=${encodeURIComponent(user?.displayName || '')}`}
-                    >
+                  <Button onClick={handleGenerateDpr} disabled={!analysis || !user}>
                       <FileText className="mr-2" />
                       Generate DPR
-                    </Link>
                   </Button>
                 </div>
               )

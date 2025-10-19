@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   FileText,
@@ -20,9 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormattedText } from '@/components/financify/formatted-text';
 import Link from 'next/link';
-import { useLanguage } from '@/hooks/use-language';
 import { generateDprSectionAction } from '@/app/actions';
-import type { GenerateDprSectionOutput } from '@/ai/schemas/dpr';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -31,11 +29,11 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 
 const dprChapterTitles = [
   'Executive Summary',
@@ -68,6 +66,8 @@ function GenerateDPRContent() {
   const idea = searchParams.get('idea');
   const promoterName = searchParams.get('name');
 
+  const [analysis, setAnalysis] =
+    useState<GenerateInvestmentIdeaAnalysisOutput | null>(null);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [generatedSections, setGeneratedSections] = useState<
     Record<string, string>
@@ -80,17 +80,31 @@ function GenerateDPRContent() {
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    if (idea && promoterName) {
-      generateSection(0);
+    const analysisDataString = localStorage.getItem('dprAnalysis');
+    if (analysisDataString) {
+      const parsedAnalysis = JSON.parse(analysisDataString);
+      setAnalysis(parsedAnalysis);
+      // Automatically start generating the first section once analysis is loaded
+      generateSection(0, parsedAnalysis);
+    } else {
+       toast({
+        variant: 'destructive',
+        title: 'Error',
+        description:
+          'Could not load investment analysis. Please go back and try again.',
+      });
     }
+    // Cleanup localStorage
+    // return () => localStorage.removeItem('dprAnalysis');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idea, promoterName]);
+  }, []);
 
   const generateSection = async (
     sectionIndex: number,
+    baseAnalysis: GenerateInvestmentIdeaAnalysisOutput | null,
     revisionRequest?: string
   ) => {
-    if (!idea || !promoterName) return;
+    if (!idea || !promoterName || !baseAnalysis) return;
 
     const targetSection = dprChapterTitles[sectionIndex];
     setIsGenerating(true);
@@ -106,8 +120,10 @@ function GenerateDPRContent() {
           return acc;
         }, {} as Record<string, string>);
 
+      // We will use a simplified input for the section generator for now.
+      // A more advanced implementation could pass the full analysis.
       const result = await generateDprSectionAction({
-        idea,
+        idea: baseAnalysis.title, // Use title from analysis
         promoterName,
         targetSection,
         previousSections,
@@ -150,18 +166,22 @@ function GenerateDPRContent() {
 
   const handleAcceptAndContinue = () => {
     const currentSectionTitle = dprChapterTitles[currentSectionIndex];
+    const finalContent = currentSectionContent;
+    
     setGeneratedSections(prev => ({
       ...prev,
-      [currentSectionTitle]: currentSectionContent,
+      [currentSectionTitle]: finalContent,
     }));
 
     if (currentSectionIndex < dprChapterTitles.length - 1) {
       const nextIndex = currentSectionIndex + 1;
       setCurrentSectionIndex(nextIndex);
-      generateSection(nextIndex);
+      generateSection(nextIndex, analysis);
     } else {
       // All sections are done
-      localStorage.setItem('finalDPR', JSON.stringify(generatedSections));
+      // Combine final section with the rest
+      const finalReport = { ...generatedSections, [currentSectionTitle]: finalContent };
+      localStorage.setItem('finalDPR', JSON.stringify(finalReport));
       router.push('/dpr-report');
     }
   };
@@ -189,7 +209,7 @@ function GenerateDPRContent() {
     setChatMessages(prev => [...prev, userMessage]);
     setIsSubmittingChat(true);
 
-    await generateSection(currentSectionIndex, chatInput);
+    await generateSection(currentSectionIndex, analysis, chatInput);
     setChatInput('');
   };
 
@@ -368,5 +388,3 @@ export default function GenerateDPRPage() {
     </Suspense>
   );
 }
-
-    
