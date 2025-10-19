@@ -19,6 +19,7 @@ import {
   type SecurityRuleContext,
 } from '@/firebase/errors';
 import { useLanguage } from '@/hooks/use-language';
+import { usePathname } from 'next/navigation';
 
 type Message = {
   id: string;
@@ -36,6 +37,9 @@ export default function AIAdvisorChat() {
   const [user, loadingAuth] = useAuthState(auth);
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
   const { translations } = useLanguage();
+  const pathname = usePathname();
+
+  const useTransactionContext = !pathname.includes('/dpr-report');
 
   useEffect(() => {
     // Generate the welcome message on the client-side to avoid hydration mismatch
@@ -51,7 +55,7 @@ export default function AIAdvisorChat() {
   }, [translations]);
 
   useEffect(() => {
-    if (user) {
+    if (user && useTransactionContext) {
       const q = query(collection(db, 'users', user.uid, 'transactions'));
       const unsubscribe = onSnapshot(
         q,
@@ -71,7 +75,7 @@ export default function AIAdvisorChat() {
       );
       return () => unsubscribe();
     }
-  }, [user]);
+  }, [user, useTransactionContext]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -107,7 +111,10 @@ export default function AIAdvisorChat() {
     setInput('');
     setIsLoading(true);
 
-    const result = await askAIAdvisorAction({ query: input, transactions });
+    const result = await askAIAdvisorAction({
+      query: input,
+      transactions: useTransactionContext ? transactions : [],
+    });
 
     if (result.success) {
       const newAiMessage: Message = {
