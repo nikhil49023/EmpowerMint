@@ -122,35 +122,34 @@ export async function generateInvestmentIdeaAnalysisAction(
   }
 }
 
-// This server action is no longer used, as writes are handled on the client.
-// It is kept here for reference but can be removed in the future.
-export async function saveInvestmentIdeaAction(
-  userId: string,
-  idea: GenerateInvestmentIdeaAnalysisOutput
-): Promise<{ success: true } | { success: false; error: string }> {
-  if (!userId || !idea) {
-    return { success: false, error: 'User ID and idea data are required.' };
+export async function saveFeedbackAction(input: {
+  message: string;
+  userId?: string;
+  userName?: string | null;
+  userEmail?: string | null;
+}): Promise<{ success: true } | { success: false; error: string }> {
+  if (!input.message) {
+    return { success: false, error: 'Feedback message cannot be empty.' };
   }
 
   try {
     const db = getDb();
-    const ideasCollectionRef = collection(db, 'users', userId, 'ideas');
-    await addDoc(ideasCollectionRef, {
-      title: idea.title,
-      summary: idea.summary,
-      savedAt: serverTimestamp(),
+    await addDoc(collection(db, 'feedback'), {
+      ...input,
+      createdAt: serverTimestamp(),
     });
     return { success: true };
   } catch (error) {
-    console.error('Error saving investment idea:', error);
+    console.error('Error saving feedback:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred.';
     return {
       success: false,
-      error: `Failed to save investment idea: ${errorMessage}`,
+      error: `Failed to save feedback: ${errorMessage}`,
     };
   }
 }
+
 
 export async function generateDprConversationAction(
   input: GenerateDprConversationInput

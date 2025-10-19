@@ -10,6 +10,8 @@ import {
   Rocket,
   Globe,
   Star,
+  FileText,
+  MessageSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -33,22 +35,89 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/hooks/use-language';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '../ui/dialog';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
+import { saveFeedbackAction } from '@/app/actions';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, translations } = useLanguage();
+  const [feedback, setFeedback] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [user] = useAuthState(auth);
+  const { toast } = useToast();
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
 
   const navItems = [
     { href: '/dashboard', label: translations.sidebar.dashboard, icon: Home },
-    { href: '/transactions', label: translations.sidebar.transactions, icon: Wallet },
-    { href: '/brainstorm', label: translations.sidebar.brainstorm, icon: BrainCircuit },
+    {
+      href: '/transactions',
+      label: translations.sidebar.transactions,
+      icon: Wallet,
+    },
+    {
+      href: '/brainstorm',
+      label: translations.sidebar.brainstorm,
+      icon: BrainCircuit,
+    },
     { href: '/launchpad', label: translations.sidebar.launchpad, icon: Rocket },
+    {
+      href: '/application-tracker',
+      label: translations.sidebar.applicationTracker,
+      icon: FileText,
+    },
   ];
-
 
   const handleLogout = () => {
     router.push('/');
+  };
+
+  const handleFeedbackSubmit = async () => {
+    if (!feedback.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Feedback cannot be empty',
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    const result = await saveFeedbackAction({
+      message: feedback,
+      userId: user?.uid,
+      userName: user?.displayName,
+      userEmail: user?.email,
+    });
+    setIsSubmitting(false);
+
+    if (result.success) {
+      toast({
+        title: 'Feedback Sent!',
+        description: 'Thank you for your feedback.',
+      });
+      setFeedback('');
+      setIsFeedbackDialogOpen(false);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: result.error,
+      });
+    }
   };
 
   return (
@@ -129,15 +198,57 @@ export default function Sidebar() {
           <User className="mr-3 h-5 w-5" />
           {translations.sidebar.myProfile}
         </Button>
-        <a href="mailto:kilanisainikhil1@gmail.com?subject=Feedback for FIn-Box">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground"
-          >
-            <Star className="mr-3 h-5 w-5" />
-            {translations.sidebar.giveFeedback}
-          </Button>
-        </a>
+        <Dialog
+          open={isFeedbackDialogOpen}
+          onOpenChange={setIsFeedbackDialogOpen}
+        >
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground"
+            >
+              <MessageSquare className="mr-3 h-5 w-5" />
+              {translations.sidebar.giveFeedback}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{translations.feedbackDialog.title}</DialogTitle>
+              <DialogDescription>
+                {translations.feedbackDialog.description}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid w-full gap-1.5">
+                <Label htmlFor="feedback-message">
+                  {translations.feedbackDialog.yourFeedback}
+                </Label>
+                <Textarea
+                  placeholder={translations.feedbackDialog.placeholder}
+                  id="feedback-message"
+                  value={feedback}
+                  onChange={e => setFeedback(e.target.value)}
+                  rows={5}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  {translations.feedbackDialog.cancel}
+                </Button>
+              </DialogClose>
+              <Button
+                onClick={handleFeedbackSubmit}
+                disabled={isSubmitting || !feedback.trim()}
+              >
+                {isSubmitting
+                  ? translations.feedbackDialog.submitting
+                  : translations.feedbackDialog.submit}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button

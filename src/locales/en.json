@@ -5,9 +5,19 @@
     "transactions": "Transactions",
     "brainstorm": "Brainstorm",
     "launchpad": "Launchpad",
+    "applicationTracker": "Application Tracker",
     "myProfile": "My Profile",
     "giveFeedback": "Give Feedback",
     "logout": "Logout"
+  },
+  "feedbackDialog": {
+    "title": "Give Feedback",
+    "description": "We'd love to hear your thoughts on how we can improve.",
+    "yourFeedback": "Your Feedback",
+    "placeholder": "Tell us what you think...",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "submitting": "Submitting..."
   },
   "logoutDialog": {
     "title": "Are you sure you want to logout?",
