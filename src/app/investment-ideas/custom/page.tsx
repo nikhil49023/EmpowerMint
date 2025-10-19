@@ -18,6 +18,7 @@ import {
   Shield,
   Save,
   CheckCircle,
+  FileText,
 } from 'lucide-react';
 import { generateInvestmentIdeaAnalysisAction } from '@/app/actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -185,22 +186,30 @@ function InvestmentIdeaContent() {
           </CardHeader>
           {!isLoading && analysis && (
             <CardContent>
-              <Button
-                onClick={handleSaveIdea}
-                disabled={isSaving || isSaved || !user}
-              >
-                {isSaved ? (
-                  <>
-                    <CheckCircle className="mr-2" /> {translations.investmentIdea.ideaSaved}
-                  </>
-                ) : isSaving ? (
-                  translations.investmentIdea.saving
-                ) : (
-                  <>
-                    <Save className="mr-2" /> {translations.investmentIdea.addToMyIdeas}
-                  </>
-                )}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={handleSaveIdea}
+                  disabled={isSaving || isSaved || !user}
+                >
+                  {isSaved ? (
+                    <>
+                      <CheckCircle className="mr-2" /> {translations.investmentIdea.ideaSaved}
+                    </>
+                  ) : isSaving ? (
+                    translations.investmentIdea.saving
+                  ) : (
+                    <>
+                      <Save className="mr-2" /> {translations.investmentIdea.addToMyIdeas}
+                    </>
+                  )}
+                </Button>
+                <Button asChild>
+                  <Link href={`/generate-drp?idea=${encodeURIComponent(analysis.title)}`}>
+                    <FileText className="mr-2" />
+                    Generate DPR
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           )}
         </Card>
