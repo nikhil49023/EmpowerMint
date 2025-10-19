@@ -36,8 +36,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from '@/components/ui/carousel';
 import { useLanguage } from '@/hooks/use-language';
 import Link from 'next/link';
@@ -59,7 +57,32 @@ const PortalCard = ({
   <Dialog>
     <DialogTrigger asChild>
       <Card className="h-full flex flex-col glassmorphic hover:border-primary transition-colors cursor-pointer">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center gap-4">
+          <svg
+            className="w-12 h-12 text-primary"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 2L3 7V17L12 22L21 17V7L12 2Z"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeLinejoin="round"
+            ></path>
+            <path
+              d="M3.5 7.5L12 12.5L20.5 7.5"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeLinejoin="round"
+            ></path>
+            <path
+              d="M12 21.5V12.5"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeLinejoin="round"
+            ></path>
+          </svg>
           <CardTitle className="text-lg">{title}</CardTitle>
         </CardHeader>
         <CardContent className="flex-1">
@@ -290,7 +313,52 @@ export default function LaunchpadPage() {
         'Units handling value-added food products, packaging, and export.',
     },
   ];
-  
+
+  const govtSchemes = [
+    {
+      icon: Briefcase,
+      title: 'AP MSME & Entrepreneur Development Policy 4.0 (2024–29)',
+      description:
+        'Capital subsidy, tax reimbursement, land rebates for MSMEs, priority for women/SC/ST/backward region entrepreneurs, “One Family, One Entrepreneur” vision, plug-and-play industrial parks.',
+      url: 'https://www.apindustries.gov.in/apindus/Data/policies/AP%20MSME%20&%20EDP%20(4.0)%20-%202024-29.pdf',
+    },
+    {
+      icon: Briefcase,
+      title: 'MSE-CDP (Cluster Development Programme)',
+      description:
+        'Support for MSME clusters with grants for common facilities, technology upgrade, shared infrastructure.',
+      url: 'https://cluster.dcmsme.gov.in',
+    },
+    {
+      icon: Briefcase,
+      title: 'CGTMSE (Credit Guarantee Fund Trust for Micro and Small Enterprises)',
+      description:
+        'Collateral-free business loans for micro and small enterprises, increased formal credit flow, guarantees up to ₹5 crore.',
+      url: 'https://www.cgtmse.in/',
+    },
+    {
+      icon: Briefcase,
+      title: 'RAMP (Raising and Accelerating MSME Performance)',
+      description:
+        'Capacity building, export and market access, MSME formalization, digital tools, state grants for Strategic Investment Plan (SIP) implementation.',
+      url: 'https://apmsmeone.ap.gov.in/MSMEONE/RAMP/AboutRamp.aspx?ID=ABOUT',
+    },
+    {
+      icon: Briefcase,
+      title: 'ZED Certification Scheme (Zero Defect Zero Effect)',
+      description:
+        'Enhances quality and sustainability for MSME manufacturing enterprises, subsidy for Bronze/Silver/Gold certification levels.',
+      url: 'https://zed.msme.gov.in/certification-process',
+    },
+    {
+      icon: Briefcase,
+      title: 'PMEGP (Prime Minister’s Employment Generation Programme)',
+      description:
+        'Subsidy-linked loans for new micro enterprises, self-employment generation.',
+      url: 'https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp',
+    },
+  ];
+
   const plugin = React.useRef(
     Autoplay({ delay: 2000, stopOnInteraction: false, stopOnMouseEnter: true })
   );
@@ -335,7 +403,9 @@ export default function LaunchpadPage() {
 
         <Card className="glassmorphic lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-xl md:text-2xl">{translations.launchpad.startupJourney.title}</CardTitle>
+            <CardTitle className="text-xl md:text-2xl">
+              {translations.launchpad.startupJourney.title}
+            </CardTitle>
             <CardDescription>
               {translations.launchpad.startupJourney.description}
             </CardDescription>
@@ -354,9 +424,7 @@ export default function LaunchpadPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">{step.title}</h3>
-                  <p className="text-muted-foreground">
-                    {step.description}
-                  </p>
+                  <p className="text-muted-foreground">{step.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -378,6 +446,7 @@ export default function LaunchpadPage() {
             <Carousel
               opts={{
                 align: 'start',
+                loop: true,
               }}
               plugins={[plugin.current]}
               className="w-full"
@@ -413,6 +482,48 @@ export default function LaunchpadPage() {
           </CardContent>
         </Card>
 
+        <Card className="glassmorphic lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
+              <Banknote />
+              Key Government Schemes
+            </CardTitle>
+            <CardDescription>
+              Leverage these government initiatives to fuel your growth.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {govtSchemes.map((scheme, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="flex items-start gap-4 p-4 rounded-lg bg-background/50"
+              >
+                <div className="p-3 bg-primary/10 text-primary rounded-full">
+                  <scheme.icon className="h-6 w-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">{scheme.title}</h3>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    {scheme.description}
+                  </p>
+                  <Button asChild variant="link" className="p-0 mt-2">
+                    <a
+                      href={scheme.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Learn More
+                    </a>
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+          </CardContent>
+        </Card>
+
         <Card className="glassmorphic">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
@@ -444,3 +555,5 @@ export default function LaunchpadPage() {
     </div>
   );
 }
+
+    
