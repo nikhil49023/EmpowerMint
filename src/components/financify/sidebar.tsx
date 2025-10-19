@@ -126,8 +126,8 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
   };
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-card border-r flex flex-col">
-      <div className="p-6 flex items-center gap-2">
+    <aside className="w-full md:w-64 flex-shrink-0 bg-card/80 backdrop-blur-lg border-r flex flex-col p-4 md:p-0">
+      <div className="hidden md:flex p-6 items-center gap-2">
         <svg
           width="40"
           height="40"
@@ -157,16 +157,16 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
         </svg>
         <h1 className="text-xl font-bold">FIn-Box</h1>
       </div>
-      <nav className="flex-1 px-4 py-2 space-y-1">
+      <nav className="flex-1 px-0 md:px-4 py-2 space-y-1">
         {navItems.map(item => (
           <Button
             key={item.label}
             variant="ghost"
             asChild
             className={cn(
-              'w-full justify-start text-muted-foreground hover:text-primary',
+              'w-full justify-start text-base font-normal text-muted-foreground hover:text-primary hover:bg-primary/10',
               pathname.startsWith(item.href) &&
-                'bg-accent text-accent-foreground hover:bg-accent/80 hover:text-accent-foreground'
+                'font-semibold text-primary bg-primary/10'
             )}
             onClick={handleLinkClick}
           >
@@ -177,12 +177,12 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
           </Button>
         ))}
       </nav>
-      <div className="p-4 border-t">
+      <div className="p-0 md:p-4 border-t">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground"
+              className="w-full justify-start text-muted-foreground font-normal"
             >
               <Globe className="mr-3 h-5 w-5" />
               {language === 'en' ? 'English' : 'తెలుగు'}
@@ -199,7 +199,7 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
         </DropdownMenu>
         <Button
           variant="ghost"
-          className="w-full justify-start text-muted-foreground"
+          className="w-full justify-start text-muted-foreground font-normal"
         >
           <User className="mr-3 h-5 w-5" />
           {translations.sidebar.myProfile}
@@ -211,7 +211,7 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
           <DialogTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground"
+              className="w-full justify-start text-muted-foreground font-normal"
             >
               <MessageSquare className="mr-3 h-5 w-5" />
               {translations.sidebar.giveFeedback}
@@ -259,7 +259,7 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
           <AlertDialogTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start text-destructive hover:text-destructive"
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <LogOut className="mr-3 h-5 w-5" />
               {translations.sidebar.logout}
