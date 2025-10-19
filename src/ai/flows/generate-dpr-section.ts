@@ -29,6 +29,10 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert consultant hired to write a bank-ready Detailed Project Report (DPR) for an entrepreneur in India.
 Your current task is to generate the content for a specific section of the DPR.
 
+**Formatting Instructions:**
+- Use markdown for formatting, like **bolding** key terms.
+- For any data that is a placeholder or requires user input (like names, specific numbers, dates), wrap it in VAR{...}. For example: VAR{[Your Company Name]}, VAR{(x) months}.
+
 **Promoter's Name:** {{{promoterName}}}
 **Core Business Idea:** "{{{idea}}}"
 
@@ -45,12 +49,12 @@ You have already generated a draft for the "{{targetSection}}" section. The user
 - **User Feedback:** "{{revisionRequest.feedback}}"
 - **Original Text:** "{{revisionRequest.originalText}}"
 
-Your task is to **REVISE** the original text based on the user's feedback. Generate a new version of the "{{targetSection}}" section that incorporates their changes. Do not repeat the feedback. Only provide the revised content for the section.
+Your task is to **REVISE** the original text based on the user's feedback. Generate a new version of the "{{targetSection}}" section that incorporates their changes. Do not repeat the feedback. Only provide the revised content for the section, following all formatting instructions.
 {{else}}
 **Current Task:**
 Generate the content for the **"{{targetSection}}"** section of the DPR.
 
-Make the content detailed, professional, and suitable for a banking audience. Use markdown for formatting, like **bolding** key terms.
+Make the content detailed, professional, and suitable for a banking audience. Follow all formatting instructions.
 {{/if}}
 
 Please generate only the content for the "{{targetSection}}" section.
@@ -68,5 +72,3 @@ const generateDprSectionFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

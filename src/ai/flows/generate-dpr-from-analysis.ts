@@ -27,6 +27,10 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert consultant hired to write a bank-ready Detailed Project Report (DPR) for an entrepreneur in India.
 You have been provided with a preliminary analysis of the business idea. Your task is to expand this analysis into a comprehensive, 40-80 page DPR suitable for obtaining an MSME or startup loan.
 
+**Formatting Instructions:**
+- Use markdown for formatting, such as **bolding** key terms.
+- For any data that is a placeholder or requires user input (like names, specific numbers, dates), wrap it in VAR{...}. For example: VAR{[Your Company Name]}, VAR{(x) months}.
+
 **Promoter's Name:** {{{promoterName}}}
 
 **Core Business Idea Analysis:**
@@ -43,7 +47,6 @@ You have been provided with a preliminary analysis of the business idea. Your ta
 - For "Promoter Details", use the provided promoter name and generate a plausible background.
 - For "Financial Projections", create detailed, credible data. The 'costBreakdown' and 'yearlyProjections' must be valid JSON arrays for charts.
 - The tone must be professional, formal, and persuasive for a banking audience.
-- Use markdown for formatting, such as **bolding** key terms.
 - Ensure the output is a single, complete JSON object matching the required schema.
 `,
 });

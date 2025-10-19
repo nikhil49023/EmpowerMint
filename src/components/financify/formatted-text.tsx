@@ -1,9 +1,10 @@
+
 'use client';
 
 import React from 'react';
 
-// This regex will find all instances of CURRENCY{...} and **...**
-const formattingRegex = /(CURRENCY\{.*?\})|(\*\*.*?\*\*)/g;
+// This regex will find all instances of CURRENCY{...}, **...**, and VAR{...}
+const formattingRegex = /(CURRENCY\{.*?\})|(\*\*.*?\*\*)|(VAR\{.*?\})/g;
 
 type FormattedTextProps = {
   text: string;
@@ -35,6 +36,16 @@ export function FormattedText({ text }: FormattedTextProps) {
         <strong key={index} className="font-semibold">
           {boldText}
         </strong>
+      );
+    }
+
+    // Check for variable/placeholder format: VAR{...}
+    if (part.startsWith('VAR{') && part.endsWith('}')) {
+      const varText = part.slice('VAR{'.length, -1);
+      return (
+        <span key={index} className="text-red-600 font-semibold">
+          {varText}
+        </span>
       );
     }
 
