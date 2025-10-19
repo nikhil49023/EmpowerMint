@@ -20,9 +20,19 @@ import {
   Sparkles,
   Globe,
   LogIn,
+  X,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { useState } from 'react';
 
 const startupSteps = [
   {
@@ -113,6 +123,54 @@ const startupHubs = [
   },
 ];
 
+const PortalCard = ({
+  title,
+  description,
+  url,
+}: {
+  title: string;
+  description: string;
+  url: string;
+}) => (
+  <Dialog>
+    <DialogTrigger asChild>
+      <Card className="h-full flex flex-col">
+        <CardHeader>
+          <CardTitle className="text-lg">{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1">
+          <p className="text-muted-foreground text-sm">{description}</p>
+        </CardContent>
+        <CardContent>
+          <Button>
+            <LogIn className="mr-2 h-4 w-4" /> Login to Portal
+          </Button>
+        </CardContent>
+      </Card>
+    </DialogTrigger>
+    <DialogContent className="max-w-[90vw] h-[90vh] flex flex-col p-0 glassmorphic">
+      <DialogHeader className="p-4 border-b flex-row flex justify-between items-center">
+        <DialogTitle className="flex items-center gap-2">
+          <Globe className="w-5 h-5" />
+          {title}
+        </DialogTitle>
+        <DialogClose asChild>
+          <Button variant="ghost" size="icon">
+            <X className="h-4 w-4" />
+          </Button>
+        </DialogClose>
+      </DialogHeader>
+      <div className="flex-1 overflow-hidden">
+        <iframe
+          src={url}
+          className="w-full h-full border-0"
+          title={title}
+        />
+      </div>
+    </DialogContent>
+  </Dialog>
+);
+
 export default function LaunchpadPage() {
   return (
     <div className="space-y-8">
@@ -125,7 +183,7 @@ export default function LaunchpadPage() {
           Your guide to starting and growing your enterprise in India.
         </p>
       </div>
-       <Card className="glassmorphic">
+      <Card className="glassmorphic">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe />
@@ -135,28 +193,12 @@ export default function LaunchpadPage() {
             Access resources and schemes from your state government.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-           <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">APMSME ONE</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <p className="text-muted-foreground text-sm">
-                    A dedicated portal for Micro, Small and Medium Enterprises in Andhra Pradesh, offering a range of services and support.
-                  </p>
-                </CardContent>
-                <CardContent>
-                    <a
-                        href="http://www.apmsmeone.in/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <Button>
-                            <LogIn className="mr-2 h-4 w-4" /> Login to Portal
-                        </Button>
-                  </a>
-                </CardContent>
-              </Card>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <PortalCard
+            title="APMSME ONE"
+            description="A dedicated portal for Micro, Small and Medium Enterprises in Andhra Pradesh, offering a range of services and support."
+            url="http://www.apmsmeone.in/"
+          />
         </CardContent>
       </Card>
 
@@ -230,7 +272,7 @@ export default function LaunchpadPage() {
           ))}
         </CardContent>
       </Card>
-      
+
       <Card className="glassmorphic">
         <CardHeader>
           <CardTitle>Your Startup Journey</CardTitle>
