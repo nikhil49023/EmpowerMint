@@ -47,17 +47,17 @@ export default function RootLayout({
       <body className={`${inter.variable} font-body antialiased`}>
         <FirebaseProvider>
           <LanguageProvider>
-            <div className="flex h-screen overflow-hidden bg-background">
+            <div className="md:flex md:h-screen md:overflow-hidden bg-background">
               {/* Desktop Sidebar */}
               <div className="hidden md:flex md:flex-shrink-0">
                 <Sidebar />
               </div>
 
-              <div className="flex flex-col w-0 flex-1 overflow-hidden">
+              <div className="flex flex-col w-0 flex-1 md:overflow-hidden print:overflow-visible">
                 {/* Mobile Header */}
                 <AppHeader />
                 
-                <main className="flex-1 relative overflow-y-auto focus:outline-none">
+                <main className="flex-1 relative md:overflow-y-auto focus:outline-none print:overflow-visible">
                   <div className="py-6 px-4 sm:px-6 lg:px-8">
                     <AnimatePresence mode="wait">
                       <motion.div

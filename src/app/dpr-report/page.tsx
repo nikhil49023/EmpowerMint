@@ -9,14 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormattedText } from '@/components/financify/formatted-text';
 import Link from 'next/link';
-import {
-  FinancialProjectionsBarChart,
-  ProjectCostPieChart,
-} from '@/components/financify/dpr-charts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
 
 type ReportData = {
   [key: string]: any;
@@ -38,6 +33,7 @@ const dprChapterTitles = [
   'Annexures',
 ];
 
+
 function DPRReportContent() {
   const searchParams = useSearchParams();
   const [report, setReport] = useState<ReportData | null>(null);
@@ -45,7 +41,6 @@ function DPRReportContent() {
   const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
   const ideaTitle = searchParams.get('idea');
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -75,9 +70,6 @@ function DPRReportContent() {
   }, [user, ideaTitle]);
 
   const handleExport = () => {
-    // This will use the browser's print-to-PDF functionality,
-    // which is the most reliable cross-browser client-side solution.
-    // The print-specific styles ensure only the report is printed.
     window.print();
   };
 
@@ -122,20 +114,15 @@ function DPRReportContent() {
             visibility: visible;
           }
           #print-section {
-            position: absolute;
-            left: 0;
-            top: 0;
-            right: 0;
-            margin: 20px;
+            position: static;
+            margin: 0;
+            width: 100%;
           }
           .no-print {
             display: none;
           }
           .print-break-before {
             page-break-before: always;
-          }
-          .print-break-after {
-            page-break-after: always;
           }
         }
       `}</style>
