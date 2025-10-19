@@ -492,35 +492,53 @@ export default function LaunchpadPage() {
               Leverage these government initiatives to fuel your growth.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {govtSchemes.map((scheme, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="flex items-start gap-4 p-4 rounded-lg bg-background/50"
-              >
-                <div className="p-3 bg-primary/10 text-primary rounded-full">
-                  <scheme.icon className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">{scheme.title}</h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    {scheme.description}
-                  </p>
-                  <Button asChild variant="link" className="p-0 mt-2">
-                    <a
-                      href={scheme.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Learn More
-                    </a>
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
+          <CardContent>
+             <Carousel
+              opts={{
+                align: 'start',
+                loop: true,
+              }}
+              plugins={[plugin.current]}
+              className="w-full"
+              onMouseEnter={plugin.current.stop}
+              onMouseLeave={plugin.current.reset}
+            >
+              <CarouselContent>
+                {govtSchemes.map((scheme, index) => (
+                  <CarouselItem
+                    key={index}
+                    className="md:basis-1/2 lg:basis-1/3"
+                  >
+                    <div className="p-1 h-full">
+                      <Card className="h-full flex flex-col glassmorphic hover:bg-background/80">
+                        <CardHeader>
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <scheme.icon className="h-6 w-6 text-primary" />
+                            {scheme.title}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-1 space-y-2">
+                          <p className="text-muted-foreground text-sm">
+                            {scheme.description}
+                          </p>
+                        </CardContent>
+                         <CardContent>
+                           <Button asChild variant="link" className="p-0">
+                            <a
+                              href={scheme.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Learn More
+                            </a>
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </CardContent>
         </Card>
 
