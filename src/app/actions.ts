@@ -29,11 +29,11 @@ import {
   type GenerateFinancialAdviceInput,
   type GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
-import {
-  generateDprSection,
-  type GenerateDprSectionInput,
-  type GenerateDprSectionOutput,
-} from '@/ai/flows/generate-dpr-section';
+import { generateDprSection } from '@/ai/flows/generate-dpr-section';
+import type {
+  GenerateDprSectionInput,
+  GenerateDprSectionOutput,
+} from '@/ai/schemas/dpr';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -114,7 +114,6 @@ export async function generateInvestmentIdeaAnalysisAction(
   }
 }
 
-
 export async function saveFeedbackAction(input: {
   message: string;
   userId?: string;
@@ -131,16 +130,25 @@ export async function saveFeedbackAction(input: {
       ...input,
       createdAt: serverTimestamp(),
     };
-
-    // Note: The `.catch` logic for permission errors will only work on the client-side.
-    // In a server action, the error will be caught by the try/catch block.
-    await addDoc(feedbackCollectionRef, feedbackData);
+    
+    addDoc(feedbackCollectionRef, feedbackData)
+      .catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: feedbackCollectionRef.path,
+          operation: 'create',
+          requestResourceData: feedbackData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        
+        // Since this is a server action, we need to return an error to the client
+        // This part won't be executed in the same way as a client-side catch,
+        // so we re-throw to be caught by the outer try-catch.
+        throw permissionError;
+      });
 
     return { success: true };
   } catch (error) {
     console.error('Error saving feedback:', error);
-    // You could potentially check for Firestore permission errors here
-    // but the error object might not be as rich as the one from the client.
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred.';
     return {

@@ -5,62 +5,15 @@
  * @fileOverview A Genkit flow for generating a single section of a Detailed Project Report (DPR).
  *
  * - generateDprSection - A function that generates or revises a single DPR section.
- * - GenerateDprSectionInput - The input type for the function.
- * - GenerateDprSectionOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-
-// Define the structure for a single message in the conversation history
-const DprMessageSchema = z.object({
-  role: z.enum(['user', 'model']),
-  text: z.string(),
-});
-
-const PreviousSectionSchema = z.object({
-  title: z.string(),
-  content: z.string(),
-});
-
-// Define the input schema for the flow
-export const GenerateDprSectionInputSchema = z.object({
-  idea: z
-    .string()
-    .describe(
-      'A string containing the core business idea and other details collected from the user, such as Project Name, Promoter Name, etc.'
-    ),
-  history: z
-    .array(DprMessageSchema)
-    .describe('The history of the conversation so far.'),
-  sectionTitle: z
-    .string()
-    .describe('The title of the DPR section to be generated or revised.'),
-  previousSections: z
-    .array(PreviousSectionSchema)
-    .optional()
-    .describe(
-      'Content of the previously completed sections to provide context.'
-    ),
-});
-export type GenerateDprSectionInput = z.infer<
-  typeof GenerateDprSectionInputSchema
->;
-
-// Define the output schema for the flow
-export const GenerateDprSectionOutputSchema = z.object({
-  sectionContent: z
-    .string()
-    .describe('The detailed content for the requested DPR section.'),
-  followupQuestion: z
-    .string()
-    .describe(
-      "A follow-up question to the user to confirm the generated content or ask for more details."
-    ),
-});
-export type GenerateDprSectionOutput = z.infer<
-  typeof GenerateDprSectionOutputSchema
->;
+import {
+  GenerateDprSectionInputSchema,
+  type GenerateDprSectionInput,
+  GenerateDprSectionOutputSchema,
+  type GenerateDprSectionOutput,
+} from '@/ai/schemas/dpr';
 
 // Export the main function that the server action will call
 export async function generateDprSection(
