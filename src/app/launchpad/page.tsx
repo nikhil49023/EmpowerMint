@@ -15,12 +15,12 @@ import {
   Rocket,
   Megaphone,
   Lightbulb,
-  ExternalLink,
   MapPin,
   Sparkles,
   Globe,
   LogIn,
   X,
+  Briefcase,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,16 @@ import {
   DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
-import { useState } from 'react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import { useLanguage } from '@/hooks/use-language';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 const PortalCard = ({
   title,
@@ -163,29 +170,6 @@ export default function LaunchpadPage() {
     },
   ];
 
-  const governmentSchemes = [
-    {
-      title: translations.launchpad.govtSchemes.seedFund.title,
-      summary: translations.launchpad.govtSchemes.seedFund.summary,
-      link: 'https://www.startupindia.gov.in/content/sih/en/funding/schemes/seed-fund-scheme.html',
-    },
-    {
-      title: translations.launchpad.govtSchemes.mudra.title,
-      summary: translations.launchpad.govtSchemes.mudra.summary,
-      link: 'https://www.mudra.org.in/',
-    },
-    {
-      title: translations.launchpad.govtSchemes.cgtmse.title,
-      summary: translations.launchpad.govtSchemes.cgtmse.summary,
-      link: 'https://www.cgtmse.in/',
-    },
-    {
-      title: translations.launchpad.govtSchemes.aim.title,
-      summary: translations.launchpad.govtSchemes.aim.summary,
-      link: 'https://aim.gov.in/',
-    },
-  ];
-
   const startupHubs = [
     {
       name: translations.launchpad.startupHubs.bengaluru.name,
@@ -202,6 +186,106 @@ export default function LaunchpadPage() {
     {
       name: translations.launchpad.startupHubs.hyderabad.name,
       description: translations.launchpad.startupHubs.hyderabad.description,
+    },
+  ];
+
+  const msmeClusters = [
+    {
+      name: 'Readymade Garments Cluster',
+      location: 'Rayadurg (Anantapur)',
+      sector: 'Textile/Apparel',
+      description:
+        'Specializing in ready-to-wear clothes, supporting jobs and exports.',
+    },
+    {
+      name: 'Powerloom Cluster',
+      location: 'Nagari (Chittoor)',
+      sector: 'Textile',
+      description:
+        'Center for powerloom-based weaving units, producing fabric for various markets.',
+    },
+    {
+      name: 'Brass Utensils Cluster',
+      location: 'Srikalahasti (Chittoor)',
+      sector: 'Metal Utensils',
+      description:
+        'Artisanal brass utensil production hub for kitchenware and religious items.',
+    },
+    {
+      name: 'Rice Mills Cluster',
+      location: 'East Godavari',
+      sector: 'Agro/Food Processing',
+      description:
+        'Major contributor to state’s rice export and domestic supply.',
+    },
+    {
+      name: 'Graphite Crucibles Cluster',
+      location: 'Rajahmundry (East Godavari)',
+      sector: 'Refractory/Metals',
+      description: 'Crucibles for metallurgical and foundry industries.',
+    },
+    {
+      name: 'Coir & Coir Products Cluster',
+      location: 'Anakapalli, East Godavari',
+      sector: 'Agro/Handicraft',
+      description:
+        'Makers of mats, ropes, and eco-products, supporting coconut farmers.',
+    },
+    {
+      name: 'Aluminium Utensils Cluster',
+      location: 'Rajahmundry (East Godavari)',
+      sector: 'Metal Utensils',
+      description: 'Focused on aluminium cookware and utility products.',
+    },
+    {
+      name: 'Refractory Products Cluster',
+      location: 'East & West Godavari',
+      sector: 'Industrial Materials',
+      description: 'Advanced materials for factories and heavy industry.',
+    },
+    {
+      name: 'Lime Calcination Cluster',
+      location: 'Guntur',
+      sector: 'Minerals',
+      description: 'Lime producers for construction, chemicals, and agriculture.',
+    },
+    {
+      name: 'Powerloom Cluster',
+      location: 'Guntur',
+      sector: 'Textile',
+      description: 'Textile cluster weaving fabrics for various sectors.',
+    },
+    {
+      name: 'Plastic Products Cluster',
+      location: 'Adilabad, Nalgonda',
+      sector: 'Plastics',
+      description: 'Supplying industrial and consumer plastic goods.',
+    },
+    {
+      name: 'Burnt Lime Industry Cluster',
+      location: 'Piduguralla (Guntur)',
+      sector: 'Industrial Minerals',
+      description: 'Specializes in burnt lime production for industrial uses.',
+    },
+    {
+      name: 'Crochet Lace Industry Cluster',
+      location: 'Narsapur (West Godavari)',
+      sector: 'Handicraft/Textile',
+      description:
+        'Famous for handmade crochet lace, supporting rural artisans.',
+    },
+    {
+      name: 'Imitation Jewellery Cluster',
+      location: 'Machilipatnam (Krishna)',
+      sector: 'Gems & Jewellery',
+      description: 'Design and manufacturing of imitation jewellery.',
+    },
+    {
+      name: 'Food Processing Cluster',
+      location: 'Vijayawada (Krishna)',
+      sector: 'Food Processing',
+      description:
+        'Units handling value-added food products, packaging, and export.',
     },
   ];
 
@@ -257,8 +341,8 @@ export default function LaunchpadPage() {
                 transition={{ duration: 0.3, delay: index * 0.1 }}
                 className="flex items-start gap-4"
               >
-                <div className="p-3 bg-accent rounded-full">
-                  <step.icon className="h-6 w-6 text-accent-foreground" />
+                <div className="p-3 bg-primary/10 text-primary rounded-full">
+                  <step.icon className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="font-semibold">{step.title}</h3>
@@ -271,47 +355,53 @@ export default function LaunchpadPage() {
           </CardContent>
         </Card>
 
-        <Card className="glassmorphic">
+        <Card className="glassmorphic lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
               <Sparkles />
-              {translations.launchpad.govtSchemes.title}
+              MSME Clusters in AP
             </CardTitle>
             <CardDescription>
-              {translations.launchpad.govtSchemes.description}
+              Explore major and existing MSME clusters in Andhra Pradesh for
+              your venture.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid sm:grid-cols-2 gap-4">
-            {governmentSchemes.map((scheme, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-              >
-                <Card className="h-full flex flex-col glassmorphic hover:bg-background/80">
-                  <CardHeader>
-                    <CardTitle className="text-base">{scheme.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <p className="text-muted-foreground text-sm">
-                      {scheme.summary}
-                    </p>
-                  </CardContent>
-                  <CardContent>
-                    <a
-                      href={scheme.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
-                    >
-                      {translations.launchpad.govtSchemes.learnMore}{' '}
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+          <CardContent>
+            <Carousel
+              opts={{
+                align: 'start',
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent>
+                {msmeClusters.map((cluster, index) => (
+                  <CarouselItem
+                    key={index}
+                    className="md:basis-1/2 lg:basis-1/3"
+                  >
+                    <div className="p-1 h-full">
+                      <Card className="h-full flex flex-col glassmorphic hover:bg-background/80">
+                        <CardHeader>
+                          <CardTitle className="text-base">
+                            {cluster.name}
+                          </CardTitle>
+                          <CardDescription>{cluster.location}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-1 space-y-2">
+                          <Badge variant="secondary">{cluster.sector}</Badge>
+                          <p className="text-muted-foreground text-sm">
+                            {cluster.description}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden sm:flex" />
+              <CarouselNext className="hidden sm:flex" />
+            </Carousel>
           </CardContent>
         </Card>
 
@@ -346,3 +436,5 @@ export default function LaunchpadPage() {
     </div>
   );
 }
+
+    
