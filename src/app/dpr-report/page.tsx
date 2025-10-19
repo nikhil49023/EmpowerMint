@@ -140,7 +140,8 @@ function DPRReportContent() {
       parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
     } catch (e) {
         console.error("Failed to parse financial section content:", e);
-        return <Section title={title} content={`Error displaying financial data. The content was not in the expected JSON format and could not be parsed.\n\nRaw content:\n${content}`} isLoading={false} />;
+        // Fallback: If parsing fails, treat content as plain text and render it using the standard Section component.
+        return <Section title={title} content={`Error displaying structured financial data. The content was not in the expected JSON format and could not be parsed. Displaying raw content instead:\n\n${content}`} isLoading={false} />;
     }
 
     return (
