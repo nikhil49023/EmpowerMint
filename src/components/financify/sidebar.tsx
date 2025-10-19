@@ -9,6 +9,7 @@ import {
   BrainCircuit,
   Rocket,
   Globe,
+  Star,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -127,6 +128,13 @@ export default function Sidebar() {
         >
           <User className="mr-3 h-5 w-5" />
           {translations.sidebar.myProfile}
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-muted-foreground"
+        >
+          <Star className="mr-3 h-5 w-5" />
+          {translations.sidebar.giveFeedback}
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>

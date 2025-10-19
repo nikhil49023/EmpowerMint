@@ -6,6 +6,7 @@
     "brainstorm": "ఆలోచనలు",
     "launchpad": "లాంచ్‌ప్యాడ్",
     "myProfile": "నా ప్రొఫైల్",
+    "giveFeedback": "అభిప్రాయం ఇవ్వండి",
     "logout": "లాగ్ అవుట్"
   },
   "logoutDialog": {
@@ -36,7 +37,7 @@
     "student": "విద్యార్థి",
     "selfEmployed": "స్వయం ఉపాధి",
     "other": "ఇతరులు",
-    "annualIncomeLabel": "వಾರ್షిక ఆదాయం (INR)",
+    "annualIncomeLabel": "వార్షిక ఆదాయం (INR)",
     "stateLabel": "రాష్ట్రం",
     "statePlaceholder": "రాష్ట్రాన్ని ఎంచుకోండి",
     "districtLabel": "జిల్లా",
