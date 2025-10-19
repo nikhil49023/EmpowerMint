@@ -73,6 +73,7 @@ function DPRReportContent() {
   }, [idea, user, loadingAuth]);
 
   const handleExport = () => {
+    // You can implement payment logic here before printing
     window.print();
   };
 
@@ -119,12 +120,16 @@ function DPRReportContent() {
             left: 0;
             top: 0;
             right: 0;
+            margin: 20px;
           }
           .no-print {
             display: none;
           }
           .print-break-before {
             page-break-before: always;
+          }
+           .print-break-after {
+            page-break-after: always;
           }
         }
       `}</style>
@@ -169,7 +174,7 @@ function DPRReportContent() {
           onClick={handleExport}
           disabled={isLoading || !!error}
         >
-          <FileDown className="mr-2" /> Export to PDF
+          <FileDown className="mr-2" /> Export to PDF (₹50)
         </Button>
       </div>
 
@@ -191,34 +196,44 @@ function DPRReportContent() {
           isLoading={isLoading}
         />
         <Section
-          title="2. Promoter/Owner Details"
+          title="2. Project Introduction & Objective"
+          content={report?.projectIntroduction}
+          isLoading={isLoading}
+        />
+        <Section
+          title="3. Promoter/Entrepreneur Profile"
           content={report?.promoterDetails}
           isLoading={isLoading}
         />
         <Section
-          title="3. Business Profile"
-          content={report?.businessProfile}
+          title="4. Business Model & Project Details"
+          content={report?.businessModel}
           isLoading={isLoading}
         />
         <Section
-          title="4. Market Analysis"
+          title="5. Market Analysis"
           content={report?.marketAnalysis}
           isLoading={isLoading}
         />
         <Section
-          title="5. Technical/Operational Plan"
-          content={report?.operationalPlan}
+          title="6. Location and Site Analysis"
+          content={report?.locationAndSite}
           isLoading={isLoading}
         />
         <Section
-          title="6. Legal & Statutory Requirements"
-          content={report?.legalRequirements}
+          title="7. Technical Feasibility & Infrastructure"
+          content={report?.technicalFeasibility}
+          isLoading={isLoading}
+        />
+        <Section
+          title="8. Implementation Schedule & Project Timeline"
+          content={report?.implementationSchedule}
           isLoading={isLoading}
         />
 
         <Card className="glassmorphic print:shadow-none print:border-none print-break-before">
           <CardHeader>
-            <CardTitle>7. Financial Projections</CardTitle>
+            <CardTitle>9. Financial Projections</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -232,15 +247,23 @@ function DPRReportContent() {
                 <div className="space-y-8">
                   <FormattedText text={report.financialProjections.summaryText} />
 
+                  <Section title="Project Cost" content={report.financialProjections.projectCost} isLoading={isLoading} />
+                  <Section title="Means of Finance" content={report.financialProjections.meansOfFinance} isLoading={isLoading} />
+                  
                   <div>
                     <h4 className="font-semibold text-lg mb-4">Project Cost Breakdown</h4>
                     <ProjectCostPieChart data={report.financialProjections.costBreakdown} />
                   </div>
 
-                  <div>
-                    <h4 className="font-semibold text-lg mb-4">Sales & Profit Projections (3-5 Years)</h4>
+                   <div className="print-break-before">
+                     <h4 className="font-semibold text-lg mb-4">Sales & Profit Projections (3-5 Years)</h4>
                     <FinancialProjectionsBarChart data={report.financialProjections.yearlyProjections} />
                   </div>
+
+                  <Section title="Profitability Analysis" content={report.financialProjections.profitabilityAnalysis} isLoading={isLoading} />
+                  <Section title="Cash Flow Statement" content={report.financialProjections.cashFlowStatement} isLoading={isLoading} />
+                  <Section title="Loan Repayment Schedule" content={report.financialProjections.loanRepaymentSchedule} isLoading={isLoading} />
+                  <Section title="Break-Even Analysis" content={report.financialProjections.breakEvenAnalysis} isLoading={isLoading} />
                 </div>
               )
             )}
@@ -248,8 +271,23 @@ function DPRReportContent() {
         </Card>
 
         <Section
-          title="8. SWOT Analysis"
+          title="10. SWOT Analysis"
           content={report?.swotAnalysis}
+          isLoading={isLoading}
+        />
+        <Section
+          title="11. Regulatory & Statutory Compliance"
+          content={report?.regulatoryCompliance}
+          isLoading={isLoading}
+        />
+        <Section
+          title="12. Risk Assessment & Mitigation Strategy"
+          content={report?.riskAssessment}
+          isLoading={isLoading}
+        />
+        <Section
+          title="13. Annexures"
+          content={report?.annexures}
           isLoading={isLoading}
         />
       </div>
