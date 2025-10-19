@@ -75,8 +75,9 @@ function DPRReportContent() {
   }, [user, ideaTitle]);
 
   const handleExport = () => {
-    // This will now use the browser's print-to-PDF functionality
+    // This will use the browser's print-to-PDF functionality,
     // which is the most reliable cross-browser client-side solution.
+    // The print-specific styles ensure only the report is printed.
     window.print();
   };
 
@@ -89,7 +90,7 @@ function DPRReportContent() {
     content?: any;
     isLoading: boolean;
   }) => (
-    <Card className="glassmorphic print:shadow-none print:border-none">
+    <Card className="glassmorphic print:shadow-none print:border-none print-break-before">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
@@ -143,20 +144,20 @@ function DPRReportContent() {
     }
 
     return (
-      <Card className="glassmorphic print:shadow-none print:border-none">
+      <Card className="glassmorphic print:shadow-none print:border-none print-break-before">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <FormattedText text={parsedContent.summaryText} />
 
-          <div>
+          <div className="print-break-after">
             <h4 className="font-semibold text-lg mb-2">Project Cost Breakdown</h4>
             <ProjectCostPieChart data={parsedContent.costBreakdown} />
             <FormattedText text={parsedContent.projectCost} />
           </div>
 
-          <div>
+          <div className="print-break-after">
             <h4 className="font-semibold text-lg mb-2">Yearly Projections</h4>
             <FinancialProjectionsBarChart data={parsedContent.yearlyProjections} />
           </div>
@@ -245,7 +246,7 @@ function DPRReportContent() {
       </div>
 
       {error && !isLoading && (
-        <Card className="text-center py-10 bg-destructive/10 border-destructive">
+        <Card className="text-center py-10 bg-destructive/10 border-destructive no-print">
           <CardHeader>
             <CardTitle>Error Loading Report</CardTitle>
           </CardHeader>
@@ -301,7 +302,7 @@ export default function DPRReportPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex flex-col justify-center items-center h-full text-center">
+        <div className="flex flex-col justify-center items-center h-full text-center no-print">
           <Loader2 className="h-8 w-8 animate-spin mb-4" />
           <h2 className="text-xl font-semibold">Loading Final Report...</h2>
           <p className="text-muted-foreground">Please wait a moment.</p>
