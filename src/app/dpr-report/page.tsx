@@ -41,6 +41,7 @@ function DPRReportContent() {
   const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
   const ideaTitle = searchParams.get('idea');
+  const promoterName = user?.displayName || 'Entrepreneur';
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -77,12 +78,14 @@ function DPRReportContent() {
     title,
     content,
     isLoading,
+    className = '',
   }: {
     title: string;
     content?: any;
     isLoading: boolean;
+    className?: string;
   }) => (
-    <Card className="glassmorphic print:shadow-none print:border-none print-break-before">
+    <Card className={`glassmorphic print:shadow-none print:border-none print-break-before ${className}`}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
@@ -106,6 +109,21 @@ function DPRReportContent() {
     <div className="space-y-8 @container">
       <style jsx global>{`
         @media print {
+          @page {
+            size: A4;
+            margin: 1.5cm;
+            @top-center {
+              content: 'Detailed Project Report: ${ideaTitle || ''}';
+              font-size: 10pt;
+              color: #666;
+            }
+            @bottom-center {
+              content: 'Page ' counter(page);
+              font-size: 10pt;
+              color: #666;
+            }
+          }
+          
           body * {
             visibility: hidden;
           }
@@ -117,6 +135,10 @@ function DPRReportContent() {
             position: static;
             margin: 0;
             width: 100%;
+            padding: 0;
+            top: 0;
+            left: 0;
+            float: none;
           }
           .no-print {
             display: none;
@@ -124,6 +146,36 @@ function DPRReportContent() {
           .print-break-before {
             page-break-before: always;
           }
+          .print-break-after {
+            page-break-after: always;
+          }
+          .print-no-break {
+            page-break-before: avoid;
+          }
+          .print-cover-page {
+             height: 80vh;
+             display: flex;
+             flex-direction: column;
+             justify-content: center;
+             align-items: center;
+             text-align: center;
+             page-break-after: always; /* Ensure it's on its own page */
+          }
+          .print-toc {
+             page-break-after: always;
+          }
+           .print-toc h1 {
+            font-size: 18pt;
+            margin-bottom: 2rem;
+           }
+           .print-toc table {
+             width: 100%;
+             border-collapse: collapse;
+           }
+           .print-toc td {
+             padding: 0.5rem 0;
+             border-bottom: 1px dotted #ccc;
+           }
         }
       `}</style>
 
@@ -170,6 +222,35 @@ function DPRReportContent() {
       )}
 
       <div id="print-section" className="space-y-6">
+        {/* Cover Page for Print */}
+        <div className="print-cover-page no-print">
+            <div className="print-only">
+                <h1 style={{fontSize: '28pt', fontWeight: 'bold', margin: '0'}}>{ideaTitle}</h1>
+                <p style={{fontSize: '14pt', marginTop: '1rem'}}>Detailed Project Report</p>
+                <div style={{marginTop: '20rem', fontSize: '12pt'}}>
+                    <p>Prepared for:</p>
+                    <p style={{fontWeight: 'bold'}}>{promoterName}</p>
+                </div>
+            </div>
+        </div>
+
+        {/* Table of Contents for Print */}
+         <div className="print-toc no-print">
+             <div className="print-only">
+                 <h1>Table of Contents</h1>
+                 <table>
+                     <tbody>
+                         {dprChapterTitles.map((title, index) => (
+                             <tr key={index}>
+                                 <td>{index + 1}. {title}</td>
+                             </tr>
+                         ))}
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+
+
         {isLoading &&
           dprChapterTitles.map((title, index) => (
             <Section
@@ -193,6 +274,7 @@ function DPRReportContent() {
                 title={`${index + 1}. ${title}`}
                 content={content}
                 isLoading={isLoading}
+                className="print-no-break"
               />
             );
           })}
