@@ -80,6 +80,7 @@ const prompt = ai.definePrompt({
   - When mentioning any currency amount, wrap it in the format \`CURRENCY{...\}\`. For example, instead of "INR 50,000", write "CURRENCY{INR 50,000}".
 
   Ensure the output is in the specified JSON format.`,
+  model: 'googleai/gemini-2.5-flash-nano',
 });
 
 const generateInvestmentIdeaAnalysisFlow = ai.defineFlow(
