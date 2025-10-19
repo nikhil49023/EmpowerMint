@@ -107,7 +107,44 @@ export default function LaunchpadPage() {
     {
       icon: Building,
       title: translations.launchpad.startupJourney.step3.title,
-      description: translations.launchpad.startupJourney.step3.description,
+      description: (
+        <>
+          Choose a business structure (Sole Proprietorship, LLP, Pvt. Ltd.) and
+          complete the legal registration process. Check for state-specific
+          portals like{' '}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="link"
+                className="p-0 h-auto text-primary underline"
+              >
+                APMSME ONE
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-[90vw] md:max-w-4xl lg:max-w-6xl h-[90vh] flex flex-col p-0 glassmorphic">
+              <DialogHeader className="p-4 border-b flex-row flex justify-between items-center">
+                <DialogTitle className="flex items-center gap-2">
+                  <Globe className="w-5 h-5" />
+                  {translations.launchpad.statePortals.apmsmeone.title}
+                </DialogTitle>
+                <DialogClose asChild>
+                  <Button variant="ghost" size="icon">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </DialogClose>
+              </DialogHeader>
+              <div className="flex-1 overflow-hidden">
+                <iframe
+                  src="https://apmsmeone.ap.gov.in/MSMEONE/LoginPages/HomeLogin.aspx"
+                  className="w-full h-full border-0"
+                  title={translations.launchpad.statePortals.apmsmeone.title}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+          .
+        </>
+      ),
     },
     {
       icon: Banknote,
