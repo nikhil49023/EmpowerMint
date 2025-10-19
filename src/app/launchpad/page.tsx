@@ -15,12 +15,13 @@ import {
   Rocket,
   Megaphone,
   Lightbulb,
-  MapPin,
   Sparkles,
   Globe,
   LogIn,
   X,
   Briefcase,
+  MessagesSquare,
+  Loader2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -41,7 +42,12 @@ import { useLanguage } from '@/hooks/use-language';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Autoplay from 'embla-carousel-autoplay';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, SecurityRuleContext } from '@/firebase/errors';
+
 
 const PortalCard = ({
   title,
@@ -114,8 +120,38 @@ const PortalCard = ({
   </Dialog>
 );
 
+type Feedback = {
+    id: string;
+    message: string;
+    userName?: string;
+}
+
 export default function LaunchpadPage() {
   const { translations } = useLanguage();
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
+
+  useEffect(() => {
+    const feedbackQuery = query(collection(db, 'feedback'), orderBy('createdAt', 'desc'), limit(5));
+    const unsubscribe = onSnapshot(feedbackQuery, (snapshot) => {
+        const feedbackData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        })) as Feedback[];
+        setFeedback(feedbackData);
+        setIsLoadingFeedback(false);
+    }, (error) => {
+        console.error("Error fetching feedback: ", error);
+        const permissionError = new FirestorePermissionError({
+            path: feedbackQuery.path,
+            operation: 'list'
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        setIsLoadingFeedback(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const startupSteps = [
     {
@@ -192,25 +228,6 @@ export default function LaunchpadPage() {
       icon: Megaphone,
       title: translations.launchpad.startupJourney.step6.title,
       description: translations.launchpad.startupJourney.step6.description,
-    },
-  ];
-
-  const startupHubs = [
-    {
-      name: translations.launchpad.startupHubs.bengaluru.name,
-      description: translations.launchpad.startupHubs.bengaluru.description,
-    },
-    {
-      name: translations.launchpad.startupHubs.delhi.name,
-      description: translations.launchpad.startupHubs.delhi.description,
-    },
-    {
-      name: translations.launchpad.startupHubs.mumbai.name,
-      description: translations.launchpad.startupHubs.mumbai.description,
-    },
-    {
-      name: translations.launchpad.startupHubs.hyderabad.name,
-      description: translations.launchpad.startupHubs.hyderabad.description,
     },
   ];
 
@@ -544,34 +561,47 @@ export default function LaunchpadPage() {
             </Carousel>
           </CardContent>
         </Card>
-
-        <Card className="glassmorphic">
+        
+        <Card className="glassmorphic lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
-              <MapPin />
-              {translations.launchpad.startupHubs.title}
+              <MessagesSquare />
+              Voices from the Ground
             </CardTitle>
             <CardDescription>
-              {translations.launchpad.startupHubs.description}
+              See what our community of founders is saying about FIn-Box.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {startupHubs.map((hub, index) => (
+            {isLoadingFeedback ? (
+                <div className="flex items-center justify-center h-24">
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+            ) : feedback.length > 0 ? (
+              feedback.map((item, index) => (
               <motion.div
-                key={index}
+                key={item.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="p-4 rounded-lg bg-background/50"
+                className="p-4 rounded-lg bg-background/50 border"
               >
-                <h3 className="font-semibold">{hub.name}</h3>
-                <p className="text-muted-foreground text-sm">
-                  {hub.description}
+                 <blockquote className="italic text-muted-foreground">
+                    &ldquo;{item.message}&rdquo;
+                  </blockquote>
+                <p className="text-right font-semibold mt-2 text-sm">
+                  - {item.userName || 'Anonymous Founder'}
                 </p>
               </motion.div>
-            ))}
+            ))
+            ) : (
+                 <div className="text-center text-muted-foreground py-8">
+                    No feedback submitted yet. Be the first to share your thoughts!
+                </div>
+            )}
           </CardContent>
         </Card>
+
       </div>
     </div>
   );
