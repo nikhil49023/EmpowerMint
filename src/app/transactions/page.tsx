@@ -723,15 +723,17 @@ export default function TransactionsPage() {
                   <Input
                     id="date"
                     type="date"
-                    value={newTransaction.date}
-                    onChange={e =>
-                      setNewTransaction({
-                        ...newTransaction,
-                        date: new Date(e.target.value)
-                          .toLocaleDateString('en-GB')
-                          .replace(/\//g, '/'),
-                      })
-                    }
+                    onChange={e => {
+                      if (e.target.value) {
+                        const date = new Date(e.target.value);
+                        if (!isNaN(date.getTime())) {
+                          setNewTransaction({
+                            ...newTransaction,
+                            date: date.toLocaleDateString('en-GB'),
+                          });
+                        }
+                      }
+                    }}
                     className="col-span-3"
                   />
                 </div>
@@ -824,11 +826,12 @@ export default function TransactionsPage() {
                             ? 'default'
                             : 'destructive'
                         }
-                        className={
+                        className={cn(
+                          'capitalize',
                           transaction.type === 'income'
                             ? 'bg-green-100 text-green-800 border-green-200'
                             : 'bg-red-100 text-red-800 border-red-200'
-                        }
+                        )}
                       >
                         {transaction.type}
                       </Badge>
