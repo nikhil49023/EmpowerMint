@@ -114,10 +114,10 @@ export default function BrainstormPage() {
           </p>
         </div>
         <Button asChild>
-          <a href={staticFinBite.link} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="mr-2" />
-            Learn More
-          </a>
+          <Link href="/my-ideas">
+            <Lightbulb className="mr-2" />
+            My Saved Ideas
+          </Link>
         </Button>
       </div>
 
