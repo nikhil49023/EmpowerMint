@@ -197,7 +197,7 @@ export default function LaunchpadPage() {
           <PortalCard
             title="APMSME ONE"
             description="A dedicated portal for Micro, Small and Medium Enterprises in Andhra Pradesh, offering a range of services and support."
-            url="http://www.apmsmeone.in/"
+            url="https://apmsmeone.ap.gov.in/MSMEONE/LoginPages/HomeLogin.aspx"
           />
         </CardContent>
       </Card>
