@@ -38,6 +38,11 @@ import {
 } from '@/ai/flows/generate-full-dpr';
 import { getDb } from '@/lib/firebase-admin';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
 
 export async function generateSuggestionsAction(
   input: GenerateSuggestionsFromPromptInput
@@ -139,10 +144,23 @@ export async function saveFeedbackAction(input: {
 
   try {
     const db = getDb();
-    await addDoc(collection(db, 'feedback'), {
+    const feedbackCollectionRef = collection(db, 'feedback');
+    const feedbackData = {
       ...input,
       createdAt: serverTimestamp(),
+    };
+
+    await addDoc(feedbackCollectionRef, feedbackData).catch(async serverError => {
+      const permissionError = new FirestorePermissionError({
+        path: feedbackCollectionRef.path,
+        operation: 'create',
+        requestResourceData: feedbackData,
+      } satisfies SecurityRuleContext);
+      errorEmitter.emit('permission-error', permissionError);
+      // Also throw to reject the promise for the client-side action handler
+      throw permissionError;
     });
+
     return { success: true };
   } catch (error) {
     console.error('Error saving feedback:', error);
