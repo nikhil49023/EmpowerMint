@@ -19,8 +19,10 @@ import {
   MapPin,
   Sparkles,
   Globe,
+  LogIn,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 const startupSteps = [
   {
@@ -144,13 +146,14 @@ export default function LaunchpadPage() {
                   </p>
                 </CardContent>
                 <CardContent>
-                  <a
-                    href="http://www.apmsmeone.in/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
-                  >
-                    Visit Portal <ExternalLink className="h-4 w-4" />
+                    <a
+                        href="http://www.apmsmeone.in/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <Button>
+                            <LogIn className="mr-2 h-4 w-4" /> Login to Portal
+                        </Button>
                   </a>
                 </CardContent>
               </Card>
