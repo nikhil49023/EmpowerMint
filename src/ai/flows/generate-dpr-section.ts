@@ -36,6 +36,13 @@ Your current task is to generate the content for a specific section of the DPR.
 **Promoter's Name:** {{{promoterName}}}
 **Core Business Idea:** "{{{idea}}}"
 
+{{#if variables}}
+**User-Defined Variables (Use these values where appropriate):**
+{{#each variables}}
+- **{{@key}}**: {{this}}
+{{/each}}
+{{/if}}
+
 {{#if previousSections}}
 **Previously Completed Sections (for context):**
 {{#each previousSections}}

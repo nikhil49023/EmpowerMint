@@ -1,4 +1,3 @@
-
 import { z } from 'genkit';
 import { GenerateInvestmentIdeaAnalysisOutputSchema } from './investment-idea-analysis';
 
@@ -19,6 +18,10 @@ export const GenerateDprSectionInputSchema = z.object({
     .describe(
       'A map of previously completed sections and their content for context.'
     ),
+  variables: z
+    .record(z.string())
+    .optional()
+    .describe('A map of user-defined values for placeholders.'),
   revisionRequest: RevisionRequestSchema.optional().describe(
     'A request to revise the section based on user feedback.'
   ),

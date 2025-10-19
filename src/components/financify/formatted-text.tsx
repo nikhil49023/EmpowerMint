@@ -1,10 +1,6 @@
-
 'use client';
 
 import React from 'react';
-
-// This regex will find all instances of CURRENCY{...}, **...**, and VAR{...}
-const formattingRegex = /(CURRENCY\{.*?\})|(\*\*.*?\*\*)|(VAR\{.*?\})/g;
 
 type FormattedTextProps = {
   text: string;
@@ -15,25 +11,15 @@ export function FormattedText({ text }: FormattedTextProps) {
     return null;
   }
 
-  // Split the text by our formatting tokens
-  const parts = text.split(formattingRegex).filter(Boolean);
+  // Improved regex to handle nested structures better and avoid splitting by mistake
+  const parts = text.split(/(\*\*.*?\*\*|VAR\{.*?\})/g).filter(Boolean);
 
   const formattedParts = parts.map((part, index) => {
-    // Check for currency format: CURRENCY{...}
-    if (part.startsWith('CURRENCY{') && part.endsWith('}')) {
-      const currencyText = part.slice('CURRENCY{'.length, -1);
-      return (
-        <strong key={index} className="text-primary font-bold">
-          {currencyText}
-        </strong>
-      );
-    }
-    
     // Check for bold format: **...**
     if (part.startsWith('**') && part.endsWith('**')) {
       const boldText = part.slice(2, -2);
       return (
-        <strong key={index} className="font-semibold">
+        <strong key={index} className="font-semibold text-foreground">
           {boldText}
         </strong>
       );
@@ -43,7 +29,7 @@ export function FormattedText({ text }: FormattedTextProps) {
     if (part.startsWith('VAR{') && part.endsWith('}')) {
       const varText = part.slice('VAR{'.length, -1);
       return (
-        <span key={index} className="text-red-600 font-semibold">
+        <span key={index} className="text-red-500 font-semibold bg-red-100/50 px-1 py-0.5 rounded-sm">
           {varText}
         </span>
       );
@@ -57,12 +43,12 @@ export function FormattedText({ text }: FormattedTextProps) {
       </React.Fragment>
     ));
 
-    return <span key={index}>{lines}</span>;
+    return <React.Fragment key={index}>{lines}</React.Fragment>;
   });
 
   return (
-    <p className="text-muted-foreground whitespace-pre-line">
+    <div className="text-muted-foreground whitespace-pre-line leading-relaxed">
       {formattedParts}
-    </p>
+    </div>
   );
 }
