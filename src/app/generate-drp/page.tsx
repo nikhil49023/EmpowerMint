@@ -9,7 +9,7 @@ import {
   Suspense,
   useCallback,
 } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -45,6 +45,7 @@ const getUniqueMessageId = () => `msg-${Date.now()}-${Math.random()}`;
 
 function DRPGenerator() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const idea = searchParams.get('idea') || 'my business idea';
   const { translations } = useLanguage();
 
@@ -60,6 +61,19 @@ function DRPGenerator() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
+
+  const getFullContext = useCallback(() => {
+    let context = `Business Idea: ${idea}. Project Name: ${projectDetails.projectName}. Promoter: ${projectDetails.yourName}. Business Type: ${projectDetails.businessType}. Company: ${projectDetails.companyName}.`;
+    messages.forEach(m => {
+      context += `\n${m.role}: ${m.text}`;
+    });
+    return context;
+  }, [idea, projectDetails, messages]);
+
+  const handleGenerateReport = () => {
+    const fullIdeaContext = getFullContext();
+    router.push(`/dpr-report?idea=${encodeURIComponent(fullIdeaContext)}`);
+  };
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,14 +252,21 @@ function DRPGenerator() {
 
   return (
     <div className="flex flex-col h-full">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <FileText /> {translations.generateDRP.title}
-        </h1>
-        <p className="text-muted-foreground">
-          {translations.generateDRP.description.replace('{projectName}', projectDetails.projectName)}
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+            <FileText /> {translations.generateDRP.title}
+            </h1>
+            <p className="text-muted-foreground">
+            {translations.generateDRP.description.replace('{projectName}', projectDetails.projectName)}
+            </p>
+        </div>
+        <Button onClick={handleGenerateReport} disabled={messages.length < 2}>
+            <Sparkles className="mr-2" />
+            Generate Full Report
+        </Button>
       </div>
+
 
       <div className="flex-1 flex flex-col gap-4 mt-8">
         <Card className="flex-1 flex flex-col glassmorphic">

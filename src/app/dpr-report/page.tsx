@@ -135,7 +135,7 @@ function DPRReportContent() {
             <FileText />
             Detailed Project Report
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground max-w-2xl truncate">
             AI-generated report for: {idea}
           </p>
         </div>
