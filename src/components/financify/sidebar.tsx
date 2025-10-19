@@ -8,8 +8,7 @@ import {
   User,
   BrainCircuit,
   Rocket,
-  Lightbulb,
-  FileText,
+  Globe,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -26,17 +25,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/transactions', label: 'Transactions', icon: Wallet },
-  { href: '/brainstorm', label: 'Brainstorm', icon: BrainCircuit },
-  { href: '/launchpad', label: 'Launchpad', icon: Rocket },
-];
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/hooks/use-language';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { language, setLanguage, translations } = useLanguage();
+
+  const navItems = [
+    { href: '/dashboard', label: translations.sidebar.dashboard, icon: Home },
+    { href: '/transactions', label: translations.sidebar.transactions, icon: Wallet },
+    { href: '/brainstorm', label: translations.sidebar.brainstorm, icon: BrainCircuit },
+    { href: '/launchpad', label: translations.sidebar.launchpad, icon: Rocket },
+  ];
+
 
   const handleLogout = () => {
     router.push('/');
@@ -94,12 +102,31 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="p-4 border-t">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground"
+            >
+              <Globe className="mr-3 h-5 w-5" />
+              {language === 'en' ? 'English' : 'తెలుగు'}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => setLanguage('en')}>
+              English
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setLanguage('te')}>
+              తెలుగు
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button
           variant="ghost"
           className="w-full justify-start text-muted-foreground"
         >
           <User className="mr-3 h-5 w-5" />
-          My Profile
+          {translations.sidebar.myProfile}
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -108,20 +135,20 @@ export default function Sidebar() {
               className="w-full justify-start text-destructive hover:text-destructive"
             >
               <LogOut className="mr-3 h-5 w-5" />
-              Logout
+              {translations.sidebar.logout}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+              <AlertDialogTitle>{translations.logoutDialog.title}</AlertDialogTitle>
               <AlertDialogDescription>
-                You will be redirected to the login page.
+                {translations.logoutDialog.description}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{translations.logoutDialog.cancel}</AlertDialogCancel>
               <AlertDialogAction onClick={handleLogout}>
-                Logout
+                {translations.logoutDialog.confirm}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -1,0 +1,17 @@
+
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "brainstorm": "Brainstorm",
+    "launchpad": "Launchpad",
+    "myProfile": "My Profile",
+    "logout": "Logout"
+  },
+  "logoutDialog": {
+    "title": "Are you sure you want to logout?",
+    "description": "You will be redirected to the login page.",
+    "cancel": "Cancel",
+    "confirm": "Logout"
+  }
+}
