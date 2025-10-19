@@ -194,7 +194,7 @@ function InvestmentIdeaContent() {
       <Card className="glassmorphic">
         <CardHeader className="flex flex-row items-center gap-4">
           <Icon className="h-8 w-8 text-primary" />
-          <CardTitle>{title}</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">{title}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -212,7 +212,7 @@ function InvestmentIdeaContent() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div className="flex justify-between items-center">
         <Button variant="ghost" asChild className="-ml-4">
           <Link href="/brainstorm">
@@ -236,8 +236,8 @@ function InvestmentIdeaContent() {
               </div>
             ) : (
               <>
-                <CardTitle className="text-3xl">{analysis?.title}</CardTitle>
-                <CardDescription>{analysis?.summary}</CardDescription>
+                <CardTitle className="text-2xl md:text-3xl">{analysis?.title}</CardTitle>
+                <CardDescription className="text-base">{analysis?.summary}</CardDescription>
               </>
             )}
           </CardHeader>
@@ -253,6 +253,7 @@ function InvestmentIdeaContent() {
                   <Button
                     onClick={() => saveAnalysis(analysis)}
                     disabled={isSaving || isSaved || !user}
+                    size="lg"
                   >
                     {isSaved ? (
                       <>
@@ -271,7 +272,7 @@ function InvestmentIdeaContent() {
                       </>
                     )}
                   </Button>
-                  <Button onClick={handleGenerateDpr} disabled={!analysis || !user}>
+                  <Button onClick={handleGenerateDpr} disabled={!analysis || !user} size="lg">
                       <FileText className="mr-2" />
                       Generate DPR
                   </Button>
@@ -282,7 +283,7 @@ function InvestmentIdeaContent() {
         </Card>
       </motion.div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6 md:gap-8">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}

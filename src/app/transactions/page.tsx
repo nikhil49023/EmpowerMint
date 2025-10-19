@@ -455,18 +455,18 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-start">
+    <div className="space-y-6 md:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{translations.transactions.title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{translations.transactions.title}</h1>
           <p className="text-muted-foreground">
             {translations.transactions.description}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" disabled={showLoginPrompt}>
+              <Button variant="destructive" disabled={showLoginPrompt} className="w-full sm:w-auto">
                 <Trash2 className="mr-2 h-4 w-4" /> {translations.transactions.clearAllData}
               </Button>
             </AlertDialogTrigger>
@@ -491,6 +491,7 @@ export default function TransactionsPage() {
               <Button
                 variant="outline"
                 disabled={isImporting || showLoginPrompt}
+                className="w-full sm:w-auto"
               >
                 {isImporting ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -543,7 +544,7 @@ export default function TransactionsPage() {
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled={showLoginPrompt}>
+              <Button variant="outline" disabled={showLoginPrompt} className="w-full sm:w-auto">
                 <PiggyBank className="mr-2 h-4 w-4" /> {translations.transactions.viewBudgets}
               </Button>
             </DialogTrigger>
@@ -692,7 +693,7 @@ export default function TransactionsPage() {
             onOpenChange={setAddTransactionDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button disabled={showLoginPrompt}>
+              <Button disabled={showLoginPrompt} className="w-full sm:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" /> {translations.transactions.addTransaction}
               </Button>
             </DialogTrigger>
@@ -806,7 +807,7 @@ export default function TransactionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-2/5">{translations.transactions.history.tableDescription}</TableHead>
-                <TableHead>{translations.transactions.history.tableDate}</TableHead>
+                <TableHead className="hidden sm:table-cell">{translations.transactions.history.tableDate}</TableHead>
                 <TableHead>{translations.transactions.history.tableType}</TableHead>
                 <TableHead className="text-right">{translations.transactions.history.tableAmount}</TableHead>
               </TableRow>
@@ -826,8 +827,9 @@ export default function TransactionsPage() {
                   <TableRow key={index}>
                     <TableCell className="font-medium">
                       {transaction.description}
+                      <div className="text-muted-foreground text-xs sm:hidden">{transaction.date}</div>
                     </TableCell>
-                    <TableCell>{transaction.date}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{transaction.date}</TableCell>
                     <TableCell>
                       <Badge
                         variant={

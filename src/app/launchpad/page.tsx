@@ -48,7 +48,7 @@ const PortalCard = ({
 }) => (
   <Dialog>
     <DialogTrigger asChild>
-      <Card className="h-full flex flex-col">
+      <Card className="h-full flex flex-col glassmorphic hover:border-primary transition-colors cursor-pointer">
         <CardHeader>
           <CardTitle className="text-lg">{title}</CardTitle>
         </CardHeader>
@@ -62,7 +62,7 @@ const PortalCard = ({
         </CardContent>
       </Card>
     </DialogTrigger>
-    <DialogContent className="max-w-[90vw] h-[90vh] flex flex-col p-0 glassmorphic">
+    <DialogContent className="max-w-[90vw] md:max-w-4xl lg:max-w-6xl h-[90vh] flex flex-col p-0 glassmorphic">
       <DialogHeader className="p-4 border-b flex-row flex justify-between items-center">
         <DialogTitle className="flex items-center gap-2">
           <Globe className="w-5 h-5" />
@@ -160,9 +160,9 @@ export default function LaunchpadPage() {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
           <Rocket className="h-8 w-8" />
           {translations.launchpad.title}
         </h1>
@@ -170,129 +170,133 @@ export default function LaunchpadPage() {
           {translations.launchpad.description}
         </p>
       </div>
-      <Card className="glassmorphic">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe />
-            {translations.launchpad.statePortals.title}
-          </CardTitle>
-          <CardDescription>
-            {translations.launchpad.statePortals.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <PortalCard
-            title={translations.launchpad.statePortals.apmsmeone.title}
-            description={
-              translations.launchpad.statePortals.apmsmeone.description
-            }
-            url="https://apmsmeone.ap.gov.in/MSMEONE/LoginPages/HomeLogin.aspx"
-            loginText={translations.launchpad.statePortals.loginToPortal}
-          />
-        </CardContent>
-      </Card>
 
-      <Card className="glassmorphic">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles />
-            {translations.launchpad.govtSchemes.title}
-          </CardTitle>
-          <CardDescription>
-            {translations.launchpad.govtSchemes.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-4">
-          {governmentSchemes.map((scheme, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-            >
-              <Card className="h-full flex flex-col">
-                <CardHeader>
-                  <CardTitle className="text-lg">{scheme.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <p className="text-muted-foreground text-sm">
-                    {scheme.summary}
-                  </p>
-                </CardContent>
-                <CardContent>
-                  <a
-                    href={scheme.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
-                  >
-                    {translations.launchpad.govtSchemes.learnMore}{' '}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        <Card className="glassmorphic lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
+              <Globe />
+              {translations.launchpad.statePortals.title}
+            </CardTitle>
+            <CardDescription>
+              {translations.launchpad.statePortals.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <PortalCard
+              title={translations.launchpad.statePortals.apmsmeone.title}
+              description={
+                translations.launchpad.statePortals.apmsmeone.description
+              }
+              url="https://apmsmeone.ap.gov.in/MSMEONE/LoginPages/HomeLogin.aspx"
+              loginText={translations.launchpad.statePortals.loginToPortal}
+            />
+            {/* Add more PortalCard components here as needed */}
+          </CardContent>
+        </Card>
 
-      <Card className="glassmorphic">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin />
-            {translations.launchpad.startupHubs.title}
-          </CardTitle>
-          <CardDescription>
-            {translations.launchpad.startupHubs.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {startupHubs.map((hub, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="p-4 rounded-lg bg-background/50"
-            >
-              <h3 className="font-semibold">{hub.name}</h3>
-              <p className="text-muted-foreground text-sm">
-                {hub.description}
-              </p>
-            </motion.div>
-          ))}
-        </CardContent>
-      </Card>
+        <Card className="glassmorphic">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
+              <Sparkles />
+              {translations.launchpad.govtSchemes.title}
+            </CardTitle>
+            <CardDescription>
+              {translations.launchpad.govtSchemes.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid sm:grid-cols-2 gap-4">
+            {governmentSchemes.map((scheme, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <Card className="h-full flex flex-col glassmorphic hover:bg-background/80">
+                  <CardHeader>
+                    <CardTitle className="text-base">{scheme.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <p className="text-muted-foreground text-sm">
+                      {scheme.summary}
+                    </p>
+                  </CardContent>
+                  <CardContent>
+                    <a
+                      href={scheme.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
+                    >
+                      {translations.launchpad.govtSchemes.learnMore}{' '}
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </CardContent>
+        </Card>
 
-      <Card className="glassmorphic">
-        <CardHeader>
-          <CardTitle>{translations.launchpad.startupJourney.title}</CardTitle>
-          <CardDescription>
-            {translations.launchpad.startupJourney.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {startupSteps.map((step, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="flex items-start gap-4"
-            >
-              <div className="p-3 bg-accent rounded-full">
-                <step.icon className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold">{step.title}</h3>
+        <Card className="glassmorphic">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
+              <MapPin />
+              {translations.launchpad.startupHubs.title}
+            </CardTitle>
+            <CardDescription>
+              {translations.launchpad.startupHubs.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {startupHubs.map((hub, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="p-4 rounded-lg bg-background/50"
+              >
+                <h3 className="font-semibold">{hub.name}</h3>
                 <p className="text-muted-foreground text-sm">
-                  {step.description}
+                  {hub.description}
                 </p>
-              </div>
-            </motion.div>
-          ))}
-        </CardContent>
-      </Card>
+              </motion.div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="glassmorphic lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-xl md:text-2xl">{translations.launchpad.startupJourney.title}</CardTitle>
+            <CardDescription>
+              {translations.launchpad.startupJourney.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {startupSteps.map((step, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="flex items-start gap-4"
+              >
+                <div className="p-3 bg-accent rounded-full">
+                  <step.icon className="h-6 w-6 text-accent-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm">
+                    {step.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

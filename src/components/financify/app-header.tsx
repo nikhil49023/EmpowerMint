@@ -11,7 +11,7 @@ export default function AppHeader() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <header className="md:hidden sticky top-0 z-10 flex h-16 flex-shrink-0 items-center justify-between border-b bg-background px-4">
+    <header className="md:hidden sticky top-0 z-10 flex h-16 flex-shrink-0 items-center justify-between border-b bg-background/80 backdrop-blur-lg px-4">
       <div className="flex items-center gap-2">
         <svg
           width="32"
@@ -49,7 +49,7 @@ export default function AppHeader() {
             <span className="sr-only">Open sidebar</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="p-0 w-64">
+        <SheetContent side="left" className="p-0 w-64 md:w-72">
           <Sidebar onLinkClick={() => setIsSidebarOpen(false)} />
         </SheetContent>
       </Sheet>

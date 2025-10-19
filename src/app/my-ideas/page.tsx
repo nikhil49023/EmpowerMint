@@ -102,9 +102,9 @@ export default function MyIdeasPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
           <Lightbulb /> {translations.myIdeas.title}
         </h1>
         <p className="text-muted-foreground">
@@ -124,7 +124,7 @@ export default function MyIdeasPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {ideas.map((idea, index) => (
             <motion.div
               key={idea.id}

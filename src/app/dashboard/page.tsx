@@ -112,13 +112,13 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">{translations.dashboard.title}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">{translations.dashboard.title}</h1>
         <p className="text-muted-foreground">{greeting}</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="glassmorphic h-full">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-2xl md:text-3xl font-bold">
               {isLoading ? (
                 <Skeleton className="h-8 w-36" />
               ) : (
@@ -151,7 +151,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-2xl md:text-3xl font-bold">
               {isLoading ? (
                 <Skeleton className="h-8 w-36" />
               ) : (
@@ -171,7 +171,7 @@ export default function DashboardPage() {
             <PiggyBank className="w-5 h-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
+            <div className="text-2xl md:text-3xl font-bold">
               {isLoading ? (
                 <Skeleton className="h-8 w-20" />
               ) : (
@@ -203,7 +203,9 @@ export default function DashboardPage() {
                     <Lightbulb className="w-4 h-4 text-accent-foreground" />
                   </span>
                   <div className="flex-1">
-                    <AlertDescription>{summary?.suggestion}</AlertDescription>
+                    <AlertDescription className="text-base md:text-lg">
+                      {summary?.suggestion}
+                    </AlertDescription>
                   </div>
                 </div>
               </Alert>

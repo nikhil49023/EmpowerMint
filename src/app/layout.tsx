@@ -58,7 +58,7 @@ export default function RootLayout({
                 <AppHeader />
                 
                 <main className="flex-1 relative overflow-y-auto focus:outline-none">
-                  <div className="py-6 px-4 sm:px-6 md:px-8">
+                  <div className="py-6 px-4 sm:px-6 lg:px-8">
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={pathname}
@@ -66,7 +66,7 @@ export default function RootLayout({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.3 }}
-                        className="max-w-7xl mx-auto"
+                        className="w-full max-w-7xl mx-auto"
                       >
                         {children}
                       </motion.div>

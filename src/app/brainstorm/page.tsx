@@ -92,15 +92,15 @@ export default function BrainstormPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-start">
+    <div className="space-y-6 md:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{translations.brainstorm.title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{translations.brainstorm.title}</h1>
           <p className="text-muted-foreground">
             {translations.brainstorm.description}
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/my-ideas">
             <Lightbulb className="mr-2" />
             {translations.brainstorm.mySavedIdeas}
@@ -111,7 +111,7 @@ export default function BrainstormPage() {
       <Card className="glassmorphic">
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
+            <h2 className="text-xl md:text-2xl font-semibold flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -122,7 +122,7 @@ export default function BrainstormPage() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-6 w-6 text-primary"
+                className="h-6 w-6 md:h-7 md:w-7 text-primary"
               >
                 <path d="M15.5 22.5a2.5 2.5 0 0 1-3 0" />
                 <path d="M12.5 20a2.5 2.5 0 0 1-3 0" />
@@ -142,15 +142,15 @@ export default function BrainstormPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
             {Object.entries(investmentIdeaCategories).map(
               ([category, { icon: Icon, ideas }]) => (
                 <Dialog key={category}>
                   <DialogTrigger asChild>
                     <Card className="group cursor-pointer hover:border-primary transition-colors flex flex-col justify-between text-center p-6 glassmorphic">
                       <div className="flex-1 flex flex-col items-center justify-center">
-                        <Icon className="h-10 w-10 text-primary mb-4" />
-                        <CardTitle className="text-lg">{category}</CardTitle>
+                        <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary mb-4" />
+                        <CardTitle className="text-base sm:text-lg">{category}</CardTitle>
                       </div>
                       <Button variant="link" className="mt-4 text-primary">
                         <Eye className="mr-2" /> {translations.brainstorm.viewMore}
@@ -189,15 +189,16 @@ export default function BrainstormPage() {
           </div>
 
           <div className="space-y-4 pt-6 border-t">
-            <h3 className="font-semibold">{translations.brainstorm.analyzeOwnIdea}</h3>
+            <h3 className="font-semibold text-lg">{translations.brainstorm.analyzeOwnIdea}</h3>
             <Textarea
               placeholder={translations.brainstorm.ideaPlaceholder}
               value={userIdea}
               onChange={e => setUserIdea(e.target.value)}
               rows={3}
+              className="text-base"
             />
             <div className="flex flex-wrap gap-2">
-              <Button onClick={handleAnalyzeIdea} disabled={!userIdea.trim()}>
+              <Button onClick={handleAnalyzeIdea} disabled={!userIdea.trim()} size="lg">
                 <Send className="mr-2" /> {translations.brainstorm.getInsights}
               </Button>
             </div>
