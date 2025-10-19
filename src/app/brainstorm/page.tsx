@@ -86,12 +86,6 @@ export default function BrainstormPage() {
   const [userIdea, setUserIdea] = useState('');
   const router = useRouter();
   const { translations } = useLanguage();
-
-  const staticFinBite = {
-    title: translations.brainstorm.schemeTitle,
-    summary: translations.brainstorm.schemeSummary,
-    link: 'https://www.startupindia.gov.in/content/sih/en/funding/schemes/seed-fund-scheme.html',
-  };
   
   const handleAnalyzeIdea = () => {
     if (!userIdea.trim()) {
@@ -121,28 +115,6 @@ export default function BrainstormPage() {
           </Link>
         </Button>
       </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key="static-fin-bite"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Card className="glassmorphic overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Newspaper className="h-5 w-5 text-primary" />
-                {staticFinBite.title}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{staticFinBite.summary}</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </AnimatePresence>
 
       <Card className="glassmorphic">
         <CardHeader>
