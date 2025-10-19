@@ -52,6 +52,39 @@ const prompt = ai.definePrompt({
   `,
 });
 
+// Moved the suggestion-only prompt definition outside the flow to prevent re-registration on every call.
+const suggestionPrompt = ai.definePrompt({
+  name: 'generateSuggestionOnlyPrompt',
+  input: {
+    schema: z.object({
+      transactions: z.any(),
+      totalIncome: z.number(),
+      totalExpenses: z.number(),
+      savingsRate: z.number(),
+    }),
+  },
+  output: {
+    schema: z.object({
+      suggestion: z
+        .string()
+        .describe(
+          'A short, actionable financial tip based on the transactions.'
+        ),
+    }),
+  },
+  prompt: `Based on the following financial summary, provide one short, actionable "Fin Bite" for an entrepreneur.
+
+        - Total Income: {{totalIncome}}
+        - Total Expenses: {{totalExpenses}}
+        - Savings Rate: {{savingsRate}}%
+
+        Transaction List:
+        {{#each transactions}}
+        - {{this.description}}: {{this.amount}} ({{this.type}}) on {{this.date}}
+        {{/each}}
+        `,
+});
+
 function parseCurrency(amount: string | number): number {
   if (typeof amount === 'number') {
     return amount;
@@ -103,39 +136,6 @@ const generateDashboardSummaryFlow = ai.defineFlow(
         totalIncome > 0
           ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100)
           : 0;
-
-      // Now, call the LLM just for the suggestion.
-      const suggestionPrompt = ai.definePrompt({
-        name: 'generateSuggestionOnlyPrompt',
-        input: {
-          schema: z.object({
-            transactions: z.any(),
-            totalIncome: z.number(),
-            totalExpenses: z.number(),
-            savingsRate: z.number(),
-          }),
-        },
-        output: {
-          schema: z.object({
-            suggestion: z
-              .string()
-              .describe(
-                'A short, actionable financial tip based on the transactions.'
-              ),
-          }),
-        },
-        prompt: `Based on the following financial summary, provide one short, actionable "Fin Bite" for an entrepreneur.
-
-        - Total Income: {{totalIncome}}
-        - Total Expenses: {{totalExpenses}}
-        - Savings Rate: {{savingsRate}}%
-
-        Transaction List:
-        {{#each transactions}}
-        - {{this.description}}: {{this.amount}} ({{this.type}}) on {{this.date}}
-        {{/each}}
-        `,
-      });
 
       const { output } = await suggestionPrompt({
         transactions: input.transactions,
