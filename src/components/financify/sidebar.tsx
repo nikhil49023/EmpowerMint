@@ -129,13 +129,15 @@ export default function Sidebar() {
           <User className="mr-3 h-5 w-5" />
           {translations.sidebar.myProfile}
         </Button>
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-muted-foreground"
-        >
-          <Star className="mr-3 h-5 w-5" />
-          {translations.sidebar.giveFeedback}
-        </Button>
+        <a href="mailto:kilanisainikhil1@gmail.com?subject=Feedback for FIn-Box">
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground"
+          >
+            <Star className="mr-3 h-5 w-5" />
+            {translations.sidebar.giveFeedback}
+          </Button>
+        </a>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button
