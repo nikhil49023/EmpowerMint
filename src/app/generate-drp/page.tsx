@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useState, useEffect, useRef, createRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   FileText,
@@ -35,8 +35,13 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
-import InteractiveDprContent, { type InteractiveDprContentHandle } from '@/components/financify/interactive-dpr-content';
+import {
+  FirestorePermissionError,
+  type SecurityRuleContext,
+} from '@/firebase/errors';
+import InteractiveDprContent, {
+  type InteractiveDprContentHandle,
+} from '@/components/financify/interactive-dpr-content';
 
 const dprChapterTitles = [
   'Executive Summary',
@@ -70,9 +75,12 @@ function GenerateDPRContent() {
   const promoterName = searchParams.get('name');
   const [user] = useAuthState(auth);
 
-  const [analysis, setAnalysis] = useState<GenerateInvestmentIdeaAnalysisOutput | null>(null);
+  const [analysis, setAnalysis] =
+    useState<GenerateInvestmentIdeaAnalysisOutput | null>(null);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
-  const [generatedSections, setGeneratedSections] = useState<Record<string, string>>({});
+  const [generatedSections, setGeneratedSections] = useState<
+    Record<string, string>
+  >({});
   const [dprVariables, setDprVariables] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,7 +93,7 @@ function GenerateDPRContent() {
   const getDprProjectDocRef = (ideaTitle: string) => {
     if (!user) return null;
     return doc(db, 'users', user.uid, 'dpr-projects', ideaTitle);
-  }
+  };
 
   useEffect(() => {
     const analysisDataString = localStorage.getItem('dprAnalysis');
@@ -101,7 +109,7 @@ function GenerateDPRContent() {
       return;
     }
   }, [idea, toast]);
-  
+
   useEffect(() => {
     if (!user || !analysis) return;
 
@@ -109,7 +117,7 @@ function GenerateDPRContent() {
       setIsLoading(true);
       const docRef = getDprProjectDocRef(analysis.title);
       if (!docRef) return;
-      
+
       try {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -118,22 +126,30 @@ function GenerateDPRContent() {
           const savedVariables = data.variables || {};
           setGeneratedSections(savedSections);
           setDprVariables(savedVariables);
-          const nextIncompleteIndex = dprChapterTitles.findIndex(title => !savedSections[title]);
-          
+          const nextIncompleteIndex = dprChapterTitles.findIndex(
+            title => !savedSections[title]
+          );
+
           if (nextIncompleteIndex !== -1) {
             setCurrentSectionIndex(nextIncompleteIndex);
-            generateSection(nextIncompleteIndex, analysis.title, promoterName || 'Entrepreneur', savedSections, savedVariables);
+            generateSection(
+              nextIncompleteIndex,
+              analysis.title,
+              promoterName || 'Entrepreneur',
+              savedSections,
+              savedVariables
+            );
           } else {
             // All sections are complete
-            setCurrentSectionIndex(dprChapterTitles.length - 1);
+            setCurrentSectionIndex(dprChapterTitles.length);
           }
         } else {
           // No project found, start from scratch
           generateSection(0, analysis.title, promoterName || 'Entrepreneur', {}, {});
         }
       } catch (error) {
-         console.error("Error loading DPR project:", error);
-         generateSection(0, analysis.title, promoterName || 'Entrepreneur', {}, {});
+        console.error('Error loading DPR project:', error);
+        generateSection(0, analysis.title, promoterName || 'Entrepreneur', {}, {});
       } finally {
         setIsLoading(false);
       }
@@ -142,20 +158,21 @@ function GenerateDPRContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, analysis]);
 
-
   const generateSection = async (
     sectionIndex: number,
     baseIdea: string,
     promoter: string,
     sections: Record<string, string>,
     variables: Record<string, string>,
-    revisionRequest?: string,
+    revisionFeedback?: string
   ) => {
     const targetSection = dprChapterTitles[sectionIndex];
     setIsGenerating(true);
 
     try {
-      const previousSections = dprChapterTitles.slice(0, sectionIndex).reduce((acc, title) => {
+      const previousSections = dprChapterTitles
+        .slice(0, sectionIndex)
+        .reduce((acc, title) => {
           acc[title] = sections[title];
           return acc;
         }, {} as Record<string, string>);
@@ -166,25 +183,40 @@ function GenerateDPRContent() {
         targetSection,
         previousSections,
         variables,
-        revisionRequest: revisionRequest
+        revisionRequest: revisionFeedback
           ? {
               originalText: generatedSections[targetSection], // Use the saved content for revision
-              feedback: revisionRequest,
+              feedback: revisionFeedback,
             }
           : undefined,
       });
 
       if (result.success) {
-        setGeneratedSections(prev => ({ ...prev, [targetSection]: result.data.content }));
-        if (revisionRequest) {
-          const aiMessage: Message = { id: getUniqueMessageId(), sender: 'ai', text: 'Here is the revised section. Let me know if you have more changes.' };
+        setGeneratedSections(prev => ({
+          ...prev,
+          [targetSection]: result.data.content,
+        }));
+        if (revisionFeedback) {
+          const aiMessage: Message = {
+            id: getUniqueMessageId(),
+            sender: 'ai',
+            text: 'Here is the revised section. Let me know if you have more changes.',
+          };
           setChatMessages(prev => [...prev, aiMessage]);
         }
       } else {
-        toast({ variant: 'destructive', title: 'Error generating section', description: result.error });
+        toast({
+          variant: 'destructive',
+          title: 'Error generating section',
+          description: result.error,
+        });
       }
     } catch (error) {
-      toast({ variant: 'destructive', title: 'An unexpected error occurred', description: 'Please try again later.' });
+      toast({
+        variant: 'destructive',
+        title: 'An unexpected error occurred',
+        description: 'Please try again later.',
+      });
     } finally {
       setIsGenerating(false);
       setIsSubmittingChat(false);
@@ -199,40 +231,71 @@ function GenerateDPRContent() {
     const newDprVariables = { ...dprVariables, ...updatedVariables };
     setDprVariables(newDprVariables);
     
+    const finalSections = { ...generatedSections, [currentSectionTitle]: contentRef.current?.getContent() || currentContent };
+    setGeneratedSections(finalSections);
+
+
     // Save the current state to Firestore
     const docRef = getDprProjectDocRef(analysis!.title);
-    if(docRef) {
+    if (docRef) {
       try {
-        await setDoc(docRef, { 
-          sections: { ...generatedSections, [currentSectionTitle]: currentContent },
-          variables: newDprVariables,
-          updatedAt: new Date()
-        }, { merge: true });
+        await setDoc(
+          docRef,
+          {
+            sections: finalSections,
+            variables: newDprVariables,
+            updatedAt: new Date(),
+          },
+          { merge: true }
+        );
       } catch (e: any) {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'write',
-          requestResourceData: { sections: generatedSections, variables: newDprVariables },
+          requestResourceData: {
+            sections: generatedSections,
+            variables: newDprVariables,
+          },
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
-        toast({ variant: 'destructive', title: 'Could not save progress', description: e.message });
+        toast({
+          variant: 'destructive',
+          title: 'Could not save progress',
+          description: e.message,
+        });
         return; // Don't proceed if save fails
       }
     }
-    
+
     if (currentSectionIndex < dprChapterTitles.length - 1) {
       const nextIndex = currentSectionIndex + 1;
       setCurrentSectionIndex(nextIndex);
-      generateSection(nextIndex, analysis?.title || idea || '', promoterName || 'Entrepreneur', { ...generatedSections, [currentSectionTitle]: currentContent }, newDprVariables);
+      generateSection(
+        nextIndex,
+        analysis?.title || idea || '',
+        promoterName || 'Entrepreneur',
+        finalSections,
+        newDprVariables
+      );
     } else {
-      localStorage.setItem('finalDPR', JSON.stringify({ ...generatedSections, [currentSectionTitle]: currentContent }));
-      router.push('/dpr-report');
+       setCurrentSectionIndex(currentSectionIndex + 1); // Move to "completed" state
     }
   };
+  
+  const handleViewFinalReport = () => {
+    // Just navigate. The report page will fetch data from Firestore.
+    router.push(`/dpr-report?idea=${encodeURIComponent(analysis!.title)}`);
+  }
 
   const handleOpenChat = () => {
     setChatMessages([
-      { id: getUniqueMessageId(), sender: 'ai', text: `I'm ready to revise the "${dprChapterTitles[currentSectionIndex]}" section. What changes would you like me to make?` },
+      {
+        id: getUniqueMessageId(),
+        sender: 'ai',
+        text: `I'm ready to revise the "${
+          dprChapterTitles[currentSectionIndex]
+        }" section. What changes would you like me to make?`,
+      },
     ]);
     setIsChatOpen(true);
   };
@@ -241,13 +304,24 @@ function GenerateDPRContent() {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    const userMessage: Message = { id: getUniqueMessageId(), sender: 'user', text: chatInput };
+    const userMessage: Message = {
+      id: getUniqueMessageId(),
+      sender: 'user',
+      text: chatInput,
+    };
     setChatMessages(prev => [...prev, userMessage]);
     setIsSubmittingChat(true);
 
     const currentVariables = contentRef.current?.getVariables() || {};
 
-    await generateSection(currentSectionIndex, analysis?.title || idea || '', promoterName || 'Entrepreneur', generatedSections, {...dprVariables, ...currentVariables}, chatInput);
+    await generateSection(
+      currentSectionIndex,
+      analysis?.title || idea || '',
+      promoterName || 'Entrepreneur',
+      generatedSections,
+      { ...dprVariables, ...currentVariables },
+      chatInput
+    );
     setChatInput('');
   };
 
@@ -261,9 +335,11 @@ function GenerateDPRContent() {
     );
   }
 
-  const isFinalSection = currentSectionIndex === dprChapterTitles.length - 1;
-  const currentSectionContent = generatedSections[dprChapterTitles[currentSectionIndex]] || '';
-  
+  const isCompleted = currentSectionIndex >= dprChapterTitles.length;
+  const currentSectionTitle = isCompleted ? "Completed" : dprChapterTitles[currentSectionIndex];
+  const currentSectionContent =
+    generatedSections[dprChapterTitles[currentSectionIndex]] || '';
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-start">
@@ -276,7 +352,11 @@ function GenerateDPRContent() {
           </p>
         </div>
         <Button variant="ghost" asChild className="-ml-4">
-          <Link href={`/investment-ideas/custom?idea=${encodeURIComponent(analysis.title || idea || '')}`}>
+          <Link
+            href={`/investment-ideas/custom?idea=${encodeURIComponent(
+              analysis.title || idea || ''
+            )}`}
+          >
             <ArrowLeft className="mr-2" /> Back to Analysis
           </Link>
         </Button>
@@ -285,14 +365,24 @@ function GenerateDPRContent() {
       <Card className="glassmorphic">
         <CardHeader>
           <CardTitle>
-            Section {currentSectionIndex + 1} of {dprChapterTitles.length}: {dprChapterTitles[currentSectionIndex]}
+            {isCompleted
+              ? 'Report Generation Complete'
+              : `Section ${currentSectionIndex + 1} of ${
+                  dprChapterTitles.length
+                }: ${currentSectionTitle}`}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isGenerating && !currentSectionContent ? (
+          {isGenerating && !currentSectionContent && !isCompleted ? (
             <div className="min-h-[200px] flex flex-col items-center justify-center text-muted-foreground">
               <Loader2 className="h-8 w-8 animate-spin mb-4" />
               <p>Generating section...</p>
+            </div>
+          ) : isCompleted ? (
+            <div className="min-h-[200px] flex flex-col items-center justify-center text-center">
+                <Sparkles className="h-12 w-12 text-primary mb-4" />
+                <h3 className="text-xl font-semibold">Congratulations!</h3>
+                <p className="text-muted-foreground mt-2">All sections of your Detailed Project Report have been generated.</p>
             </div>
           ) : (
             <InteractiveDprContent
@@ -304,26 +394,41 @@ function GenerateDPRContent() {
           )}
         </CardContent>
       </Card>
-
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={handleOpenChat} disabled={isGenerating || !currentSectionContent}>
-          <MessageSquare className="mr-2" /> Request Changes
-        </Button>
-        <Button onClick={handleAcceptAndContinue} disabled={isGenerating || !currentSectionContent}>
-          {isFinalSection ? (
-            <><Eye className="mr-2" /> View Final Report</>
-          ) : (
-            <>Accept and Continue <ChevronsRight className="ml-2" /></>
-          )}
-        </Button>
-      </div>
+      
+      {isCompleted ? (
+        <div className="flex justify-end">
+            <Button onClick={handleViewFinalReport}>
+                <Eye className="mr-2" /> View Final Report
+            </Button>
+        </div>
+      ) : (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={handleOpenChat}
+            disabled={isGenerating || !currentSectionContent}
+          >
+            <MessageSquare className="mr-2" /> Request Changes
+          </Button>
+          <Button
+            onClick={handleAcceptAndContinue}
+            disabled={isGenerating || !currentSectionContent}
+          >
+            {currentSectionIndex === dprChapterTitles.length -1 ? (
+                <>Complete Report</>
+            ) : (
+                <>Accept and Continue <ChevronsRight className="ml-2" /></>
+            )}
+          </Button>
+        </div>
+      )}
 
       <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
         <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 glassmorphic">
           <DialogHeader className="p-4 border-b">
             <DialogTitle>Revise Section</DialogTitle>
             <DialogDescription>
-              Tell me what you'd like to change about the "{dprChapterTitles[currentSectionIndex]}" section.
+              Tell me what you'd like to change about the "{currentSectionTitle}" section.
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1">
@@ -336,18 +441,26 @@ function GenerateDPRContent() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
-                    className={`flex items-start gap-3 ${message.sender === 'user' ? 'justify-end' : ''}`}
+                    className={`flex items-start gap-3 ${
+                      message.sender === 'user' ? 'justify-end' : ''
+                    }`}
                   >
                     {message.sender === 'ai' && (
                       <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
                         <Sparkles className="h-5 w-5" />
                       </div>
                     )}
-                    <div className={`rounded-lg p-3 max-w-md text-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                    <div
+                      className={`rounded-lg p-3 max-w-md text-sm ${
+                        message.sender === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
                       <p>{message.text}</p>
                     </div>
                     {message.sender === 'user' && (
-                       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                         <User className="h-5 w-5" />
                       </div>
                     )}
@@ -361,7 +474,7 @@ function GenerateDPRContent() {
                   transition={{ duration: 0.3, delay: 0.2 }}
                   className="flex items-start gap-3"
                 >
-                   <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
                     <Sparkles className="h-5 w-5" />
                   </div>
                   <div className="bg-muted rounded-lg p-3 max-w-md">
@@ -379,7 +492,11 @@ function GenerateDPRContent() {
                 placeholder="e.g., 'Make the tone more formal...'"
                 disabled={isSubmittingChat}
               />
-              <Button type="submit" size="icon" disabled={isSubmittingChat || !chatInput.trim()}>
+              <Button
+                type="submit"
+                size="icon"
+                disabled={isSubmittingChat || !chatInput.trim()}
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </form>
@@ -405,3 +522,5 @@ export default function GenerateDPRPage() {
     </Suspense>
   );
 }
+
+    

@@ -13,6 +13,7 @@ type InteractiveDprContentProps = {
 
 export type InteractiveDprContentHandle = {
   getVariables: () => Record<string, string>;
+  getContent: () => string;
 };
 
 const InteractiveDprContent = forwardRef<InteractiveDprContentHandle, InteractiveDprContentProps>(
@@ -21,6 +22,15 @@ const InteractiveDprContent = forwardRef<InteractiveDprContentHandle, Interactiv
 
     useImperativeHandle(ref, () => ({
       getVariables: () => variables,
+      getContent: () => {
+         return text.split(formattingRegex).filter(Boolean).map((part) => {
+            if (part.startsWith('VAR{') && part.endsWith('}')) {
+              const varKey = part.slice('VAR{'.length, -1);
+              return variables[varKey] || part;
+            }
+            return part;
+         }).join('');
+      }
     }));
 
     const handleVariableChange = (key: string, value: string) => {
@@ -80,3 +90,5 @@ const InteractiveDprContent = forwardRef<InteractiveDprContentHandle, Interactiv
 
 InteractiveDprContent.displayName = 'InteractiveDprContent';
 export default InteractiveDprContent;
+
+    
