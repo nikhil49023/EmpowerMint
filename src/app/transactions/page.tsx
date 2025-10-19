@@ -129,50 +129,50 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (user) {
       setLoadingData(true);
-      const transQuery = query(
-        collection(db, 'users', user.uid, 'transactions')
-      );
-      const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
 
+      const transQuery = query(collection(db, 'users', user.uid, 'transactions'));
       const unsubTransactions = onSnapshot(
         transQuery,
-        snapshot => {
+        (snapshot) => {
           const transData = snapshot.docs.map(doc => ({
             ...(doc.data() as ExtractedTransaction),
           }));
           setTransactions(transData);
-          if (loadingData) setLoadingData(false);
+          setLoadingData(false); 
         },
-        async serverError => {
+        (error) => {
+          console.error("Error fetching transactions: ", error);
           const permissionError = new FirestorePermissionError({
             path: transQuery.path,
             operation: 'list',
           } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);
+          setLoadingData(false);
         }
       );
 
+      const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
       const unsubBudgets = onSnapshot(
         budgetQuery,
-        snapshot => {
+        (snapshot) => {
           const budgetsData = snapshot.docs.map(doc => ({
             id: doc.id,
             ...(doc.data() as Omit<Budget, 'id' | 'spent' | 'icon'>),
-            spent: 0, // Will be calculated in useMemo
+            spent: 0,
             icon: categoryIcons[doc.data().name] || categoryIcons.Default,
           }));
           setBudgets(budgetsData);
-          if (loadingData) setLoadingData(false);
         },
-        async serverError => {
-          const permissionError = new FirestorePermissionError({
+        (error) => {
+          console.error("Error fetching budgets: ", error);
+           const permissionError = new FirestorePermissionError({
             path: budgetQuery.path,
             operation: 'list',
           } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);
         }
       );
-
+      
       return () => {
         try {
           unsubTransactions();
