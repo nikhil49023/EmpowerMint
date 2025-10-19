@@ -45,29 +45,17 @@ const prompt = ai.definePrompt({
   name: 'generateFullDprPrompt',
   input: { schema: GenerateFullDprInputSchema },
   output: { schema: GenerateFullDprOutputSchema },
-  prompt: `You are "FIn-Box," a professional business consultant specializing in creating bank-ready Detailed Project Reports (DPRs) for Indian entrepreneurs.
-
-Your task is to generate a comprehensive, well-structured, and realistic DPR based on the provided business idea and promoter details. Use markdown for formatting, including **bolding** key terms and using bullet points for lists.
-
-**Business Idea**: "{{{idea}}}"
-**Promoter Name**: {{#if userName}}"{{userName}}"{{else}}Not provided{{/if}}
-
-Generate a detailed report covering the following sections. Be thorough and practical.
-
-1.  **Executive Summary**: A concise and compelling overview of the business, its objectives, and key highlights.
-2.  **Promoter/Owner Details**: Write a brief professional profile for the promoter. If a name is provided, use it. Infer potential strengths based on the business idea (e.g., if it's a tech idea, assume some technical acumen).
-3.  **Business Profile**: Define the type of enterprise (manufacturing, service, or trading). Detail the products or services. Explain the unique value proposition and the market need it addresses.
-4.  **Market Analysis**: Identify the target market and customer profile. Analyze local demand and competition. Propose a practical marketing and sales strategy for an early-stage business in India.
-5.  **Technical/Operational Plan**: Describe the operational workflow. List potential machinery, equipment, and raw materials needed. Suggest location requirements and estimate the initial workforce.
-6.  **Legal & Statutory Requirements**: List the essential licenses and registrations required to operate this business in India (e.g., GST Registration, MSME/Udyam Registration, FSSAI license if applicable, etc.).
-7.  **Financial Projections**: This section is critical.
-    - First, provide a **text summary** analyzing the total project cost, funding sources, a high-level cost breakup, and projected sales and profitability.
-    - Second, provide a structured JSON array for the **cost breakdown** suitable for a pie chart. Use realistic categories like 'Machinery & Equipment', 'Raw Materials (First Batch)', 'Rent Deposit', 'Working Capital', etc. All values must be numbers.
-    - Third, provide a structured JSON array for **yearly projections** (3 to 5 years) suitable for a bar chart. Include 'year', 'sales' (revenue), and 'profit'. All values must be numbers.
-8.  **SWOT Analysis**: Conduct a SWOT analysis (Strengths, Weaknesses, Opportunities, Threats) for the business idea.
-
-Your output must be in the specified JSON format.
-`,
+  // By using a fine-tuned model, the prompt can be much shorter and more direct,
+  // as the model has already learned the desired output structure.
+  // This significantly reduces the number of input tokens for each API call.
+  prompt: `Generate a bank-ready Detailed Project Report (DPR) for an Indian entrepreneur.
+  
+  **Business Idea**: "{{{idea}}}"
+  **Promoter Name**: {{#if userName}}"{{userName}}"{{else}}Not provided{{/if}}
+  `,
+  // Once fine-tuned in Vertex AI, you would replace the general model
+  // with your custom model's unique endpoint ID.
+  model: 'tunedModels/your-custom-dpr-model-id',
 });
 
 const generateFullDprFlow = ai.defineFlow(
