@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Lightbulb, Loader2 } from 'lucide-react';
+import { Lightbulb, Loader2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -23,6 +23,7 @@ import {
   type SecurityRuleContext,
 } from '@/firebase/errors';
 import { useLanguage } from '@/hooks/use-language';
+import { useRouter } from 'next/navigation';
 
 type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
   id: string;
@@ -37,6 +38,7 @@ export default function MyIdeasPage() {
   const [ideas, setIdeas] = useState<SavedIdea[]>([]);
   const [loadingIdeas, setLoadingIdeas] = useState(true);
   const { translations } = useLanguage();
+  const router = useRouter();
 
   useEffect(() => {
     if (user) {
@@ -67,6 +69,18 @@ export default function MyIdeasPage() {
       setLoadingIdeas(false);
     }
   }, [user, loadingAuth]);
+
+  const handleGenerateDpr = (
+    idea: GenerateInvestmentIdeaAnalysisOutput
+  ) => {
+    if (!idea || !user) return;
+    localStorage.setItem('dprAnalysis', JSON.stringify(idea));
+    router.push(
+      `/generate-drp?idea=${encodeURIComponent(
+        idea.title
+      )}&name=${encodeURIComponent(user?.displayName || 'Entrepreneur')}`
+    );
+  };
 
   if (loadingAuth || loadingIdeas) {
     return (
@@ -126,7 +140,7 @@ export default function MyIdeasPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow" />
-                <CardContent>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <Button asChild variant="outline" className="w-full">
                     <Link
                       href={{
@@ -136,6 +150,10 @@ export default function MyIdeasPage() {
                     >
                       {translations.myIdeas.viewAnalysis}
                     </Link>
+                  </Button>
+                  <Button onClick={() => handleGenerateDpr(idea)} className="w-full">
+                    <FileText className="mr-2 h-4 w-4"/>
+                    Generate DPR
                   </Button>
                 </CardContent>
               </Card>
