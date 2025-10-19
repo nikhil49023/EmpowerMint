@@ -7,59 +7,12 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import { GenerateInvestmentIdeaAnalysisOutputSchema } from '../schemas/investment-idea-analysis';
-
-// Input: The full analysis object and the promoter's name.
-export const GenerateDprFromAnalysisInputSchema = z.object({
-  analysis: GenerateInvestmentIdeaAnalysisOutputSchema.describe(
-    'The detailed analysis of the business idea.'
-  ),
-  promoterName: z.string().describe('The name of the promoter/entrepreneur.'),
-});
-export type GenerateDprFromAnalysisInput = z.infer<
-  typeof GenerateDprFromAnalysisInputSchema
->;
-
-// Output: A structured, multi-chapter DPR.
-const FinancialProjectionsSchema = z.object({
-  summaryText: z
-    .string()
-    .describe('A brief summary of the financial outlook.'),
-  projectCost: z.string().describe('Breakdown of total project costs.'),
-  meansOfFinance: z
-    .string()
-    .describe('How the project will be financed (equity, debt).'),
-  costBreakdown: z
-    .array(z.object({ name: z.string(), value: z.number() }))
-    .describe('A JSON array for a pie chart of cost breakdown.'),
-  yearlyProjections: z
-    .array(z.object({ year: z.string(), sales: z.number(), profit: z.number() }))
-    .describe('A JSON array for a bar chart of yearly sales and profit.'),
-  profitabilityAnalysis: z.string().describe('Analysis of profitability.'),
-  cashFlowStatement: z.string().describe('Projected cash flow statement.'),
-  loanRepaymentSchedule: z.string().describe('Loan repayment schedule.'),
-  breakEvenAnalysis: z.string().describe('Break-even point analysis.'),
-});
-
-export const GenerateDprFromAnalysisOutputSchema = z.object({
-  executiveSummary: z.string(),
-  projectIntroduction: z.string(),
-  promoterDetails: z.string(),
-  businessModel: z.string(),
-  marketAnalysis: z.string(),
-  locationAndSite: z.string(),
-  technicalFeasibility: z.string(),
-  implementationSchedule: z.string(),
-  financialProjections: FinancialProjectionsSchema,
-  swotAnalysis: z.string(),
-  regulatoryCompliance: z.string(),
-  riskAssessment: z.string(),
-  annexures: z.string(),
-});
-export type GenerateDprFromAnalysisOutput = z.infer<
-  typeof GenerateDprFromAnalysisOutputSchema
->;
+import {
+  GenerateDprFromAnalysisInputSchema,
+  GenerateDprFromAnalysisOutputSchema,
+  type GenerateDprFromAnalysisInput,
+  type GenerateDprFromAnalysisOutput,
+} from '@/ai/schemas/dpr';
 
 export async function generateDprFromAnalysis(
   input: GenerateDprFromAnalysisInput
