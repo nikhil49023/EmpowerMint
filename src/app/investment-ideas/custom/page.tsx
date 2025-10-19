@@ -204,7 +204,7 @@ function InvestmentIdeaContent() {
                   )}
                 </Button>
                 <Button asChild>
-                  <Link href={`/generate-drp?idea=${encodeURIComponent(analysis.title)}`}>
+                  <Link href={`/dpr-report?idea=${encodeURIComponent(analysis.title)}`}>
                     <FileText className="mr-2" />
                     Generate DPR
                   </Link>
