@@ -21,6 +21,23 @@ type ReportData = {
   [key: string]: any;
 };
 
+const dprChapterTitles = [
+  'Executive Summary',
+  'Project Introduction',
+  'Promoter Details',
+  'Business Model',
+  'Market Analysis',
+  'Location and Site',
+  'Technical Feasibility',
+  'Implementation Schedule',
+  'Financial Projections',
+  'SWOT Analysis',
+  'Regulatory Compliance',
+  'Risk Assessment',
+  'Annexures',
+];
+
+
 function DPRReportContent() {
   const router = useRouter();
   const [report, setReport] = useState<ReportData | null>(null);
@@ -198,14 +215,16 @@ function DPRReportContent() {
           ))}
         
         {report &&
-          Object.entries(report).map(([title, content]) => {
-             if (title === 'Financial Projections') {
-              return <FinancialSection key={title} title={`9. ${title}`} content={content} isLoading={isLoading} />;
+          Object.entries(report).map(([key, content]) => {
+            const title = dprChapterTitles.find(t => t.toLowerCase().replace(/ /g, '') === key.toLowerCase().replace(/ /g, '')) || key;
+             if (key === 'financialProjections') {
+              const index = dprChapterTitles.indexOf('Financial Projections');
+              return <FinancialSection key={key} title={`${index + 1}. Financial Projections`} content={content} isLoading={isLoading} />;
             }
             const index = dprChapterTitles.indexOf(title);
             return (
               <Section
-                key={title}
+                key={key}
                 title={`${index + 1}. ${title}`}
                 content={content}
                 isLoading={isLoading}
