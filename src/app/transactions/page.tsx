@@ -174,8 +174,12 @@ export default function TransactionsPage() {
       );
 
       return () => {
-        unsubTransactions();
-        unsubBudgets();
+        try {
+          unsubTransactions();
+          unsubBudgets();
+        } catch (error) {
+          console.error('Error unsubscribing from Firestore:', error);
+        }
       };
     } else if (!loadingAuth) {
       setLoadingData(false);
