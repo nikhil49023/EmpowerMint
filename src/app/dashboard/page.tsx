@@ -36,6 +36,10 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [greeting, setGreeting] = useState('');
   const { translations } = useLanguage();
+  
+  const getCacheKey = useCallback(() => {
+    return user ? `dashboard-summary-${user.uid}` : null;
+  }, [user]);
 
   useEffect(() => {
     const hours = new Date().getHours();
@@ -47,6 +51,18 @@ export default function DashboardPage() {
       setGreeting(translations.dashboard.greeting.evening);
     }
   }, [translations]);
+  
+  // Load initial summary from cache
+  useEffect(() => {
+    const cacheKey = getCacheKey();
+    if (cacheKey) {
+      const cachedSummary = localStorage.getItem(cacheKey);
+      if (cachedSummary) {
+        setSummary(JSON.parse(cachedSummary));
+        setIsLoading(false);
+      }
+    }
+  }, [getCacheKey]);
 
   useEffect(() => {
     if (user) {
@@ -74,32 +90,45 @@ export default function DashboardPage() {
   }, [user, loadingAuth]);
 
   const fetchSummary = useCallback(async () => {
+    const cacheKey = getCacheKey();
+    
+    // If there are no transactions, set a default state and clear cache
     if (transactions.length === 0 && !loadingAuth && user) {
-      setSummary({
+      const defaultSummary = {
         totalIncome: 0,
         totalExpenses: 0,
         savingsRate: 0,
         suggestion: translations.dashboard.defaultSuggestion,
-      });
+      };
+      setSummary(defaultSummary);
+      if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(defaultSummary));
       setIsLoading(false);
       return;
     }
+    
+    // Only generate a new summary if there are transactions
     if (transactions.length > 0) {
       setIsLoading(true);
       const result = await generateDashboardSummaryAction(transactions);
       if (result.success) {
         setSummary(result.data);
+        if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(result.data));
       } else {
         console.error(result.error);
-        // Handle error state if needed
+        // On failure, clear cache to avoid showing stale data
+        if(cacheKey) localStorage.removeItem(cacheKey);
       }
       setIsLoading(false);
     }
-  }, [transactions, user, loadingAuth, translations]);
+  }, [transactions, user, loadingAuth, translations, getCacheKey]);
 
   useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
+    // Only run fetchSummary if transactions have been loaded from Firestore
+    // This prevents running it with an empty array on initial load
+    if(!loadingAuth && user) {
+        fetchSummary();
+    }
+  }, [transactions, loadingAuth, user, fetchSummary]);
 
   const formatCurrency = (amount: number | undefined) => {
     if (amount === undefined) {
@@ -130,7 +159,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl md:text-3xl font-bold">
-              {isLoading ? (
+              {isLoading && !summary ? (
                 <Skeleton className="h-8 w-36" />
               ) : (
                 formatCurrency(summary?.totalExpenses)
@@ -152,7 +181,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl md:text-3xl font-bold">
-              {isLoading ? (
+              {isLoading && !summary ? (
                 <Skeleton className="h-8 w-36" />
               ) : (
                 formatCurrency(summary?.totalIncome)
@@ -172,7 +201,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl md:text-3xl font-bold">
-              {isLoading ? (
+              {isLoading && !summary ? (
                 <Skeleton className="h-8 w-20" />
               ) : (
                 `${summary?.savingsRate ?? 0}%`
@@ -191,7 +220,7 @@ export default function DashboardPage() {
             <CardTitle>{translations.dashboard.suggestionsTitle}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            {isLoading ? (
+            {isLoading && !summary ? (
               <div className="space-y-2">
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-3/4" />

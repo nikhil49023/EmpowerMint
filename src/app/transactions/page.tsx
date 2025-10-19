@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -126,6 +126,13 @@ export default function TransactionsPage() {
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
 
+  const invalidateDashboardCache = useCallback(() => {
+    if (user) {
+      const cacheKey = `dashboard-summary-${user.uid}`;
+      localStorage.removeItem(cacheKey);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       setLoadingData(true);
@@ -235,6 +242,7 @@ export default function TransactionsPage() {
         setNewBudgetName('');
         setNewBudgetAmount('');
         setAddBudgetDialogOpen(false);
+        invalidateDashboardCache();
         toast({
           title: 'Success',
           description: translations.transactions.toasts.successAddBudget,
@@ -272,6 +280,7 @@ export default function TransactionsPage() {
     budgetSnapshot.forEach(doc => batch.delete(doc.ref));
 
     await batch.commit();
+    invalidateDashboardCache();
 
     toast({
       title: 'Success',
@@ -316,6 +325,7 @@ export default function TransactionsPage() {
           amount: '',
         });
         setAddTransactionDialogOpen(false);
+        invalidateDashboardCache();
         toast({
           title: 'Success',
           description: translations.transactions.toasts.successAddTransaction,
@@ -366,6 +376,7 @@ export default function TransactionsPage() {
           batch
             .commit()
             .then(() => {
+              invalidateDashboardCache();
               toast({
                 title: 'Import Successful',
                 description: `${result.data.transactions.length} ${translations.transactions.toasts.importSuccess}`,
