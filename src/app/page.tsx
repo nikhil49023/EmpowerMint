@@ -253,6 +253,7 @@ export default function LoginPage() {
                   required={isSignUp}
                   value={name}
                   onChange={e => setName(e.target.value)}
+                  suppressHydrationWarning
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -265,12 +266,13 @@ export default function LoginPage() {
                     required={isSignUp}
                     value={age}
                     onChange={e => setAge(e.target.value)}
+                    suppressHydrationWarning
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="occupation">Occupation</Label>
                   <Select onValueChange={setOccupation} value={occupation}>
-                    <SelectTrigger id="occupation">
+                    <SelectTrigger id="occupation" suppressHydrationWarning>
                       <SelectValue placeholder="Select occupation" />
                     </SelectTrigger>
                     <SelectContent>
@@ -294,13 +296,14 @@ export default function LoginPage() {
                   required={isSignUp}
                   value={annualIncome}
                   onChange={e => setAnnualIncome(e.target.value)}
+                  suppressHydrationWarning
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="state">State</Label>
                   <Select onValueChange={setState} value={state}>
-                    <SelectTrigger id="state">
+                    <SelectTrigger id="state" suppressHydrationWarning>
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
@@ -320,6 +323,7 @@ export default function LoginPage() {
                     required={isSignUp}
                     value={district}
                     onChange={e => setDistrict(e.target.value)}
+                    suppressHydrationWarning
                   />
                 </div>
               </div>
@@ -334,6 +338,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
+              suppressHydrationWarning
             />
           </div>
           <div className="space-y-2">
@@ -344,11 +349,12 @@ export default function LoginPage() {
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
+              suppressHydrationWarning
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" onClick={handleAuthAction}>
+          <Button className="w-full" onClick={handleAuthAction} suppressHydrationWarning>
             {isSignUp ? 'Sign Up' : 'Login'}
           </Button>
 
@@ -367,6 +373,7 @@ export default function LoginPage() {
             variant="outline"
             className="w-full"
             onClick={handleGoogleSignIn}
+            suppressHydrationWarning
           >
             <GoogleIcon />
             <span className="ml-2">Sign in with Google</span>
@@ -381,6 +388,7 @@ export default function LoginPage() {
                 setIsSignUp(!isSignUp);
                 setError(null);
               }}
+              suppressHydrationWarning
             >
               {isSignUp ? 'Login' : 'Sign up'}
             </Button>
