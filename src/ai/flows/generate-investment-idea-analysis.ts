@@ -77,7 +77,6 @@ const prompt = ai.definePrompt({
   **Formatting instructions**:
   - Use simple, easy-to-understand language.
   - Use markdown to **bold** important keywords and phrases.
-  - When mentioning any currency amount, wrap it in the format \`CURRENCY{...\}\`. For example, instead of "INR 50,000", write "CURRENCY{INR 50,000}".
 
   Ensure the output is in the specified JSON format.`,
 });
