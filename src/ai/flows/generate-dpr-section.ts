@@ -66,18 +66,18 @@ Make the content detailed, professional, and suitable for a banking audience. Fo
 
 {{#if (eq targetSection "Financial Projections")}}
 **SPECIAL INSTRUCTIONS FOR FINANCIAL PROJECTIONS:**
-Your output for the 'content' field MUST be a single, valid, stringified JSON object. Do NOT include any markdown, introductory text, or anything outside of the JSON structure. The entire 'content' output must be parsable with JSON.parse().
+Your output for the 'content' field MUST be a single, valid, stringified JSON object. Do NOT include any markdown, introductory text, code fences (\`\`\`), or anything outside of the pure JSON structure. The entire 'content' output must be parsable with JSON.parse().
 The JSON object must have the following structure:
 {
-  "summaryText": "A brief summary of the financial outlook.",
-  "projectCost": "Breakdown of total project costs in markdown.",
-  "meansOfFinance": "How the project will be financed (equity, debt) in markdown.",
+  "summaryText": "A brief summary of the financial outlook in markdown format.",
+  "projectCost": "Breakdown of total project costs in markdown format.",
+  "meansOfFinance": "How the project will be financed (equity, debt) in markdown format.",
   "costBreakdown": [ { "name": "Item 1", "value": 100000 }, { "name": "Item 2", "value": 200000 } ],
   "yearlyProjections": [ { "year": "Year 1", "sales": 500000, "profit": 50000 }, { "year": "Year 2", "sales": 1000000, "profit": 200000 } ],
-  "profitabilityAnalysis": "Analysis of profitability in markdown.",
-  "cashFlowStatement": "Projected cash flow statement in markdown.",
-  "loanRepaymentSchedule": "Loan repayment schedule in markdown.",
-  "breakEvenAnalysis": "Break-even point analysis in markdown."
+  "profitabilityAnalysis": "Analysis of profitability in markdown format.",
+  "cashFlowStatement": "Projected cash flow statement in markdown format.",
+  "loanRepaymentSchedule": "Loan repayment schedule in markdown format.",
+  "breakEvenAnalysis": "Break-even point analysis in markdown format."
 }
 Generate detailed, credible data for all fields within this JSON structure.
 {{else}}
