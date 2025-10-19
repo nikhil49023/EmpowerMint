@@ -25,7 +25,7 @@ const prompt = ai.definePrompt({
   input: { schema: GenerateDprFromAnalysisInputSchema },
   output: { schema: GenerateDprFromAnalysisOutputSchema },
   prompt: `You are an expert consultant hired to write a bank-ready Detailed Project Report (DPR) for an entrepreneur in India.
-You have been provided with a preliminary analysis of the business idea. Your task is to expand this analysis into a comprehensive, 40-80 page DPR suitable for obtaining an MSME or startup loan.
+You have been provided with a preliminary analysis of the business idea. Your task is to expand this analysis into a comprehensive, bank-ready DPR of approximately 40 pages.
 
 **Formatting Instructions:**
 - Use markdown for formatting, such as **bolding** key terms.

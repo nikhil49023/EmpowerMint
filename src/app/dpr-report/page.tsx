@@ -132,16 +132,28 @@ function DPRReportContent() {
             visibility: visible;
           }
           #print-section {
-            position: static;
+            position: relative;
             margin: 0;
+            padding: 0.5cm;
             width: 100%;
-            padding: 0;
-            top: 0;
-            left: 0;
+            border: 1px solid #ccc;
+            min-height: calc(100vh - 3cm); /* Adjust based on margin */
             float: none;
           }
+          #print-section::after {
+            content: 'FIn-Box';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 120px;
+            font-weight: bold;
+            color: rgba(0, 0, 0, 0.05);
+            pointer-events: none;
+            z-index: -1;
+          }
           .no-print {
-            display: none;
+            display: none !important;
           }
           .print-break-before {
             page-break-before: always;
@@ -223,8 +235,8 @@ function DPRReportContent() {
 
       <div id="print-section" className="space-y-6">
         {/* Cover Page for Print */}
-        <div className="print-cover-page no-print">
-            <div className="print-only">
+        <div className="print-cover-page hidden print:block">
+            <div>
                 <h1 style={{fontSize: '28pt', fontWeight: 'bold', margin: '0'}}>{ideaTitle}</h1>
                 <p style={{fontSize: '14pt', marginTop: '1rem'}}>Detailed Project Report</p>
                 <div style={{marginTop: '20rem', fontSize: '12pt'}}>
@@ -235,8 +247,8 @@ function DPRReportContent() {
         </div>
 
         {/* Table of Contents for Print */}
-         <div className="print-toc no-print">
-             <div className="print-only">
+         <div className="print-toc hidden print:block">
+             <div>
                  <h1>Table of Contents</h1>
                  <table>
                      <tbody>
