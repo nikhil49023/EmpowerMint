@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -7,7 +8,10 @@ type FormattedTextProps = {
 };
 
 export function FormattedText({ text }: FormattedTextProps) {
-  if (!text) {
+  if (typeof text !== 'string') {
+    if (text) {
+      console.warn('FormattedText component received a non-string prop:', text);
+    }
     return null;
   }
 
