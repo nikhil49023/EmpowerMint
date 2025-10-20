@@ -87,23 +87,22 @@ function InvestmentIdeaContent() {
         savedAt: serverTimestamp(),
       };
 
-      try {
-        await addDoc(ideasCollectionRef, ideaData);
-        setIsSaved(true);
-        toast({
-          title: translations.investmentIdea._TITLE,
-          description: translations.investmentIdea.ideaSavedSuccess,
+      addDoc(ideasCollectionRef, ideaData).catch(async serverError => {
+          const permissionError = new FirestorePermissionError({
+            path: ideasCollectionRef.path,
+            operation: 'create',
+            requestResourceData: ideaData,
+          } satisfies SecurityRuleContext);
+          errorEmitter.emit('permission-error', permissionError);
+        })
+        .finally(() => {
+          setIsSaving(false);
+          setIsSaved(true);
+          toast({
+            title: translations.investmentIdea._TITLE,
+            description: translations.investmentIdea.ideaSavedSuccess,
+          });
         });
-      } catch (serverError) {
-        const permissionError = new FirestorePermissionError({
-          path: ideasCollectionRef.path,
-          operation: 'create',
-          requestResourceData: ideaData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      } finally {
-        setIsSaving(false);
-      }
     },
     [user, toast, translations]
   );
@@ -153,7 +152,12 @@ function InvestmentIdeaContent() {
             setError(result.error);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
+        const permissionError = new FirestorePermissionError({
+          path: `users/${user.uid}/ideas`,
+          operation: 'list',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
         console.error('Error fetching or generating analysis:', err);
         setError(
           'An unexpected error occurred while retrieving your analysis.'

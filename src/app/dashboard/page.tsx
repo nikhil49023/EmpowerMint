@@ -66,7 +66,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      const q = query(collection(db, 'users', user.uid, 'transactions'));
+      const transCollectionRef = collection(db, 'users', user.uid, 'transactions');
+      const q = query(transCollectionRef);
       const unsubscribe = onSnapshot(
         q,
         querySnapshot => {
@@ -77,7 +78,7 @@ export default function DashboardPage() {
         },
         async serverError => {
           const permissionError = new FirestorePermissionError({
-            path: q.path,
+            path: `users/${user.uid}/transactions`,
             operation: 'list',
           } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);

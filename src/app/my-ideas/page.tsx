@@ -42,8 +42,9 @@ export default function MyIdeasPage() {
 
   useEffect(() => {
     if (user) {
+      const ideasCollectionRef = collection(db, 'users', user.uid, 'ideas');
       const ideasQuery = query(
-        collection(db, 'users', user.uid, 'ideas'),
+        ideasCollectionRef,
         orderBy('savedAt', 'desc')
       );
       const unsubscribe = onSnapshot(
@@ -58,10 +59,11 @@ export default function MyIdeasPage() {
         },
         async serverError => {
           const permissionError = new FirestorePermissionError({
-            path: ideasQuery.path,
+            path: `users/${user.uid}/ideas`,
             operation: 'list',
           } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);
+          setLoadingIdeas(false);
         }
       );
       return () => unsubscribe();

@@ -136,8 +136,8 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (user) {
       setLoadingData(true);
-
-      const transQuery = query(collection(db, 'users', user.uid, 'transactions'));
+      const transCollectionRef = collection(db, 'users', user.uid, 'transactions');
+      const transQuery = query(transCollectionRef);
       const unsubTransactions = onSnapshot(
         transQuery,
         (snapshot) => {
@@ -150,7 +150,7 @@ export default function TransactionsPage() {
         (error) => {
           console.error("Error fetching transactions: ", error);
           const permissionError = new FirestorePermissionError({
-            path: transQuery.path,
+            path: `users/${user.uid}/transactions`,
             operation: 'list',
           } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);
@@ -158,7 +158,8 @@ export default function TransactionsPage() {
         }
       );
 
-      const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
+      const budgetCollectionRef = collection(db, 'users', user.uid, 'budgets');
+      const budgetQuery = query(budgetCollectionRef);
       const unsubBudgets = onSnapshot(
         budgetQuery,
         (snapshot) => {
@@ -173,7 +174,7 @@ export default function TransactionsPage() {
         (error) => {
           console.error("Error fetching budgets: ", error);
            const permissionError = new FirestorePermissionError({
-            path: budgetQuery.path,
+            path: `users/${user.uid}/budgets`,
             operation: 'list',
           } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);
@@ -238,7 +239,14 @@ export default function TransactionsPage() {
     const budgetsCollectionRef = collection(db, 'users', user.uid, 'budgets');
 
     addDoc(budgetsCollectionRef, newBudgetData)
-      .then(() => {
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: budgetsCollectionRef.path,
+          operation: 'create',
+          requestResourceData: newBudgetData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      }).then(() => {
         setNewBudgetName('');
         setNewBudgetAmount('');
         setAddBudgetDialogOpen(false);
@@ -247,14 +255,6 @@ export default function TransactionsPage() {
           title: 'Success',
           description: translations.transactions.toasts.successAddBudget,
         });
-      })
-      .catch(async serverError => {
-        const permissionError = new FirestorePermissionError({
-          path: budgetsCollectionRef.path,
-          operation: 'create',
-          requestResourceData: newBudgetData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
       });
   };
 
@@ -273,19 +273,28 @@ export default function TransactionsPage() {
     const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
 
     const batch = writeBatch(db);
-    const transSnapshot = await getDocs(transQuery);
-    transSnapshot.forEach(doc => batch.delete(doc.ref));
+    
+    try {
+        const transSnapshot = await getDocs(transQuery);
+        transSnapshot.forEach(doc => batch.delete(doc.ref));
 
-    const budgetSnapshot = await getDocs(budgetQuery);
-    budgetSnapshot.forEach(doc => batch.delete(doc.ref));
+        const budgetSnapshot = await getDocs(budgetQuery);
+        budgetSnapshot.forEach(doc => batch.delete(doc.ref));
 
-    await batch.commit();
-    invalidateDashboardCache();
+        await batch.commit();
+        invalidateDashboardCache();
 
-    toast({
-      title: 'Success',
-      description: translations.transactions.toasts.successClearData,
-    });
+        toast({
+        title: 'Success',
+        description: translations.transactions.toasts.successClearData,
+        });
+    } catch(e: any) {
+        const permissionError = new FirestorePermissionError({
+            path: `users/${user.uid}/transactions`,
+            operation: 'delete'
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+    }
   };
 
   const handleAddTransaction = async () => {
@@ -317,6 +326,14 @@ export default function TransactionsPage() {
       'transactions'
     );
     addDoc(transactionsCollectionRef, newTransaction)
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: transactionsCollectionRef.path,
+          operation: 'create',
+          requestResourceData: newTransaction,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      })
       .then(() => {
         setNewTransaction({
           description: '',
@@ -330,14 +347,6 @@ export default function TransactionsPage() {
           title: 'Success',
           description: translations.transactions.toasts.successAddTransaction,
         });
-      })
-      .catch(async serverError => {
-        const permissionError = new FirestorePermissionError({
-          path: transactionsCollectionRef.path,
-          operation: 'create',
-          requestResourceData: newTransaction,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
       });
   };
 
@@ -375,13 +384,6 @@ export default function TransactionsPage() {
 
           batch
             .commit()
-            .then(() => {
-              invalidateDashboardCache();
-              toast({
-                title: 'Import Successful',
-                description: `${result.data.transactions.length} ${translations.transactions.toasts.importSuccess}`,
-              });
-            })
             .catch(async serverError => {
               const permissionError = new FirestorePermissionError({
                 path: transactionsCol.path,
@@ -389,6 +391,13 @@ export default function TransactionsPage() {
                 requestResourceData: result.data.transactions, // This is an array, but should give enough context
               } satisfies SecurityRuleContext);
               errorEmitter.emit('permission-error', permissionError);
+            })
+            .then(() => {
+              invalidateDashboardCache();
+              toast({
+                title: 'Import Successful',
+                description: `${result.data.transactions.length} ${translations.transactions.toasts.importSuccess}`,
+              });
             });
         } else {
           toast({

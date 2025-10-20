@@ -12,6 +12,9 @@ import Link from 'next/link';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+
 
 type ReportData = {
   [key: string]: any;
@@ -60,6 +63,11 @@ function DPRReportContent() {
           setError('No report data found. Please generate the DPR first.');
         }
       } catch (e: any) {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'get',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
         console.error('Failed to fetch report:', e);
         setError(`Failed to load the generated report data: ${e.message}`);
       } finally {

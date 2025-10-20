@@ -75,9 +75,17 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       const userDocRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
+      
+      const docSnap = await getDoc(userDocRef).catch(serverError => {
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'get',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError; // re-throw to be caught by outer try-catch
+      });
 
-      if (!userDoc.exists()) {
+      if (!docSnap.exists()) {
         const newUser = {
           name: user.displayName || '',
           email: user.email,

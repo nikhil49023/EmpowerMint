@@ -148,6 +148,11 @@ function GenerateDPRContent() {
           generateSection(0, analysis.title, promoterName || 'Entrepreneur', {}, {});
         }
       } catch (error) {
+        const permissionError = new FirestorePermissionError({
+          path: docRef.path,
+          operation: 'get',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
         console.error('Error loading DPR project:', error);
         generateSection(0, analysis.title, promoterName || 'Entrepreneur', {}, {});
       } finally {
@@ -238,24 +243,16 @@ function GenerateDPRContent() {
     // Save the current state to Firestore
     const docRef = getDprProjectDocRef(analysis!.title);
     if (docRef) {
-      try {
-        await setDoc(
-          docRef,
-          {
-            sections: finalSections,
-            variables: newDprVariables,
-            updatedAt: new Date(),
-          },
-          { merge: true }
-        );
-      } catch (e: any) {
+      const dataToSave = {
+        sections: finalSections,
+        variables: newDprVariables,
+        updatedAt: new Date(),
+      };
+      setDoc(docRef, dataToSave, { merge: true }).catch(async (e: any) => {
         const permissionError = new FirestorePermissionError({
           path: docRef.path,
           operation: 'write',
-          requestResourceData: {
-            sections: generatedSections,
-            variables: newDprVariables,
-          },
+          requestResourceData: dataToSave,
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         toast({
@@ -263,8 +260,9 @@ function GenerateDPRContent() {
           title: 'Could not save progress',
           description: e.message,
         });
-        return; // Don't proceed if save fails
-      }
+        // Short-circuit to prevent moving to next section on save failure
+        throw e;
+      });
     }
 
     if (currentSectionIndex < dprChapterTitles.length - 1) {
@@ -522,5 +520,3 @@ export default function GenerateDPRPage() {
     </Suspense>
   );
 }
-
-    
