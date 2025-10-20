@@ -14,33 +14,18 @@ const firebaseConfig = {
   appId: "1:1017273967743:web:64f163722cb5e56f2e4b4a"
 };
 
-type FirebaseInstances = {
-  app: FirebaseApp;
-  auth: Auth;
-  db: Firestore;
-};
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
 
-let firebaseInstances: FirebaseInstances | null = null;
-
-function initializeFirebase(): FirebaseInstances {
-  if (firebaseInstances) {
-    return firebaseInstances;
-  }
-
-  let app;
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApps()[0];
-  }
-
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  firebaseInstances = { app, auth, db };
-  return firebaseInstances;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
 }
 
-const { app, auth, db } = initializeFirebase();
+auth = getAuth(app);
+db = getFirestore(app);
 
-export { app, auth, db, initializeFirebase };
+// No longer exporting initializeFirebase as it's run directly here.
+export { app, auth, db };
