@@ -48,6 +48,7 @@ function GenerateDPRContent() {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
   
   // Form State
   const [promoterName, setPromoterName] = useState('');
@@ -75,6 +76,22 @@ function GenerateDPRContent() {
     }
   }, [idea, user]);
   
+    useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isGenerating && generationProgress < 90) {
+      timer = setInterval(() => {
+        setGenerationProgress(prev => {
+          if (prev < 90) {
+            return prev + 1;
+          }
+          clearInterval(timer);
+          return prev;
+        });
+      }, 500); // Progresses over ~45 seconds
+    }
+    return () => clearInterval(timer);
+  }, [isGenerating, generationProgress]);
+
   const handleNext = () => {
       if (currentStep < steps.length - 1) {
           setCurrentStep(currentStep + 1);
@@ -93,6 +110,7 @@ function GenerateDPRContent() {
           return;
       }
       setIsGenerating(true);
+      setGenerationProgress(0);
       toast({
           title: 'Generating DPR',
           description: 'This may take a minute or two. Please wait...',
@@ -110,6 +128,8 @@ function GenerateDPRContent() {
           financialData,
           additionalInfo
       });
+      
+      setGenerationProgress(100);
 
       if (result.success) {
           const docRef = doc(db, 'users', user.uid, 'dpr-projects', businessName);
@@ -236,6 +256,30 @@ function GenerateDPRContent() {
   );
 
   const progress = ((currentStep + 1) / steps.length) * 100;
+  
+  const getGenerationStatusText = () => {
+    if (generationProgress < 20) return "Initializing generation...";
+    if (generationProgress < 50) return "Analyzing your inputs...";
+    if (generationProgress < 80) return "Compiling report sections...";
+    if (generationProgress < 100) return "Finalizing charts and financial data...";
+    return "Generation complete! Redirecting...";
+  }
+
+  if (isGenerating) {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mb-4"/>
+            <h2 className="text-2xl font-bold mb-2">Generating Your DPR</h2>
+            <p className="text-muted-foreground mb-6 max-w-md">
+                Our AI is building your comprehensive report. This may take a minute or two, please don't close this page.
+            </p>
+            <div className="w-full max-w-md">
+                <Progress value={generationProgress} className="w-full mb-2" />
+                <p className="text-sm text-muted-foreground">{getGenerationStatusText()} ({Math.round(generationProgress)}%)</p>
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -314,3 +358,5 @@ export default function GenerateDPRPage() {
     </Suspense>
   );
 }
+
+    
