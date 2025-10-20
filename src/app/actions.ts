@@ -25,23 +25,18 @@ import {
   type GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
 import {
-  generateDprSection,
-  type GenerateDprSectionInput,
-  type GenerateDprSectionOutput,
-} from '@/ai/flows/generate-dpr-section';
-import { db } from '@/lib/firebase';
+  generateDpr,
+  type GenerateDprInput,
+  type GenerateDprOutput,
+} from '@/ai/flows/generate-dpr-from-analysis';
+
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
-import {
-  generateDprFromAnalysis,
-  type GenerateDprFromAnalysisInput,
-  type GenerateDprFromAnalysisOutput,
-} from '@/ai/flows/generate-dpr-from-analysis';
-
+import { db } from '@/lib/firebase';
 
 export async function generateSuggestionsAction(
   input: GenerateSuggestionsFromPromptInput
@@ -176,33 +171,14 @@ export async function askAIAdvisorAction(
   }
 }
 
-export async function generateDprSectionAction(
-  input: GenerateDprSectionInput
+export async function generateDprAction(
+  input: GenerateDprInput
 ): Promise<
-  | { success: true; data: GenerateDprSectionOutput }
+  | { success: true; data: GenerateDprOutput }
   | { success: false; error: string }
 > {
   try {
-    const result = await generateDprSection(input);
-    return { success: true, data: result };
-  } catch (error) {
-    console.error('DPR Section Generation Error:', error);
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'An unknown error occurred.',
-    };
-  }
-}
-
-export async function generateDprFromAnalysisAction(
-  input: GenerateDprFromAnalysisInput
-): Promise<
-  | { success: true; data: GenerateDprFromAnalysisOutput }
-  | { success: false; error: string }
-> {
-  try {
-    const result = await generateDprFromAnalysis(input);
+    const result = await generateDpr(input);
     return { success: true, data: result };
   } catch (error) {
     console.error(error);

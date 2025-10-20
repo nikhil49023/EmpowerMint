@@ -18,13 +18,11 @@ import {
   Shield,
   Save,
   CheckCircle,
-  FileText,
   Loader2,
   ChevronsRight,
 } from 'lucide-react';
 import {
   generateInvestmentIdeaAnalysisAction,
-  generateDprFromAnalysisAction,
 } from '@/app/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -43,8 +41,6 @@ import {
   where,
   getDocs,
   limit,
-  doc,
-  setDoc,
 } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
@@ -66,13 +62,12 @@ function InvestmentIdeaContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [isGeneratingDpr, setIsGeneratingDpr] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [user] = useAuthState(auth);
   const { toast } = useToast();
   const { translations } = useLanguage();
 
-  const handleInteractiveDpr = () => {
+  const handleBuildDpr = () => {
     if (!analysis || !user) return;
     localStorage.setItem('dprAnalysis', JSON.stringify(analysis));
     router.push(
@@ -82,69 +77,6 @@ function InvestmentIdeaContent() {
     );
   };
   
-  const handleGenerateFullDpr = async () => {
-    if (!analysis || !user) return;
-    setIsGeneratingDpr(true);
-    toast({
-      title: "Generating Full DPR",
-      description: "This may take a minute or two. Please wait...",
-    });
-
-    const result = await generateDprFromAnalysisAction({
-      analysis: {
-        title: analysis.title,
-        summary: analysis.summary,
-        investmentStrategy: analysis.investmentStrategy,
-        targetAudience: analysis.targetAudience,
-        roi: analysis.roi,
-        futureProofing: analysis.futureProofing,
-      },
-      promoterName: user.displayName || "Entrepreneur",
-    });
-
-    if (result.success) {
-      const dprData = result.data;
-      const docRef = doc(db, 'users', user.uid, 'dpr-projects', analysis.title);
-      const dataToSave = {
-        sections: dprData,
-        variables: {},
-        updatedAt: serverTimestamp(),
-      };
-      
-      setDoc(docRef, dataToSave, { merge: true })
-        .then(() => {
-            toast({
-              title: "DPR Generated Successfully!",
-              description: "Your full Detailed Project Report is ready.",
-            });
-            router.push(`/dpr-report?idea=${encodeURIComponent(analysis.title)}`);
-        })
-        .catch(async (e: any) => {
-            const permissionError = new FirestorePermissionError({
-              path: docRef.path,
-              operation: 'write',
-              requestResourceData: dataToSave,
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-            toast({
-              variant: 'destructive',
-              title: 'Could not save DPR',
-              description: 'Failed to save the generated DPR to your projects.',
-            });
-            setIsGeneratingDpr(false);
-        });
-
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'DPR Generation Failed',
-            description: result.error,
-        });
-        setIsGeneratingDpr(false);
-    }
-  }
-
-
   const saveAnalysis = useCallback(
     async (analysisToSave: GenerateInvestmentIdeaAnalysisOutput) => {
       if (!user) return;
@@ -345,22 +277,9 @@ function InvestmentIdeaContent() {
                       </>
                     )}
                   </Button>
-                  <Button onClick={handleGenerateFullDpr} disabled={!analysis || !user || isGeneratingDpr} size="lg">
-                      {isGeneratingDpr ? (
-                        <>
-                          <Loader2 className="mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="mr-2" />
-                          Generate Full DPR
-                        </>
-                      )}
-                  </Button>
-                  <Button onClick={handleInteractiveDpr} disabled={!analysis || !user || isGeneratingDpr} size="lg" variant="outline">
+                  <Button onClick={handleBuildDpr} disabled={!analysis || !user} size="lg">
                       <ChevronsRight className="mr-2" />
-                      Build Interactively
+                      Build DPR
                   </Button>
                 </div>
               )

@@ -1,506 +1,300 @@
 
 'use client';
 
-import { Suspense, useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   FileText,
   Loader2,
   ArrowLeft,
   ChevronsRight,
-  Eye,
-  MessageSquare,
-  Sparkles,
-  User,
-  Send,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import Link from 'next/link';
-import { generateDprSectionAction } from '@/app/actions';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Textarea } from '@/components/ui/textarea';
+import Link from 'next/link';
+import { generateDprAction } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
-import InteractiveDprContent, {
-  type InteractiveDprContentHandle,
-} from '@/components/financify/interactive-dpr-content';
+import { Progress } from '@/components/ui/progress';
 
-const dprChapterTitles = [
-  'Executive Summary',
-  'Project Introduction',
-  'Promoter Details',
-  'Business Model',
-  'Market Analysis',
-  'Location and Site',
-  'Technical Feasibility',
-  'Implementation Schedule',
-  'Financial Projections',
-  'SWOT Analysis',
-  'Regulatory Compliance',
-  'Risk Assessment',
-  'Annexures',
+const steps = [
+    "MSME Details",
+    "Project Scope",
+    "Target Market",
+    "Financial Data",
+    "Additional Info",
+    "Review & Generate"
 ];
 
-type Message = {
-  id: string;
-  text: string;
-  sender: 'user' | 'ai';
-};
-
-const getUniqueMessageId = () => `msg-${Date.now()}-${Math.random()}`;
 
 function GenerateDPRContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
   const idea = searchParams.get('idea');
-  const promoterName = searchParams.get('name');
   const [user] = useAuthState(auth);
 
-  const [analysis, setAnalysis] =
-    useState<GenerateInvestmentIdeaAnalysisOutput | null>(null);
-  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
-  const [generatedSections, setGeneratedSections] = useState<
-    Record<string, string>
-  >({});
-  const [dprVariables, setDprVariables] = useState<Record<string, string>>({});
+  const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [isSubmittingChat, setIsSubmittingChat] = useState(false);
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<Message[]>([]);
-  const contentRef = useRef<InteractiveDprContentHandle>(null);
-
-  const getDprProjectDocRef = (ideaTitle: string) => {
-    if (!user) return null;
-    return doc(db, 'users', user.uid, 'dpr-projects', ideaTitle);
-  };
-
+  
+  // Form State
+  const [promoterName, setPromoterName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [businessType, setBusinessType] = useState('');
+  const [location, setLocation] = useState('');
+  const [projectScope, setProjectScope] = useState('');
+  const [targetMarket, setTargetMarket] = useState('');
+  const [financialData, setFinancialData] = useState('');
+  const [additionalInfo, setAdditionalInfo] = useState('');
+  
   useEffect(() => {
     const analysisDataString = localStorage.getItem('dprAnalysis');
     if (analysisDataString) {
-      const parsedAnalysis = JSON.parse(analysisDataString);
-      setAnalysis(parsedAnalysis);
-    } else if (!idea) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not load project idea. Please go back and try again.',
-      });
-      return;
+      const parsedAnalysis: GenerateInvestmentIdeaAnalysisOutput = JSON.parse(analysisDataString);
+      setBusinessName(parsedAnalysis.title);
+      setProjectScope(parsedAnalysis.summary);
+      setTargetMarket(parsedAnalysis.targetAudience);
+    } else if (idea) {
+        setBusinessName(idea);
     }
-  }, [idea, toast]);
 
-  useEffect(() => {
-    if (!user || !analysis) return;
-
-    const loadExistingProject = async () => {
-      setIsLoading(true);
-      const docRef = getDprProjectDocRef(analysis.title);
-      if (!docRef) return;
-
-      try {
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const savedSections = data.sections || {};
-          const savedVariables = data.variables || {};
-          setGeneratedSections(savedSections);
-          setDprVariables(savedVariables);
-          const nextIncompleteIndex = dprChapterTitles.findIndex(
-            title => !savedSections[title]
-          );
-
-          if (nextIncompleteIndex !== -1) {
-            setCurrentSectionIndex(nextIncompleteIndex);
-            generateSection(
-              nextIncompleteIndex,
-              analysis.title,
-              promoterName || 'Entrepreneur',
-              savedSections,
-              savedVariables
-            );
-          } else {
-            // All sections are complete
-            setCurrentSectionIndex(dprChapterTitles.length);
-          }
-        } else {
-          // No project found, start from scratch
-          generateSection(0, analysis.title, promoterName || 'Entrepreneur', {}, {});
-        }
-      } catch (error) {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'get',
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        console.error('Error loading DPR project:', error);
-        generateSection(0, analysis.title, promoterName || 'Entrepreneur', {}, {});
-      } finally {
-        setIsLoading(false);
+    if (user?.displayName) {
+        setPromoterName(user.displayName);
+    }
+  }, [idea, user]);
+  
+  const handleNext = () => {
+      if (currentStep < steps.length - 1) {
+          setCurrentStep(currentStep + 1);
       }
-    };
-    loadExistingProject();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, analysis]);
+  }
 
-  const generateSection = async (
-    sectionIndex: number,
-    baseIdea: string,
-    promoter: string,
-    sections: Record<string, string>,
-    variables: Record<string, string>,
-    revisionFeedback?: string
-  ) => {
-    const targetSection = dprChapterTitles[sectionIndex];
-    setIsGenerating(true);
+  const handleBack = () => {
+      if (currentStep > 0) {
+          setCurrentStep(currentStep - 1);
+      }
+  }
 
-    try {
-      const previousSections = dprChapterTitles
-        .slice(0, sectionIndex)
-        .reduce((acc, title) => {
-          acc[title] = sections[title];
-          return acc;
-        }, {} as Record<string, string>);
+  const handleGenerateDPR = async () => {
+      if(!user) {
+          toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to generate a DPR.' });
+          return;
+      }
+      setIsGenerating(true);
+      toast({
+          title: 'Generating DPR',
+          description: 'This may take a minute or two. Please wait...',
+      });
 
-      const result = await generateDprSectionAction({
-        idea: baseIdea,
-        promoterName: promoter,
-        targetSection,
-        previousSections,
-        variables,
-        revisionRequest: revisionFeedback
-          ? {
-              originalText: generatedSections[targetSection], // Use the saved content for revision
-              feedback: revisionFeedback,
-            }
-          : undefined,
+      const result = await generateDprAction({
+          msmeDetails: {
+              promoterName,
+              businessName,
+              businessType,
+              location
+          },
+          projectScope,
+          targetMarket,
+          financialData,
+          additionalInfo
       });
 
       if (result.success) {
-        setGeneratedSections(prev => ({
-          ...prev,
-          [targetSection]: result.data.content,
-        }));
-        if (revisionFeedback) {
-          const aiMessage: Message = {
-            id: getUniqueMessageId(),
-            sender: 'ai',
-            text: 'Here is the revised section. Let me know if you have more changes.',
+          const docRef = doc(db, 'users', user.uid, 'dpr-projects', businessName);
+          const dataToSave = {
+            sections: result.data,
+            variables: {},
+            updatedAt: serverTimestamp(),
           };
-          setChatMessages(prev => [...prev, aiMessage]);
-        }
+          
+          setDoc(docRef, dataToSave, { merge: true })
+            .then(() => {
+                toast({
+                  title: "DPR Generated Successfully!",
+                  description: "Your full Detailed Project Report is ready.",
+                });
+                router.push(`/dpr-report?idea=${encodeURIComponent(businessName)}`);
+            })
+            .catch(async (e: any) => {
+                const permissionError = new FirestorePermissionError({
+                  path: docRef.path,
+                  operation: 'write',
+                  requestResourceData: dataToSave,
+                } satisfies SecurityRuleContext);
+                errorEmitter.emit('permission-error', permissionError);
+                toast({
+                  variant: 'destructive',
+                  title: 'Could not save DPR',
+                  description: 'Failed to save the generated DPR to your projects.',
+                });
+                 setIsGenerating(false);
+            });
+
       } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error generating section',
-          description: result.error,
-        });
+          toast({
+              variant: 'destructive',
+              title: 'DPR Generation Failed',
+              description: result.error,
+          });
+          setIsGenerating(false);
       }
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'An unexpected error occurred',
-        description: 'Please try again later.',
-      });
-    } finally {
-      setIsGenerating(false);
-      setIsSubmittingChat(false);
-    }
   };
 
-  const handleAcceptAndContinue = async () => {
-    const currentSectionTitle = dprChapterTitles[currentSectionIndex];
-    const currentContent = generatedSections[currentSectionTitle];
 
-    const updatedVariables = contentRef.current?.getVariables() || {};
-    const newDprVariables = { ...dprVariables, ...updatedVariables };
-    setDprVariables(newDprVariables);
-    
-    const finalSections = { ...generatedSections, [currentSectionTitle]: contentRef.current?.getContent() || currentContent };
-    setGeneratedSections(finalSections);
-
-
-    // Save the current state to Firestore
-    const docRef = getDprProjectDocRef(analysis!.title);
-    if (docRef) {
-      const dataToSave = {
-        sections: finalSections,
-        variables: newDprVariables,
-        updatedAt: new Date(),
-      };
-      setDoc(docRef, dataToSave, { merge: true }).catch(async (e: any) => {
-        const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'write',
-          requestResourceData: dataToSave,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        toast({
-          variant: 'destructive',
-          title: 'Could not save progress',
-          description: e.message,
-        });
-        // Short-circuit to prevent moving to next section on save failure
-        throw e;
-      });
-    }
-
-    if (currentSectionIndex < dprChapterTitles.length - 1) {
-      const nextIndex = currentSectionIndex + 1;
-      setCurrentSectionIndex(nextIndex);
-      generateSection(
-        nextIndex,
-        analysis?.title || idea || '',
-        promoterName || 'Entrepreneur',
-        finalSections,
-        newDprVariables
-      );
-    } else {
-       setCurrentSectionIndex(currentSectionIndex + 1); // Move to "completed" state
-    }
-  };
+  const renderStepContent = () => {
+      switch(currentStep) {
+          case 0: // MSME Details
+            return (
+                <div className="space-y-4">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="promoterName">Promoter Name</Label>
+                            <Input id="promoterName" value={promoterName} onChange={(e) => setPromoterName(e.target.value)} placeholder="e.g., Anika Sharma" />
+                        </div>
+                         <div className="space-y-1.5">
+                            <Label htmlFor="businessName">Business / Project Name</Label>
+                            <Input id="businessName" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g., Eco-Friendly Packaging Solutions" />
+                        </div>
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="businessType">Business Type</Label>
+                            <Input id="businessType" value={businessType} onChange={(e) => setBusinessType(e.target.value)} placeholder="e.g., Manufacturing, Service" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="location">Location</Label>
+                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Pune, Maharashtra" />
+                        </div>
+                    </div>
+                </div>
+            );
+          case 1: // Project Scope
+            return (
+                <div className="space-y-1.5">
+                    <Label htmlFor="projectScope">Project Scope</Label>
+                    <Textarea id="projectScope" value={projectScope} onChange={(e) => setProjectScope(e.target.value)} rows={8} placeholder="Define the project's objectives, deliverables, and boundaries..." />
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Info className="h-3 w-3"/>This can be pre-filled from your idea analysis.</p>
+                </div>
+            );
+          case 2: // Target Market
+            return (
+                 <div className="space-y-1.5">
+                    <Label htmlFor="targetMarket">Target Market</Label>
+                    <Textarea id="targetMarket" value={targetMarket} onChange={(e) => setTargetMarket(e.target.value)} rows={8} placeholder="Describe your ideal customers, market size, and competitors..." />
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Info className="h-3 w-3"/>This can be pre-filled from your idea analysis.</p>
+                </div>
+            );
+          case 3: // Financial Data
+            return (
+                 <div className="space-y-1.5">
+                    <Label htmlFor="financialData">Financial Data</Label>
+                    <Textarea id="financialData" value={financialData} onChange={(e) => setFinancialData(e.target.value)} rows={8} placeholder="Provide details on estimated startup costs, funding sources, and revenue projections..." />
+                </div>
+            );
+          case 4: // Additional Info
+            return (
+                 <div className="space-y-1.5">
+                    <Label htmlFor="additionalInfo">Additional Information</Label>
+                    <Textarea id="additionalInfo" value={additionalInfo} onChange={(e) => setAdditionalInfo(e.target.value)} rows={8} placeholder="Include any other relevant details, such as your unique selling proposition (USP), team background, etc..." />
+                </div>
+            );
+          case 5: // Review & Generate
+             return (
+                 <div className="space-y-6">
+                     <h3 className="text-lg font-semibold">Review Your Input</h3>
+                     <div className="space-y-4 rounded-md border p-4 max-h-96 overflow-y-auto">
+                        <ReviewSection title="MSME Details" content={`Promoter: ${promoterName}\nBusiness: ${businessName}\nType: ${businessType}\nLocation: ${location}`} />
+                        <ReviewSection title="Project Scope" content={projectScope} />
+                        <ReviewSection title="Target Market" content={targetMarket} />
+                        <ReviewSection title="Financial Data" content={financialData} />
+                        <ReviewSection title="Additional Info" content={additionalInfo} />
+                     </div>
+                 </div>
+             );
+          default:
+            return null;
+      }
+  }
   
-  const handleViewFinalReport = () => {
-    // Just navigate. The report page will fetch data from Firestore.
-    router.push(`/dpr-report?idea=${encodeURIComponent(analysis!.title)}`);
-  }
-
-  const handleOpenChat = () => {
-    setChatMessages([
-      {
-        id: getUniqueMessageId(),
-        sender: 'ai',
-        text: `I'm ready to revise the "${
-          dprChapterTitles[currentSectionIndex]
-        }" section. What changes would you like me to make?`,
-      },
-    ]);
-    setIsChatOpen(true);
-  };
-
-  const handleSendChatMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-
-    const userMessage: Message = {
-      id: getUniqueMessageId(),
-      sender: 'user',
-      text: chatInput,
-    };
-    setChatMessages(prev => [...prev, userMessage]);
-    setIsSubmittingChat(true);
-
-    const currentVariables = contentRef.current?.getVariables() || {};
-
-    await generateSection(
-      currentSectionIndex,
-      analysis?.title || idea || '',
-      promoterName || 'Entrepreneur',
-      generatedSections,
-      { ...dprVariables, ...currentVariables },
-      chatInput
-    );
-    setChatInput('');
-  };
-
-  if (isLoading || !analysis) {
-    return (
-      <div className="flex flex-col justify-center items-center h-full text-center">
-        <Loader2 className="h-8 w-8 animate-spin mb-4" />
-        <h2 className="text-xl font-semibold">Loading DPR Generator...</h2>
-        <p className="text-muted-foreground">Checking for saved progress.</p>
+  const ReviewSection = ({ title, content }: { title: string; content: string }) => (
+      <div>
+          <h4 className="font-medium text-primary">{title}</h4>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{content || "Not provided"}</p>
       </div>
-    );
-  }
+  );
 
-  const isCompleted = currentSectionIndex >= dprChapterTitles.length;
-  const currentSectionTitle = isCompleted ? "Completed" : dprChapterTitles[currentSectionIndex];
-  const currentSectionContent =
-    generatedSections[dprChapterTitles[currentSectionIndex]] || '';
+  const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <FileText /> Interactive DPR Generator
+            <FileText /> DPR Generation Wizard
           </h1>
           <p className="text-muted-foreground">
-            Generating report for: <span className="font-semibold">{analysis.title}</span>
+            Generating report for: <span className="font-semibold">{businessName}</span>
           </p>
         </div>
         <Button variant="ghost" asChild className="-ml-4">
           <Link
-            href={`/investment-ideas/custom?idea=${encodeURIComponent(
-              analysis.title || idea || ''
-            )}`}
+            href={`/investment-ideas/custom?idea=${encodeURIComponent(idea || '')}`}
           >
             <ArrowLeft className="mr-2" /> Back to Analysis
           </Link>
         </Button>
       </div>
 
-      <Card className="glassmorphic">
+       <Card className="glassmorphic">
         <CardHeader>
           <CardTitle>
-            {isCompleted
-              ? 'Report Generation Complete'
-              : `Section ${currentSectionIndex + 1} of ${
-                  dprChapterTitles.length
-                }: ${currentSectionTitle}`}
+            Step {currentStep + 1}: {steps[currentStep]}
           </CardTitle>
+           <CardDescription>
+            Please provide the following details to generate your report.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {isGenerating && !currentSectionContent && !isCompleted ? (
-            <div className="min-h-[200px] flex flex-col items-center justify-center text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin mb-4" />
-              <p>Generating section...</p>
+            <div className="my-4">
+                <Progress value={progress} className="w-full" />
             </div>
-          ) : isCompleted ? (
-            <div className="min-h-[200px] flex flex-col items-center justify-center text-center">
-                <Sparkles className="h-12 w-12 text-primary mb-4" />
-                <h3 className="text-xl font-semibold">Congratulations!</h3>
-                <p className="text-muted-foreground mt-2">All sections of your Detailed Project Report have been generated.</p>
+            <div className="min-h-[250px] mt-6">
+                {renderStepContent()}
             </div>
-          ) : (
-            <InteractiveDprContent
-              ref={contentRef}
-              key={currentSectionIndex} // Force re-mount when section changes
-              text={currentSectionContent}
-              initialVariables={dprVariables}
-            />
-          )}
         </CardContent>
       </Card>
       
-      {isCompleted ? (
-        <div className="flex justify-end">
-            <Button onClick={handleViewFinalReport}>
-                <Eye className="mr-2" /> View Final Report
+      <div className="flex justify-between gap-2">
+          <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || isGenerating}>
+            Back
+          </Button>
+          {currentStep < steps.length - 1 ? (
+             <Button onClick={handleNext}>
+                Next <ChevronsRight className="ml-2" />
             </Button>
-        </div>
-      ) : (
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={handleOpenChat}
-            disabled={isGenerating || !currentSectionContent}
-          >
-            <MessageSquare className="mr-2" /> Request Changes
-          </Button>
-          <Button
-            onClick={handleAcceptAndContinue}
-            disabled={isGenerating || !currentSectionContent}
-          >
-            {currentSectionIndex === dprChapterTitles.length -1 ? (
-                <>Complete Report</>
-            ) : (
-                <>Accept and Continue <ChevronsRight className="ml-2" /></>
-            )}
-          </Button>
-        </div>
-      )}
+          ) : (
+            <Button onClick={handleGenerateDPR} disabled={isGenerating}>
+                {isGenerating ? (
+                    <> <Loader2 className="mr-2 animate-spin" /> Generating Report...</>
+                ) : (
+                    "Generate DPR"
+                )}
+            </Button>
+          )}
+      </div>
 
-      <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-        <DialogContent className="max-w-2xl h-[70vh] flex flex-col p-0 glassmorphic">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle>Revise Section</DialogTitle>
-            <DialogDescription>
-              Tell me what you'd like to change about the "{currentSectionTitle}" section.
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="flex-1">
-            <div className="space-y-6 p-4">
-              <AnimatePresence>
-                {chatMessages.map(message => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3 }}
-                    className={`flex items-start gap-3 ${
-                      message.sender === 'user' ? 'justify-end' : ''
-                    }`}
-                  >
-                    {message.sender === 'ai' && (
-                      <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
-                        <Sparkles className="h-5 w-5" />
-                      </div>
-                    )}
-                    <div
-                      className={`rounded-lg p-3 max-w-md text-sm ${
-                        message.sender === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <p>{message.text}</p>
-                    </div>
-                    {message.sender === 'user' && (
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                        <User className="h-5 w-5" />
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {isSubmittingChat && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                  className="flex items-start gap-3"
-                >
-                  <div className="h-8 w-8 rounded-full bg-primary/20 text-primary flex items-center justify-center">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <div className="bg-muted rounded-lg p-3 max-w-md">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </ScrollArea>
-          <DialogFooter className="p-4 border-t">
-            <form onSubmit={handleSendChatMessage} className="w-full flex gap-2">
-              <Input
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                placeholder="e.g., 'Make the tone more formal...'"
-                disabled={isSubmittingChat}
-              />
-              <Button
-                type="submit"
-                size="icon"
-                disabled={isSubmittingChat || !chatInput.trim()}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </form>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

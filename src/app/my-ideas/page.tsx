@@ -8,9 +8,6 @@ import {
   query,
   orderBy,
   onSnapshot,
-  doc,
-  setDoc,
-  serverTimestamp,
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -22,7 +19,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Lightbulb, Loader2, FileText, ChevronsRight } from 'lucide-react';
+import { Lightbulb, Loader2, ChevronsRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -33,7 +30,6 @@ import {
 import { useLanguage } from '@/hooks/use-language';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { generateDprFromAnalysisAction } from '@/app/actions';
 
 type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
   id: string;
@@ -47,10 +43,8 @@ export default function MyIdeasPage() {
   const [user, loadingAuth] = useAuthState(auth);
   const [ideas, setIdeas] = useState<SavedIdea[]>([]);
   const [loadingIdeas, setLoadingIdeas] = useState(true);
-  const [generatingDprFor, setGeneratingDprFor] = useState<string | null>(null);
   const { translations } = useLanguage();
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -84,7 +78,7 @@ export default function MyIdeasPage() {
     }
   }, [user, loadingAuth]);
 
-  const handleInteractiveDpr = (idea: GenerateInvestmentIdeaAnalysisOutput) => {
+  const handleBuildDpr = (idea: GenerateInvestmentIdeaAnalysisOutput) => {
     if (!idea || !user) return;
     localStorage.setItem('dprAnalysis', JSON.stringify(idea));
     router.push(
@@ -94,70 +88,6 @@ export default function MyIdeasPage() {
     );
   };
   
-  const handleGenerateFullDpr = async (idea: SavedIdea) => {
-    if (!idea || !user) return;
-    setGeneratingDprFor(idea.title);
-    toast({
-      title: "Generating Full DPR",
-      description: "This may take a minute or two. Please wait...",
-    });
-
-    const result = await generateDprFromAnalysisAction({
-      analysis: {
-        title: idea.title,
-        summary: idea.summary,
-        investmentStrategy: idea.investmentStrategy,
-        targetAudience: idea.targetAudience,
-        roi: idea.roi,
-        futureProofing: idea.futureProofing,
-      },
-      promoterName: user.displayName || "Entrepreneur",
-    });
-    
-    if (result.success) {
-      const dprData = result.data;
-      const docRef = doc(db, 'users', user.uid, 'dpr-projects', idea.title);
-       const dataToSave = {
-        sections: dprData,
-        variables: {},
-        updatedAt: serverTimestamp(),
-      };
-      
-      setDoc(docRef, dataToSave, { merge: true })
-        .then(() => {
-            toast({
-              title: "DPR Generated Successfully!",
-              description: "Your full Detailed Project Report is ready.",
-            });
-            router.push(`/dpr-report?idea=${encodeURIComponent(idea.title)}`);
-        })
-        .catch(async (e: any) => {
-            const permissionError = new FirestorePermissionError({
-              path: docRef.path,
-              operation: 'write',
-              requestResourceData: dataToSave,
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-            toast({
-              variant: 'destructive',
-              title: 'Could not save DPR',
-              description: 'Failed to save the generated DPR to your projects.',
-            });
-        }).finally(() => {
-            setGeneratingDprFor(null);
-        });
-
-    } else {
-        toast({
-            variant: 'destructive',
-            title: 'DPR Generation Failed',
-            description: result.error,
-        });
-        setGeneratingDprFor(null);
-    }
-  }
-
-
   if (loadingAuth || loadingIdeas) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -228,19 +158,11 @@ export default function MyIdeasPage() {
                           {translations.myIdeas.viewAnalysis}
                         </Link>
                       </Button>
-                       <Button onClick={() => handleInteractiveDpr(idea)} className="w-full" variant="outline">
+                       <Button onClick={() => handleBuildDpr(idea)} className="w-full">
                         <ChevronsRight className="mr-2 h-4 w-4"/>
                         Build DPR
                       </Button>
                     </div>
-                    <Button onClick={() => handleGenerateFullDpr(idea)} className="w-full" disabled={generatingDprFor === idea.title}>
-                        {generatingDprFor === idea.title ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                        ) : (
-                            <FileText className="mr-2 h-4 w-4"/>
-                        )}
-                        Generate Full DPR
-                    </Button>
                 </CardContent>
               </Card>
             </motion.div>

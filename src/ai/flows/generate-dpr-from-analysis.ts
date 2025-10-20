@@ -8,54 +8,62 @@
 
 import { ai } from '@/ai/genkit';
 import {
-  GenerateDprFromAnalysisInputSchema,
-  GenerateDprFromAnalysisOutputSchema,
-  type GenerateDprFromAnalysisInput,
-  type GenerateDprFromAnalysisOutput,
+  GenerateDprInputSchema,
+  GenerateDprOutputSchema,
+  type GenerateDprInput,
+  type GenerateDprOutput,
 } from '@/ai/schemas/dpr';
 
-export async function generateDprFromAnalysis(
-  input: GenerateDprFromAnalysisInput
-): Promise<GenerateDprFromAnalysisOutput> {
-  return generateDprFromAnalysisFlow(input);
+export async function generateDpr(
+  input: GenerateDprInput
+): Promise<GenerateDprOutput> {
+  return generateDprFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'generateDprFromAnalysisPrompt',
-  input: { schema: GenerateDprFromAnalysisInputSchema },
-  output: { schema: GenerateDprFromAnalysisOutputSchema },
+  name: 'generateDprPrompt',
+  input: { schema: GenerateDprInputSchema },
+  output: { schema: GenerateDprOutputSchema },
   prompt: `You are an expert consultant hired to write a bank-ready Detailed Project Report (DPR) for an entrepreneur in India.
-You have been provided with a preliminary analysis of the business idea. Your task is to expand this analysis into a comprehensive, bank-ready DPR of approximately 40 pages.
+You have been provided with structured information about the business. Your task is to expand this into a comprehensive, bank-ready DPR of approximately 40 pages.
 
 **Formatting Instructions:**
 - Use markdown for formatting, such as **bolding** key terms.
-- For any data that is a placeholder or requires user input (like names, specific numbers, dates), wrap it in VAR{...}. For example: VAR{[Your Company Name]}, VAR{(x) months}.
 
-**Promoter's Name:** {{{promoterName}}}
+**MSME Details:**
+- Promoter's Name: {{{msmeDetails.promoterName}}}
+- Business Name: {{{msmeDetails.businessName}}}
+- Business Type: {{{msmeDetails.businessType}}}
+- Location: {{{msmeDetails.location}}}
 
-**Core Business Idea Analysis:**
-- **Title**: {{{analysis.title}}}
-- **Summary**: {{{analysis.summary}}}
-- **Investment Strategy**: {{{analysis.investmentStrategy}}}
-- **Target Audience**: {{{analysis.targetAudience}}}
-- **Return on Investment (ROI)**: {{{analysis.roi}}}
-- **Future Proofing**: {{{analysis.futureProofing}}}
+**Project Scope:**
+{{{projectScope}}}
+
+**Target Market:**
+{{{targetMarket}}}
+
+**Financial Data:**
+{{{financialData}}}
+
+**Additional Information:**
+{{{additionalInfo}}}
+
 
 **Instructions:**
-- Elaborate on each point from the analysis to create detailed chapters for the DPR.
+- Elaborate on each point from the provided details to create detailed chapters for the DPR.
 - Generate realistic and detailed content for ALL sections defined in the output schema.
-- For "Promoter Details", use the provided promoter name and generate a plausible background.
-- For "Financial Projections", create detailed, credible data. The 'costBreakdown' and 'yearlyProjections' must be valid JSON arrays for charts.
+- For "Promoter Details", use the provided promoter name and generate a plausible background based on the business context.
+- For "Financial Projections", create detailed, credible data based on the user's input. The 'costBreakdown' and 'yearlyProjections' must be valid JSON arrays for charts.
 - The tone must be professional, formal, and persuasive for a banking audience.
 - Ensure the output is a single, complete JSON object matching the required schema.
 `,
 });
 
-const generateDprFromAnalysisFlow = ai.defineFlow(
+const generateDprFlow = ai.defineFlow(
   {
-    name: 'generateDprFromAnalysisFlow',
-    inputSchema: GenerateDprFromAnalysisInputSchema,
-    outputSchema: GenerateDprFromAnalysisOutputSchema,
+    name: 'generateDprFlow',
+    inputSchema: GenerateDprInputSchema,
+    outputSchema: GenerateDprOutputSchema,
   },
   async input => {
     const { output } = await prompt(input);

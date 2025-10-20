@@ -14,6 +14,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
+import { ProjectCostPieChart, FinancialProjectionsBarChart } from '@/components/financify/dpr-charts';
 
 
 type ReportData = {
@@ -104,6 +105,44 @@ function DPRReportContent() {
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
           </div>
+        ) : title === 'Financial Projections' && typeof content === 'object' ? (
+           <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">Financial Summary</h3>
+                    <FormattedText text={content.summaryText} />
+                </div>
+                <div className="grid grid-cols-1 @lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Project Cost Breakdown</h3>
+                         <ProjectCostPieChart data={content.costBreakdown} />
+                    </div>
+                     <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Yearly Projections</h3>
+                        <FinancialProjectionsBarChart data={content.yearlyProjections} />
+                    </div>
+                </div>
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">Means of Finance</h3>
+                    <FormattedText text={content.meansOfFinance} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">Profitability Analysis</h3>
+                    <FormattedText text={content.profitabilityAnalysis} />
+                </div>
+                 <div>
+                    <h3 className="text-lg font-semibold mb-2">Cash Flow Statement</h3>
+                    <FormattedText text={content.cashFlowStatement} />
+                </div>
+                 <div>
+                    <h3 className="text-lg font-semibold mb-2">Loan Repayment Schedule</h3>
+                    <FormattedText text={content.loanRepaymentSchedule} />
+                </div>
+                 <div>
+                    <h3 className="text-lg font-semibold mb-2">Break-Even Analysis</h3>
+                    <FormattedText text={content.breakEvenAnalysis} />
+                </div>
+
+           </div>
         ) : (
           <FormattedText
             text={content || 'No content generated for this section.'}
