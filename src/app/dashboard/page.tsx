@@ -58,12 +58,17 @@ export default function DashboardPage() {
     if (cacheKey) {
       const cachedSummary = localStorage.getItem(cacheKey);
       if (cachedSummary) {
-        setSummary(JSON.parse(cachedSummary));
-        setIsLoading(false);
+        try {
+          setSummary(JSON.parse(cachedSummary));
+        } catch(e) {
+          console.error("Failed to parse cached summary", e);
+          localStorage.removeItem(cacheKey);
+        }
       }
     }
   }, [getCacheKey]);
 
+  // Real-time listener for transactions
   useEffect(() => {
     if (user) {
       const transCollectionRef = collection(db, 'users', user.uid, 'transactions');
@@ -75,6 +80,7 @@ export default function DashboardPage() {
             doc => doc.data() as ExtractedTransaction
           );
           setTransactions(transactionsData);
+          setIsLoading(false); // Transactions have loaded (or are empty)
         },
         async serverError => {
           const permissionError = new FirestorePermissionError({
@@ -82,33 +88,37 @@ export default function DashboardPage() {
             operation: 'list',
           } satisfies SecurityRuleContext);
           errorEmitter.emit('permission-error', permissionError);
+          setIsLoading(false);
         }
       );
       return () => unsubscribe();
     } else if (!loadingAuth) {
+      // If there's no user and auth is not loading, we're done.
       setIsLoading(false);
     }
   }, [user, loadingAuth]);
 
-  const fetchSummary = useCallback(async () => {
-    const cacheKey = getCacheKey();
-    
-    // If there are no transactions, set a default state and clear cache
-    if (transactions.length === 0 && !loadingAuth && user) {
-      const defaultSummary = {
-        totalIncome: 0,
-        totalExpenses: 0,
-        savingsRate: 0,
-        suggestion: translations.dashboard.defaultSuggestion,
-      };
-      setSummary(defaultSummary);
-      if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(defaultSummary));
-      setIsLoading(false);
-      return;
-    }
-    
-    // Only generate a new summary if there are transactions
-    if (transactions.length > 0) {
+  // Effect to generate summary when transactions change
+  useEffect(() => {
+    // This function will be triggered whenever `transactions` state updates.
+    const fetchSummary = async () => {
+      const cacheKey = getCacheKey();
+      
+      // If there are no transactions, set a default state and clear cache
+      if (transactions.length === 0) {
+        const defaultSummary = {
+          totalIncome: 0,
+          totalExpenses: 0,
+          savingsRate: 0,
+          suggestion: translations.dashboard.defaultSuggestion,
+        };
+        setSummary(defaultSummary);
+        if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(defaultSummary));
+        return; // No need to call the API
+      }
+      
+      // Only generate a new summary if there are transactions
+      // Set loading state for the summary generation specifically
       setIsLoading(true);
       const result = await generateDashboardSummaryAction(transactions);
       if (result.success) {
@@ -116,20 +126,18 @@ export default function DashboardPage() {
         if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(result.data));
       } else {
         console.error(result.error);
-        // On failure, clear cache to avoid showing stale data
-        if(cacheKey) localStorage.removeItem(cacheKey);
+        // On failure, don't clear the summary, maybe show a toast
+        // This keeps stale data visible, which is better than nothing.
       }
       setIsLoading(false);
-    }
-  }, [transactions, user, loadingAuth, translations, getCacheKey]);
+    };
 
-  useEffect(() => {
-    // Only run fetchSummary if transactions have been loaded from Firestore
-    // This prevents running it with an empty array on initial load
-    if(!loadingAuth && user) {
+    // We only want to fetch a summary if the user is logged in.
+    // The `onSnapshot` listener will set transactions and trigger this effect.
+    if (!loadingAuth && user) {
         fetchSummary();
     }
-  }, [transactions, loadingAuth, user, fetchSummary]);
+  }, [transactions, user, loadingAuth, translations, getCacheKey]);
 
   const formatCurrency = (amount: number | undefined) => {
     if (amount === undefined) {
