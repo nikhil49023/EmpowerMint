@@ -38,6 +38,7 @@ import {
   type SecurityRuleContext,
 } from '@/firebase/errors';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Eye, EyeOff } from 'lucide-react';
 
 const indianStates = [
   'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
@@ -67,6 +68,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { translations } = useLanguage();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -263,7 +265,33 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">{translations.loginPage.passwordLabel}</Label>
-            <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} suppressHydrationWarning />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                suppressHydrationWarning
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute inset-y-0 right-0 h-full px-3 text-muted-foreground hover:bg-transparent"
+                onClick={() => setShowPassword(prev => !prev)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+                <span className="sr-only">
+                  {showPassword ? 'Hide password' : 'Show password'}
+                </span>
+              </Button>
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 px-6 pb-6">
@@ -299,3 +327,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
