@@ -126,8 +126,11 @@ function GenerateDPRContent() {
       };
       
       let sectionsGenerated = 0;
+      let generationFailed = false;
 
       for (const section of dprSections) {
+        if (generationFailed) break;
+
         setGenerationStatusText(`Generating ${section.replace(/([A-Z])/g, ' $1').trim()}...`);
         
         const result = await generateDprSectionAction({ ...generationInput, section });
@@ -139,37 +142,45 @@ function GenerateDPRContent() {
                 updatedAt: serverTimestamp(),
             };
             
-            try {
-                await setDoc(sectionDocRef, dataToSave, { merge: true });
-            } catch (e: any) {
-                const permissionError = new FirestorePermissionError({
-                  path: sectionDocRef.path,
-                  operation: 'write',
-                  requestResourceData: dataToSave,
-                } satisfies SecurityRuleContext);
-                errorEmitter.emit('permission-error', permissionError);
-                toast({
-                  variant: 'destructive',
-                  title: `Could not save ${section} section`,
-                  description: 'Failed to save the generated section to your project.',
+            await new Promise<void>((resolve) => {
+              setDoc(sectionDocRef, dataToSave, { merge: true })
+                .then(() => {
+                  sectionsGenerated++;
+                  setGenerationProgress((sectionsGenerated / dprSections.length) * 100);
+                  resolve();
+                })
+                .catch(async (e: any) => {
+                  const permissionError = new FirestorePermissionError({
+                    path: sectionDocRef.path,
+                    operation: 'write',
+                    requestResourceData: dataToSave,
+                  } satisfies SecurityRuleContext);
+                  errorEmitter.emit('permission-error', permissionError);
+                  toast({
+                    variant: 'destructive',
+                    title: `Could not save ${section} section`,
+                    description: 'Failed to save the generated section to your project.',
+                  });
+                  generationFailed = true;
+                  resolve();
                 });
-                setIsGenerating(false);
-                return; // Stop generation on failure
-            }
+            });
 
-            sectionsGenerated++;
-            setGenerationProgress((sectionsGenerated / dprSections.length) * 100);
         } else {
             toast({
               variant: 'destructive',
               title: `Failed to generate ${section}`,
               description: result.error,
             });
-            setIsGenerating(false);
-            return; // Stop generation on failure
+            generationFailed = true;
         }
       }
       
+      if (generationFailed) {
+        setIsGenerating(false);
+        return;
+      }
+
       setGenerationStatusText("Finalizing report...");
       setGenerationProgress(100);
 
@@ -358,3 +369,5 @@ export default function GenerateDPRPage() {
     </Suspense>
   );
 }
+
+    
