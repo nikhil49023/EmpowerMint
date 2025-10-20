@@ -18,6 +18,13 @@ export const GenerateDprInputSchema = z.object({
 });
 export type GenerateDprInput = z.infer<typeof GenerateDprInputSchema>;
 
+// Schema for generating a single DPR section
+export const GenerateDprSectionInputSchema = GenerateDprInputSchema.extend({
+    section: z.string().describe('The specific DPR section to generate (e.g., "Market Analysis").'),
+});
+export type GenerateDprSectionInput = z.infer<typeof GenerateDprSectionInputSchema>;
+
+
 const FinancialProjectionsSchema = z.object({
   summaryText: z
     .string()
@@ -56,3 +63,8 @@ export const GenerateDprOutputSchema = z.object({
 export type GenerateDprOutput = z.infer<
   typeof GenerateDprOutputSchema
 >;
+
+export const GenerateDprSectionOutputSchema = z.object({
+    content: z.union([z.string(), FinancialProjectionsSchema]).describe('The generated content for the section. This will be a string for most sections, but an object for Financial Projections.'),
+});
+export type GenerateDprSectionOutput = z.infer<typeof GenerateDprSectionOutputSchema>;

@@ -11,7 +11,7 @@ import { FormattedText } from '@/components/financify/formatted-text';
 import Link from 'next/link';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 import { ProjectCostPieChart, FinancialProjectionsBarChart } from '@/components/financify/dpr-charts';
@@ -55,18 +55,24 @@ function DPRReportContent() {
         return;
       }
       setIsLoading(true);
-      const docRef = doc(db, 'users', user.uid, 'dpr-projects', ideaTitle);
+      
+      const sections: ReportData = {};
       try {
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setReport(docSnap.data().sections);
+        const sectionsCollectionRef = collection(db, 'users', user.uid, 'dpr-projects', ideaTitle, 'sections');
+        const querySnapshot = await getDocs(sectionsCollectionRef);
+        
+        if (querySnapshot.empty) {
+            setError('No report data found. Please generate the DPR first.');
         } else {
-          setError('No report data found. Please generate the DPR first.');
+            querySnapshot.forEach((doc) => {
+                sections[doc.id] = doc.data().content;
+            });
+            setReport(sections);
         }
       } catch (e: any) {
         const permissionError = new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'get',
+          path: `users/${user.uid}/dpr-projects/${ideaTitle}/sections`,
+          operation: 'list',
         } satisfies SecurityRuleContext);
         errorEmitter.emit('permission-error', permissionError);
         console.error('Failed to fetch report:', e);
@@ -318,19 +324,18 @@ function DPRReportContent() {
               isLoading={true}
             />
           ))}
-
-        {report &&
+        
+        {report && !isLoading &&
           dprChapterTitles.map((title, index) => {
-            const key =
-              Object.keys(report).find(
-                k => k.toLowerCase().replace(/ /g, '') === title.toLowerCase().replace(/ /g, '')
-              ) || title;
+            // Find the key in the report object that matches the title, ignoring case and spaces.
+            const key = Object.keys(report).find(k => k.toLowerCase().replace(/ /g, '') === title.toLowerCase().replace(/ /g, '')) || title;
             const content = report[key];
+             const sectionTitle = `${index + 1}. ${title.replace(/([A-Z])/g, ' $1').trim()}`.replace("And", "and");
 
             return (
               <Section
                 key={key}
-                title={`${index + 1}. ${title}`}
+                title={sectionTitle}
                 content={content}
                 isLoading={isLoading}
                 className="print-no-break"

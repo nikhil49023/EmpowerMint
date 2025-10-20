@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
-import { generateDprAction } from '@/app/actions';
+import { generateDprSectionAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -29,13 +29,29 @@ import {
 } from '@/firebase/errors';
 import { Progress } from '@/components/ui/progress';
 
-const steps = [
+const formSteps = [
     "MSME Details",
     "Project Scope",
     "Target Market",
     "Financial Data",
     "Additional Info",
     "Review & Generate"
+];
+
+const dprSections = [
+    'ExecutiveSummary',
+    'ProjectIntroduction',
+    'PromoterDetails',
+    'BusinessModel',
+    'MarketAnalysis',
+    'LocationAndSite',
+    'TechnicalFeasibility',
+    'ImplementationSchedule',
+    'FinancialProjections',
+    'SWOTAnalysis',
+    'RegulatoryCompliance',
+    'RiskAssessment',
+    'Annexures',
 ];
 
 
@@ -49,6 +65,7 @@ function GenerateDPRContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [generationStatusText, setGenerationStatusText] = useState('');
   
   // Form State
   const [promoterName, setPromoterName] = useState('');
@@ -75,25 +92,9 @@ function GenerateDPRContent() {
         setPromoterName(user.displayName);
     }
   }, [idea, user]);
-  
-    useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isGenerating && generationProgress < 90) {
-      timer = setInterval(() => {
-        setGenerationProgress(prev => {
-          if (prev < 90) {
-            return prev + 1;
-          }
-          clearInterval(timer);
-          return prev;
-        });
-      }, 500); // Progresses over ~45 seconds
-    }
-    return () => clearInterval(timer);
-  }, [isGenerating, generationProgress]);
 
   const handleNext = () => {
-      if (currentStep < steps.length - 1) {
+      if (currentStep < formSteps.length - 1) {
           setCurrentStep(currentStep + 1);
       }
   }
@@ -116,60 +117,67 @@ function GenerateDPRContent() {
           description: 'This may take a minute or two. Please wait...',
       });
 
-      const result = await generateDprAction({
-          msmeDetails: {
-              promoterName,
-              businessName,
-              businessType,
-              location
-          },
+      const generationInput = {
+          msmeDetails: { promoterName, businessName, businessType, location },
           projectScope,
           targetMarket,
           financialData,
           additionalInfo
-      });
+      };
       
-      setGenerationProgress(100);
+      let sectionsGenerated = 0;
 
-      if (result.success) {
-          const docRef = doc(db, 'users', user.uid, 'dpr-projects', businessName);
-          const dataToSave = {
-            sections: result.data,
-            variables: {},
-            updatedAt: serverTimestamp(),
-          };
-          
-          setDoc(docRef, dataToSave, { merge: true })
-            .then(() => {
-                toast({
-                  title: "DPR Generated Successfully!",
-                  description: "Your full Detailed Project Report is ready.",
-                });
-                router.push(`/dpr-report?idea=${encodeURIComponent(businessName)}`);
-            })
-            .catch(async (e: any) => {
+      for (const section of dprSections) {
+        setGenerationStatusText(`Generating ${section.replace(/([A-Z])/g, ' $1').trim()}...`);
+        
+        const result = await generateDprSectionAction({ ...generationInput, section });
+
+        if (result.success) {
+            const sectionDocRef = doc(db, 'users', user.uid, 'dpr-projects', businessName, 'sections', section);
+            const dataToSave = {
+                content: result.data.content,
+                updatedAt: serverTimestamp(),
+            };
+            
+            try {
+                await setDoc(sectionDocRef, dataToSave, { merge: true });
+            } catch (e: any) {
                 const permissionError = new FirestorePermissionError({
-                  path: docRef.path,
+                  path: sectionDocRef.path,
                   operation: 'write',
                   requestResourceData: dataToSave,
                 } satisfies SecurityRuleContext);
                 errorEmitter.emit('permission-error', permissionError);
                 toast({
                   variant: 'destructive',
-                  title: 'Could not save DPR',
-                  description: 'Failed to save the generated DPR to your projects.',
+                  title: `Could not save ${section} section`,
+                  description: 'Failed to save the generated section to your project.',
                 });
-                 setIsGenerating(false);
-            });
+                setIsGenerating(false);
+                return; // Stop generation on failure
+            }
 
-      } else {
-          toast({
+            sectionsGenerated++;
+            setGenerationProgress((sectionsGenerated / dprSections.length) * 100);
+        } else {
+            toast({
               variant: 'destructive',
-              title: 'DPR Generation Failed',
+              title: `Failed to generate ${section}`,
               description: result.error,
-          });
-          setIsGenerating(false);
+            });
+            setIsGenerating(false);
+            return; // Stop generation on failure
+        }
       }
+      
+      setGenerationStatusText("Finalizing report...");
+      setGenerationProgress(100);
+
+      toast({
+        title: "DPR Generated Successfully!",
+        description: "Your full Detailed Project Report is ready.",
+      });
+      router.push(`/dpr-report?idea=${encodeURIComponent(businessName)}`);
   };
 
 
@@ -255,16 +263,8 @@ function GenerateDPRContent() {
       </div>
   );
 
-  const progress = ((currentStep + 1) / steps.length) * 100;
+  const progress = ((currentStep + 1) / formSteps.length) * 100;
   
-  const getGenerationStatusText = () => {
-    if (generationProgress < 20) return "Initializing generation...";
-    if (generationProgress < 50) return "Analyzing your inputs...";
-    if (generationProgress < 80) return "Compiling report sections...";
-    if (generationProgress < 100) return "Finalizing charts and financial data...";
-    return "Generation complete! Redirecting...";
-  }
-
   if (isGenerating) {
     return (
         <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
@@ -275,7 +275,7 @@ function GenerateDPRContent() {
             </p>
             <div className="w-full max-w-md">
                 <Progress value={generationProgress} className="w-full mb-2" />
-                <p className="text-sm text-muted-foreground">{getGenerationStatusText()} ({Math.round(generationProgress)}%)</p>
+                <p className="text-sm text-muted-foreground">{generationStatusText} ({Math.round(generationProgress)}%)</p>
             </div>
         </div>
     )
@@ -304,7 +304,7 @@ function GenerateDPRContent() {
        <Card className="glassmorphic">
         <CardHeader>
           <CardTitle>
-            Step {currentStep + 1}: {steps[currentStep]}
+            Step {currentStep + 1}: {formSteps[currentStep]}
           </CardTitle>
            <CardDescription>
             Please provide the following details to generate your report.
@@ -324,7 +324,7 @@ function GenerateDPRContent() {
           <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || isGenerating}>
             Back
           </Button>
-          {currentStep < steps.length - 1 ? (
+          {currentStep < formSteps.length - 1 ? (
              <Button onClick={handleNext}>
                 Next <ChevronsRight className="ml-2" />
             </Button>
@@ -358,5 +358,3 @@ export default function GenerateDPRPage() {
     </Suspense>
   );
 }
-
-    

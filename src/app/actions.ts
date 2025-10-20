@@ -29,6 +29,11 @@ import {
   type GenerateDprInput,
   type GenerateDprOutput,
 } from '@/ai/flows/generate-dpr-from-analysis';
+import {
+  generateDprSection,
+  type GenerateDprSectionInput,
+  type GenerateDprSectionOutput,
+} from '@/ai/flows/generate-dpr-section';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -134,11 +139,6 @@ export async function saveFeedbackAction(input: {
         requestResourceData: feedbackData,
       } satisfies SecurityRuleContext);
       errorEmitter.emit('permission-error', permissionError);
-
-      // Since this is a server action, we need to return an error to the client
-      // This part won't be executed in the same way as a client-side catch,
-      // so we re-throw to be caught by the outer try-catch.
-      throw permissionError;
     });
 
     return { success: true };
@@ -185,6 +185,25 @@ export async function generateDprAction(
     return {
       success: false,
       error: 'Failed to generate DPR. Please try again.',
+    };
+  }
+}
+
+
+export async function generateDprSectionAction(
+  input: GenerateDprSectionInput
+): Promise<
+  | { success: true; data: GenerateDprSectionOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateDprSection(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      error: 'Failed to generate DPR section. Please try again.',
     };
   }
 }
