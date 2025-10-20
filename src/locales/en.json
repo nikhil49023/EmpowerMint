@@ -180,7 +180,8 @@
     "loginButton": "Login",
     "noIdeas": "You haven't saved any ideas yet.",
     "startBrainstorming": "Start Brainstorming",
-    "viewAnalysis": "View Analysis"
+    "viewAnalysis": "View Analysis",
+    "buildDPR": "Build DPR"
   },
   "investmentIdea": {
     "backToBrainstorm": "Back to Brainstorm",
@@ -198,9 +199,9 @@
     "ideaSavedSuccess": "Your idea has been saved successfully.",
     "loading": "Loading analysis..."
   },
-  "generateDRP": {
-    "title": "Generate Detailed Project Report (DRP)",
-    "description": "Brainstorm with our AI to build your comprehensive DRP for {projectName}.",
+  "generateDPR": {
+    "title": "Generate Detailed Project Report (DPR)",
+    "description": "Brainstorm with our AI to build your comprehensive DPR for {projectName}.",
     "form": {
       "title": "Project Details",
       "description": "First, let's gather some basic details for your DPR.",
@@ -216,13 +217,13 @@
     },
     "chat": {
       "inputPlaceholder": "Tell me about your project...",
-      "welcome": "Hello! I am here to help you brainstorm and build a Detailed Project Report (DRP) for your project: **{projectName}**. To start, could you tell me a bit more about the business idea?",
+      "welcome": "Hello! I am here to help you brainstorm and build a Detailed Project Report (DPR) for your project: **{projectName}**. To start, could you tell me a bit more about the business idea?",
       "welcomeSuggestion1": "Let's start with my idea: \"{idea}\"",
-      "welcomeSuggestion2": "What is a DRP?",
+      "welcomeSuggestion2": "What is a DPR?",
       "welcomeSuggestion3": "How does this work?",
       "error": "I'm sorry, but I'm having trouble connecting right now. Please try again in a moment."
     },
-    "loading": "Loading DRP Generator..."
+    "loading": "Loading DPR Generator..."
   },
   "launchpad": {
     "title": "Founder's Launchpad",
@@ -285,8 +286,8 @@
         "description": "Define your business idea and validate its market potential. Research your target audience and competitors."
       },
       "step2": {
-        "title": "2. Business Plan (DRP)",
-        "description": "Create a Detailed Project Report (DRP). Use our \"Brainstorm\" feature to get AI-powered assistance in building your plan."
+        "title": "2. Business Plan (DPR)",
+        "description": "Create a Detailed Project Report (DPR). Use our \"Brainstorm\" feature to get AI-powered assistance in building your plan."
       },
       "step3": {
         "title": "3. Register Your Business",

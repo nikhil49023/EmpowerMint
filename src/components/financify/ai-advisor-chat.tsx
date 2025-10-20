@@ -43,7 +43,7 @@ export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
   const { translations } = useLanguage();
   const pathname = usePathname();
 
-  const useTransactionContext = !pathname.includes('/generate-drp');
+  const useTransactionContext = !pathname.includes('/generate-dpr');
 
   useEffect(() => {
     const welcomeMessage: Message = {

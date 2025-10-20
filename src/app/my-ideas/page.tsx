@@ -88,7 +88,7 @@ export default function MyIdeasPage() {
     if (!idea || !user) return;
     localStorage.setItem('dprAnalysis', JSON.stringify(idea));
     router.push(
-      `/generate-drp?idea=${encodeURIComponent(
+      `/generate-dpr?idea=${encodeURIComponent(
         idea.title
       )}&name=${encodeURIComponent(user?.displayName || 'Entrepreneur')}`
     );
@@ -223,7 +223,7 @@ export default function MyIdeasPage() {
                       </Button>
                        <Button onClick={() => handleInteractiveDpr(idea)} className="w-full" variant="outline">
                         <ChevronsRight className="mr-2 h-4 w-4"/>
-                        Build DRP
+                        Build DPR
                       </Button>
                     </div>
                     <Button onClick={() => handleGenerateFullDpr(idea)} className="w-full" disabled={generatingDprFor === idea.title}>
@@ -232,7 +232,7 @@ export default function MyIdeasPage() {
                         ) : (
                             <FileText className="mr-2 h-4 w-4"/>
                         )}
-                        Generate Full DRP
+                        Generate Full DPR
                     </Button>
                 </CardContent>
               </Card>

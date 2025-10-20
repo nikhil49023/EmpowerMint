@@ -76,7 +76,7 @@ function InvestmentIdeaContent() {
     if (!analysis || !user) return;
     localStorage.setItem('dprAnalysis', JSON.stringify(analysis));
     router.push(
-      `/generate-drp?idea=${encodeURIComponent(
+      `/generate-dpr?idea=${encodeURIComponent(
         analysis.title
       )}&name=${encodeURIComponent(user?.displayName || 'Entrepreneur')}`
     );
