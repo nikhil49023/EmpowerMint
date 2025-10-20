@@ -3,7 +3,15 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  setDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import {
   Card,
@@ -14,7 +22,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Lightbulb, Loader2, FileText } from 'lucide-react';
+import { Lightbulb, Loader2, FileText, ChevronsRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -24,6 +32,8 @@ import {
 } from '@/firebase/errors';
 import { useLanguage } from '@/hooks/use-language';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { generateDprFromAnalysisAction } from '@/app/actions';
 
 type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
   id: string;
@@ -37,8 +47,10 @@ export default function MyIdeasPage() {
   const [user, loadingAuth] = useAuthState(auth);
   const [ideas, setIdeas] = useState<SavedIdea[]>([]);
   const [loadingIdeas, setLoadingIdeas] = useState(true);
+  const [generatingDprFor, setGeneratingDprFor] = useState<string | null>(null);
   const { translations } = useLanguage();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -72,9 +84,7 @@ export default function MyIdeasPage() {
     }
   }, [user, loadingAuth]);
 
-  const handleGenerateDpr = (
-    idea: GenerateInvestmentIdeaAnalysisOutput
-  ) => {
+  const handleInteractiveDpr = (idea: GenerateInvestmentIdeaAnalysisOutput) => {
     if (!idea || !user) return;
     localStorage.setItem('dprAnalysis', JSON.stringify(idea));
     router.push(
@@ -83,6 +93,63 @@ export default function MyIdeasPage() {
       )}&name=${encodeURIComponent(user?.displayName || 'Entrepreneur')}`
     );
   };
+  
+  const handleGenerateFullDpr = async (idea: GenerateInvestmentIdeaAnalysisOutput) => {
+    if (!idea || !user) return;
+    setGeneratingDprFor(idea.title);
+    toast({
+      title: "Generating Full DPR",
+      description: "This may take a minute or two. Please wait...",
+    });
+
+    const result = await generateDprFromAnalysisAction({
+      analysis: idea,
+      promoterName: user.displayName || "Entrepreneur",
+    });
+    
+    if (result.success) {
+      const dprData = result.data;
+      const docRef = doc(db, 'users', user.uid, 'dpr-projects', idea.title);
+       const dataToSave = {
+        sections: dprData,
+        variables: {},
+        updatedAt: serverTimestamp(),
+      };
+      
+      setDoc(docRef, dataToSave, { merge: true })
+        .then(() => {
+            toast({
+              title: "DPR Generated Successfully!",
+              description: "Your full Detailed Project Report is ready.",
+            });
+            router.push(`/dpr-report?idea=${encodeURIComponent(idea.title)}`);
+        })
+        .catch(async (e: any) => {
+            const permissionError = new FirestorePermissionError({
+              path: docRef.path,
+              operation: 'write',
+              requestResourceData: dataToSave,
+            } satisfies SecurityRuleContext);
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+              variant: 'destructive',
+              title: 'Could not save DPR',
+              description: 'Failed to save the generated DPR to your projects.',
+            });
+        }).finally(() => {
+            setGeneratingDprFor(null);
+        });
+
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'DPR Generation Failed',
+            description: result.error,
+        });
+        setGeneratingDprFor(null);
+    }
+  }
+
 
   if (loadingAuth || loadingIdeas) {
     return (
@@ -142,21 +209,31 @@ export default function MyIdeasPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow" />
-                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Button asChild variant="outline" className="w-full">
-                    <Link
-                      href={{
-                        pathname: '/investment-ideas/custom',
-                        query: { idea: idea.title },
-                      }}
-                    >
-                      {translations.myIdeas.viewAnalysis}
-                    </Link>
-                  </Button>
-                  <Button onClick={() => handleGenerateDpr(idea)} className="w-full">
-                    <FileText className="mr-2 h-4 w-4"/>
-                    Generate DPR
-                  </Button>
+                <CardContent className="flex flex-col gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Button asChild variant="outline" className="w-full">
+                        <Link
+                          href={{
+                            pathname: '/investment-ideas/custom',
+                            query: { idea: idea.title },
+                          }}
+                        >
+                          {translations.myIdeas.viewAnalysis}
+                        </Link>
+                      </Button>
+                       <Button onClick={() => handleInteractiveDpr(idea)} className="w-full" variant="outline">
+                        <ChevronsRight className="mr-2 h-4 w-4"/>
+                        Build DRP
+                      </Button>
+                    </div>
+                    <Button onClick={() => handleGenerateFullDpr(idea)} className="w-full" disabled={generatingDprFor === idea.title}>
+                        {generatingDprFor === idea.title ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                        ) : (
+                            <FileText className="mr-2 h-4 w-4"/>
+                        )}
+                        Generate Full DRP
+                    </Button>
                 </CardContent>
               </Card>
             </motion.div>
