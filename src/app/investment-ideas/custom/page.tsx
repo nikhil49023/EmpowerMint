@@ -91,7 +91,14 @@ function InvestmentIdeaContent() {
     });
 
     const result = await generateDprFromAnalysisAction({
-      analysis,
+      analysis: {
+        title: analysis.title,
+        summary: analysis.summary,
+        investmentStrategy: analysis.investmentStrategy,
+        targetAudience: analysis.targetAudience,
+        roi: analysis.roi,
+        futureProofing: analysis.futureProofing,
+      },
       promoterName: user.displayName || "Entrepreneur",
     });
 

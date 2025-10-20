@@ -94,7 +94,7 @@ export default function MyIdeasPage() {
     );
   };
   
-  const handleGenerateFullDpr = async (idea: GenerateInvestmentIdeaAnalysisOutput) => {
+  const handleGenerateFullDpr = async (idea: SavedIdea) => {
     if (!idea || !user) return;
     setGeneratingDprFor(idea.title);
     toast({
@@ -103,7 +103,14 @@ export default function MyIdeasPage() {
     });
 
     const result = await generateDprFromAnalysisAction({
-      analysis: idea,
+      analysis: {
+        title: idea.title,
+        summary: idea.summary,
+        investmentStrategy: idea.investmentStrategy,
+        targetAudience: idea.targetAudience,
+        roi: idea.roi,
+        futureProofing: idea.futureProofing,
+      },
       promoterName: user.displayName || "Entrepreneur",
     });
     
