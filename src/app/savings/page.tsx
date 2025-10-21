@@ -16,7 +16,7 @@ import { Progress } from '@/components/ui/progress';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { Target, TrendingUp, TrendingDown, Info, Loader2 } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, Info, Loader2, PiggyBank } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
