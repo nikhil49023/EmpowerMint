@@ -34,6 +34,11 @@ import {
   type GenerateDprSectionInput,
   type GenerateDprSectionOutput,
 } from '@/ai/flows/generate-dpr-section';
+import {
+  generateEmergencyFundSuggestion,
+  type GenerateEmergencyFundSuggestionInput,
+  type GenerateEmergencyFundSuggestionOutput,
+} from '@/ai/flows/generate-emergency-fund-recommendation';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -204,6 +209,24 @@ export async function generateDprSectionAction(
     return {
       success: false,
       error: 'Failed to generate DPR section. Please try again.',
+    };
+  }
+}
+
+export async function generateEmergencyFundSuggestionAction(
+  input: GenerateEmergencyFundSuggestionInput
+): Promise<
+  | { success: true; data: GenerateEmergencyFundSuggestionOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateEmergencyFundSuggestion(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error in emergency fund suggestion action:', error);
+    return {
+      success: false,
+      error: 'Failed to generate emergency fund suggestion.',
     };
   }
 }

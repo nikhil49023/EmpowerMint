@@ -14,17 +14,36 @@ import {
   HeartPulse,
   Info,
   Trash2,
+  ShieldAlert,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { generateDashboardSummaryAction } from '../actions';
+import {
+  generateDashboardSummaryAction,
+  generateEmergencyFundSuggestionAction,
+} from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, onSnapshot, query, doc, addDoc, deleteDoc } from 'firebase/firestore';
+import {
+  collection,
+  onSnapshot,
+  query,
+  doc,
+  addDoc,
+  deleteDoc,
+  getDocs,
+  writeBatch,
+} from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
   FirestorePermissionError,
@@ -34,8 +53,16 @@ import { useLanguage } from '@/hooks/use-language';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,7 +72,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
@@ -67,6 +93,13 @@ type Budget = {
   icon: React.ElementType;
 };
 
+type SavingsGoal = {
+  id: string;
+  name: string;
+  targetAmount: number;
+  isDefault?: boolean;
+};
+
 export default function DashboardPage() {
   const [user, loadingAuth] = useAuthState(auth);
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
@@ -74,55 +107,26 @@ export default function DashboardPage() {
     null
   );
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingBudgets, setIsLoadingBudgets] = useState(true);
+  const [isLoadingSavingsGoals, setIsLoadingSavingsGoals] = useState(true);
+
   const [greeting, setGreeting] = useState('');
   const { translations } = useLanguage();
-  
-  const [savingsGoal, setSavingsGoal] = useLocalStorage<number>(
-    `savings-goal-${user?.uid || ''}`, 0
-  );
-  const [goalInput, setGoalInput] = useState<string>('');
-  
+  const { toast } = useToast();
+
+  // Dialog states
   const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
+  const [addGoalDialogOpen, setAddGoalDialogOpen] = useState(false);
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
+  const [goalToDelete, setGoalToDelete] = useState<SavingsGoal | null>(null);
+
+  // Form states
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
-  const { toast } = useToast();
-  
-  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
-
-  useEffect(() => {
-    if (savingsGoal > 0) {
-      setGoalInput(String(savingsGoal));
-    } else {
-      setGoalInput('');
-    }
-  }, [savingsGoal]);
-  
-  const handleSetGoal = () => {
-    const newGoal = parseFloat(goalInput);
-    if (!isNaN(newGoal) && newGoal >= 0) {
-      setSavingsGoal(newGoal);
-      toast({
-        title: 'Savings Goal Updated',
-        description: `Your new monthly savings goal is ${formatCurrency(newGoal)}.`,
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Input',
-        description: 'Please enter a valid number for your savings goal.',
-      });
-    }
-  };
-
-  const handleRemoveGoal = () => {
-    setSavingsGoal(0);
-    toast({
-      title: 'Savings Goal Removed',
-      description: 'Your monthly savings goal has been cleared.',
-    });
-  };
+  const [newGoalName, setNewGoalName] = useState('');
+  const [newGoalAmount, setNewGoalAmount] = useState('');
 
   const invalidateDashboardCache = useCallback(() => {
     if (user) {
@@ -131,76 +135,7 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const handleAddBudget = async () => {
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: translations.transactions.toasts.errorLoginToAddBudget,
-      });
-      return;
-    }
-    if (!newBudgetName || !newBudgetAmount) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: translations.transactions.toasts.errorFillFields,
-      });
-      return;
-    }
-    const newBudgetData = {
-      name: newBudgetName,
-      amount: parseFloat(newBudgetAmount),
-    };
-
-    const budgetsCollectionRef = collection(db, 'users', user.uid, 'budgets');
-
-    addDoc(budgetsCollectionRef, newBudgetData)
-      .catch(async serverError => {
-        const permissionError = new FirestorePermissionError({
-          path: budgetsCollectionRef.path,
-          operation: 'create',
-          requestResourceData: newBudgetData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      }).then(() => {
-        setNewBudgetName('');
-        setNewBudgetAmount('');
-        setAddBudgetDialogOpen(false);
-        invalidateDashboardCache();
-        toast({
-          title: 'Success',
-          description: translations.transactions.toasts.successAddBudget,
-        });
-      });
-  };
-
-  const handleDeleteBudget = async (budgetId: string) => {
-    if (!user) return;
-    const budgetDocRef = doc(db, 'users', user.uid, 'budgets', budgetId);
-    
-    deleteDoc(budgetDocRef)
-      .then(() => {
-        toast({
-            title: 'Budget Deleted',
-            description: 'The budget has been successfully removed.',
-        });
-        setBudgetToDelete(null);
-        invalidateDashboardCache();
-      })
-      .catch(async serverError => {
-        const permissionError = new FirestorePermissionError({
-          path: budgetDocRef.path,
-          operation: 'delete',
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not delete the budget. Please try again.',
-        });
-      });
-  };
+  // --- Data Fetching and Real-time Listeners ---
 
   const getCacheKey = useCallback(() => {
     return user ? `dashboard-summary-${user.uid}` : null;
@@ -216,7 +151,6 @@ export default function DashboardPage() {
       setGreeting(translations.dashboard.greeting.evening);
     }
   }, [translations]);
-  
 
   // Load initial summary from cache
   useEffect(() => {
@@ -226,84 +160,77 @@ export default function DashboardPage() {
       if (cachedSummary) {
         try {
           setSummary(JSON.parse(cachedSummary));
-        } catch(e) {
-          console.error("Failed to parse cached summary", e);
+        } catch (e) {
+          console.error('Failed to parse cached summary', e);
           localStorage.removeItem(cacheKey);
         }
       }
     }
   }, [getCacheKey]);
 
-  // Real-time listener for transactions and budgets
+  // Real-time listeners for all user data
   useEffect(() => {
     if (user) {
-      // Transactions listener
-      const transCollectionRef = collection(db, 'users', user.uid, 'transactions');
-      const q = query(transCollectionRef);
-      const unsubscribeTrans = onSnapshot(
-        q,
-        querySnapshot => {
-          const transactionsData = querySnapshot.docs.map(
-            doc => doc.data() as ExtractedTransaction
-          );
-          setTransactions(transactionsData);
-          setIsLoading(false); // Transactions have loaded (or are empty)
+      const collections = [
+        {
+          path: 'transactions',
+          setter: setTransactions,
+          loader: setIsLoading,
         },
-        async serverError => {
-          const permissionError = new FirestorePermissionError({
-            path: `users/${user.uid}/transactions`,
-            operation: 'list',
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-          setIsLoading(false);
-        }
-      );
-      
-      // Budgets listener
-      const budgetCollectionRef = collection(db, 'users', user.uid, 'budgets');
-      const budgetQuery = query(budgetCollectionRef);
-      const unsubscribeBudgets = onSnapshot(
-        budgetQuery,
-        (snapshot) => {
-          const budgetsData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...(doc.data() as Omit<Budget, 'id' | 'spent' | 'icon'>),
-            spent: 0,
-            icon: categoryIcons[doc.data().name] || categoryIcons.Default,
-          }));
-          setBudgets(budgetsData);
-          setIsLoadingBudgets(false);
+        {
+          path: 'budgets',
+          setter: setBudgets,
+          loader: setIsLoadingBudgets,
         },
-        (error) => {
-          console.error("Error fetching budgets: ", error);
-           const permissionError = new FirestorePermissionError({
-            path: `users/${user.uid}/budgets`,
-            operation: 'list',
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-          setIsLoadingBudgets(false);
-        }
-      );
+        {
+          path: 'savings-goals',
+          setter: setSavingsGoals,
+          loader: setIsLoadingSavingsGoals,
+        },
+      ];
 
-      return () => {
-        unsubscribeTrans();
-        unsubscribeBudgets();
-      };
+      const unsubscribes = collections.map(({ path, setter, loader }) => {
+        loader(true);
+        const collectionRef = collection(db, 'users', user.uid, path);
+        const q = query(collectionRef);
+        return onSnapshot(
+          q,
+          snapshot => {
+            const data = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+            })) as any[];
+            setter(data);
+            loader(false);
+          },
+          async error => {
+            console.error(`Error fetching ${path}: `, error);
+            const permissionError = new FirestorePermissionError({
+              path: `users/${user.uid}/${path}`,
+              operation: 'list',
+            } satisfies SecurityRuleContext);
+            errorEmitter.emit('permission-error', permissionError);
+            loader(false);
+          }
+        );
+      });
 
+      return () => unsubscribes.forEach(unsub => unsub());
     } else if (!loadingAuth) {
-      // If there's no user and auth is not loading, we're done.
+      // No user, reset all data
       setIsLoading(false);
       setIsLoadingBudgets(false);
+      setIsLoadingSavingsGoals(false);
+      setTransactions([]);
+      setBudgets([]);
+      setSavingsGoals([]);
     }
   }, [user, loadingAuth]);
 
   // Effect to generate summary when transactions change
   useEffect(() => {
-    // This function will be triggered whenever `transactions` state updates.
     const fetchSummary = async () => {
       const cacheKey = getCacheKey();
-      
-      // If there are no transactions, set a default state and clear cache
       if (transactions.length === 0) {
         const defaultSummary = {
           totalIncome: 0,
@@ -312,31 +239,193 @@ export default function DashboardPage() {
           suggestion: translations.dashboard.defaultSuggestion,
         };
         setSummary(defaultSummary);
-        if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(defaultSummary));
-        return; // No need to call the API
+        if (cacheKey)
+          localStorage.setItem(cacheKey, JSON.stringify(defaultSummary));
+        return;
       }
-      
-      // Only generate a new summary if there are transactions
-      // Set loading state for the summary generation specifically
       setIsLoading(true);
       const result = await generateDashboardSummaryAction(transactions);
       if (result.success) {
         setSummary(result.data);
-        if (cacheKey) localStorage.setItem(cacheKey, JSON.stringify(result.data));
+        if (cacheKey)
+          localStorage.setItem(cacheKey, JSON.stringify(result.data));
       } else {
         console.error(result.error);
-        // On failure, don't clear the summary, maybe show a toast
-        // This keeps stale data visible, which is better than nothing.
       }
       setIsLoading(false);
     };
 
-    // We only want to fetch a summary if the user is logged in.
-    // The `onSnapshot` listener will set transactions and trigger this effect.
     if (!loadingAuth && user) {
-        fetchSummary();
+      fetchSummary();
     }
   }, [transactions, user, loadingAuth, translations, getCacheKey]);
+  
+    // Effect to create default emergency fund
+  useEffect(() => {
+    if (
+      user &&
+      !isLoadingSavingsGoals &&
+      savingsGoals.length === 0 &&
+      summary
+    ) {
+      const createDefaultGoal = async () => {
+        const result = await generateEmergencyFundSuggestionAction({
+          totalIncome: summary.totalIncome,
+          totalExpenses: summary.totalExpenses,
+        });
+
+        if (result.success && result.data.recommendedAmount > 0) {
+          const goalsCollectionRef = collection(
+            db,
+            'users',
+            user.uid,
+            'savings-goals'
+          );
+          const newGoalData = {
+            name: 'Emergency Fund',
+            targetAmount: result.data.recommendedAmount,
+            isDefault: true,
+          };
+          addDoc(goalsCollectionRef, newGoalData).catch(
+            async serverError => {
+              const permissionError = new FirestorePermissionError({
+                path: goalsCollectionRef.path,
+                operation: 'create',
+                requestResourceData: newGoalData,
+              } satisfies SecurityRuleContext);
+              errorEmitter.emit('permission-error', permissionError);
+            }
+          );
+        }
+      };
+
+      // Check if a default goal already exists to prevent re-creation
+      const hasDefault = savingsGoals.some(g => g.isDefault);
+      if (!hasDefault) {
+        createDefaultGoal();
+      }
+    }
+  }, [user, savingsGoals, isLoadingSavingsGoals, summary]);
+
+  // --- CRUD Operations ---
+
+  const handleAddBudget = async () => {
+    if (!user) return;
+    if (!newBudgetName || !newBudgetAmount) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please fill out all fields.',
+      });
+      return;
+    }
+    const budgetsCollectionRef = collection(db, 'users', user.uid, 'budgets');
+    const newBudgetData = {
+      name: newBudgetName,
+      amount: parseFloat(newBudgetAmount),
+    };
+
+    addDoc(budgetsCollectionRef, newBudgetData)
+      .then(() => {
+        setNewBudgetName('');
+        setNewBudgetAmount('');
+        setAddBudgetDialogOpen(false);
+        invalidateDashboardCache();
+        toast({ title: 'Success', description: 'Budget added successfully.' });
+      })
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: budgetsCollectionRef.path,
+          operation: 'create',
+          requestResourceData: newBudgetData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
+
+  const handleDeleteBudget = async (budgetId: string) => {
+    if (!user) return;
+    const budgetDocRef = doc(db, 'users', user.uid, 'budgets', budgetId);
+    deleteDoc(budgetDocRef)
+      .then(() => {
+        toast({
+          title: 'Budget Deleted',
+          description: 'The budget has been successfully removed.',
+        });
+        setBudgetToDelete(null);
+        invalidateDashboardCache();
+      })
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: budgetDocRef.path,
+          operation: 'delete',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
+
+  const handleAddGoal = async () => {
+    if (!user) return;
+    if (!newGoalName || !newGoalAmount) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please fill out all fields.',
+      });
+      return;
+    }
+    const goalsCollectionRef = collection(
+      db,
+      'users',
+      user.uid,
+      'savings-goals'
+    );
+    const newGoalData = {
+      name: newGoalName,
+      targetAmount: parseFloat(newGoalAmount),
+    };
+
+    addDoc(goalsCollectionRef, newGoalData)
+      .then(() => {
+        setNewGoalName('');
+        setNewGoalAmount('');
+        setAddGoalDialogOpen(false);
+        toast({
+          title: 'Success',
+          description: 'Savings Goal added successfully.',
+        });
+      })
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: goalsCollectionRef.path,
+          operation: 'create',
+          requestResourceData: newGoalData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
+
+  const handleDeleteGoal = async (goalId: string) => {
+    if (!user) return;
+    const goalDocRef = doc(db, 'users', user.uid, 'savings-goals', goalId);
+    deleteDoc(goalDocRef)
+      .then(() => {
+        toast({
+          title: 'Goal Deleted',
+          description: 'The savings goal has been successfully removed.',
+        });
+        setGoalToDelete(null);
+      })
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: goalDocRef.path,
+          operation: 'delete',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      });
+  };
+
+  // --- Memoized Computations ---
 
   const formatCurrency = (amount: number | undefined) => {
     if (amount === undefined || typeof amount !== 'number') {
@@ -347,7 +436,12 @@ export default function DashboardPage() {
       currency: 'INR',
     }).format(amount);
   };
-  
+
+  const totalSavings = useMemo(
+    () => (summary ? summary.totalIncome - summary.totalExpenses : 0),
+    [summary]
+  );
+
   const budgetsWithSpending = useMemo(() => {
     return budgets.map(budget => {
       const spent = transactions
@@ -360,46 +454,36 @@ export default function DashboardPage() {
           const amount = parseFloat(
             String(t.amount).replace(/[^0-9.-]+/g, '')
           );
-          return sum + amount;
+          return sum + (isNaN(amount) ? 0 : amount);
         }, 0);
-      return { ...budget, spent };
+      return { ...budget, spent, icon: categoryIcons[budget.name] || categoryIcons.Default };
     });
   }, [budgets, transactions]);
   
-  const totalSavings = useMemo(() => {
-    if (summary) {
-        return summary.totalIncome - summary.totalExpenses;
-    }
-    let income = 0;
-    let expenses = 0;
-    transactions.forEach(t => {
-      const amount = parseFloat(String(t.amount).replace(/[^0-9.-]+/g, ''));
-      if (t.type === 'income') {
-        income += amount;
-      } else {
-        expenses += amount;
-      }
-    });
-    return income - expenses;
-  }, [summary, transactions]);
+  const overallSavingsProgress = useMemo(() => {
+      const totalTarget = savingsGoals.reduce((sum, goal) => sum + goal.targetAmount, 0);
+      if (totalTarget === 0) return 0;
+      return Math.min((totalSavings / totalTarget) * 100, 100);
+  }, [savingsGoals, totalSavings]);
 
-  const savingsGoalProgress = savingsGoal > 0 ? Math.min((totalSavings / savingsGoal) * 100, 100) : 0;
-  
   return (
     <div className="space-y-6 md:space-y-8">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold">{translations.dashboard.title}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">
+          {translations.dashboard.title}
+        </h1>
         <p className="text-muted-foreground">{greeting}</p>
       </div>
 
       <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Summary Cards */}
         <Card className="glassmorphic h-full">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               {translations.dashboard.yourExpenses}
             </CardTitle>
-            <div className="p-2 bg-red-100 rounded-md">
-              <TrendingDown className="w-4 h-4 text-red-600" />
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-md">
+              <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
             </div>
           </CardHeader>
           <CardContent>
@@ -410,9 +494,6 @@ export default function DashboardPage() {
                 formatCurrency(summary?.totalExpenses)
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {translations.dashboard.thisMonth}
-            </p>
           </CardContent>
         </Card>
         <Card className="glassmorphic h-full">
@@ -420,8 +501,8 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">
               {translations.dashboard.yourIncome}
             </CardTitle>
-            <div className="p-2 bg-green-100 rounded-md">
-              <TrendingUp className="w-4 h-4 text-green-600" />
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-md">
+              <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
             </div>
           </CardHeader>
           <CardContent>
@@ -432,9 +513,6 @@ export default function DashboardPage() {
                 formatCurrency(summary?.totalIncome)
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {translations.dashboard.thisMonth}
-            </p>
           </CardContent>
         </Card>
         <Card className="glassmorphic h-full">
@@ -452,333 +530,325 @@ export default function DashboardPage() {
                 `${summary?.savingsRate ?? 0}%`
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              {translations.dashboard.savingsRateDescription}
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1">
-        <Card className="glassmorphic">
-          <CardHeader>
-            <CardTitle>{translations.dashboard.suggestionsTitle}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {isLoading && !summary ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            ) : (
-              <Alert className="border-0 p-0 bg-transparent">
-                <div className="flex items-start gap-3">
-                  <span className="p-2 bg-accent rounded-full">
-                    <Lightbulb className="w-4 h-4 text-accent-foreground" />
-                  </span>
-                  <div className="flex-1">
-                    <AlertDescription className="text-base md:text-lg">
-                      {summary?.suggestion}
-                    </AlertDescription>
-                  </div>
+      {/* Suggestion Card */}
+      <Card className="glassmorphic">
+        <CardHeader>
+          <CardTitle>{translations.dashboard.suggestionsTitle}</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {isLoading && !summary ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ) : (
+            <Alert className="border-0 p-0 bg-transparent">
+              <div className="flex items-start gap-3">
+                <span className="p-2 bg-accent/20 dark:bg-accent/10 rounded-full">
+                  <Lightbulb className="w-4 h-4 text-accent-foreground" />
+                </span>
+                <div className="flex-1">
+                  <AlertDescription className="text-base">
+                    {summary?.suggestion}
+                  </AlertDescription>
                 </div>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
-          <Dialog>
-            <DialogTrigger asChild>
-                <Card className="glassmorphic cursor-pointer hover:border-primary transition-colors">
-                  <CardHeader>
-                      <CardTitle>{translations.transactions.budgetsDialog.title}</CardTitle>
-                      <CardDescription>{translations.transactions.budgetsDialog.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      {isLoadingBudgets ? (
-                          <div className="space-y-4">
-                              <Skeleton className="h-10 w-full" />
-                              <Skeleton className="h-10 w-full" />
-                          </div>
-                      ) : budgetsWithSpending.length > 0 ? (
-                          <div className="space-y-4">
-                              {budgetsWithSpending.slice(0, 2).map(budget => {
-                                  const progress = Math.min((budget.spent / budget.amount) * 100, 100);
-                                  return (
-                                      <div key={budget.id}>
-                                          <div className="flex justify-between items-center mb-1">
-                                              <span className="text-sm font-medium">{budget.name}</span>
-                                              <span className="text-sm text-muted-foreground">{formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}</span>
-                                          </div>
-                                          <Progress value={progress} />
-                                      </div>
-                                  )
-                              })}
-                              {budgetsWithSpending.length > 2 && <p className="text-sm text-center text-muted-foreground pt-2">Click to see all budgets.</p>}
-                          </div>
-                      ) : (
-                          <div className="text-center py-8 text-muted-foreground">
-                              <p>{translations.transactions.budgetsDialog.noBudgetsTitle}</p>
-                              <p className="text-sm">Click here to add one.</p>
-                          </div>
-                      )}
-                  </CardContent>
-              </Card>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>{translations.transactions.budgetsDialog.title}</DialogTitle>
-                <DialogDescription>
-                  {translations.transactions.budgetsDialog.description}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-8 py-4">
-                <div className="flex justify-end">
-                  <Dialog
-                    open={addBudgetDialogOpen}
-                    onOpenChange={setAddBudgetDialogOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> {translations.transactions.budgetsDialog.addNewBudget}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>{translations.transactions.addBudgetDialog.title}</DialogTitle>
-                        <DialogDescription>
-                          {translations.transactions.addBudgetDialog.description}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="name" className="text-right">
-                            {translations.transactions.addBudgetDialog.nameLabel}
-                          </Label>
-                          <Input
-                            id="name"
-                            value={newBudgetName}
-                            onChange={e => setNewBudgetName(e.target.value)}
-                            className="col-span-3"
-                            placeholder={translations.transactions.addBudgetDialog.namePlaceholder}
-                          />
+        {/* Budgets Card & Dialog */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Card className="glassmorphic cursor-pointer hover:border-primary transition-colors">
+              <CardHeader>
+                <CardTitle>Budgets</CardTitle>
+                <CardDescription>
+                  Track your monthly category spending.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingBudgets ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : budgetsWithSpending.length > 0 ? (
+                  <div className="space-y-4">
+                    {budgetsWithSpending.slice(0, 2).map(budget => (
+                      <div key={budget.id}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium">
+                            {budget.name}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {formatCurrency(budget.spent)} /{' '}
+                            {formatCurrency(budget.amount)}
+                          </span>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="amount" className="text-right">
-                            {translations.transactions.addBudgetDialog.amountLabel}
-                          </Label>
-                          <Input
-                            id="amount"
-                            type="number"
-                            value={newBudgetAmount}
-                            onChange={e => setNewBudgetAmount(e.target.value)}
-                            className="col-span-3"
-                            placeholder={translations.transactions.addBudgetDialog.amountPlaceholder}
-                          />
-                        </div>
+                        <Progress
+                          value={(budget.spent / budget.amount) * 100}
+                        />
                       </div>
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button type="button" variant="secondary">
-                            {translations.transactions.addBudgetDialog.cancel}
-                          </Button>
-                        </DialogClose>
-                        <Button onClick={handleAddBudget}>{translations.transactions.addBudgetDialog.addBudget}</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                {budgetsWithSpending.length === 0 ? (
-                  <Card className="flex items-center justify-center min-h-[200px] border-dashed shadow-none glassmorphic">
-                    <CardContent className="text-center p-6">
-                      <div className="flex justify-center mb-4">
-                        <PiggyBank className="w-16 h-16 text-muted-foreground" />
-                      </div>
-                      <h2 className="text-xl font-semibold">{translations.transactions.budgetsDialog.noBudgetsTitle}</h2>
-                      <p className="text-muted-foreground mt-2">
-                        {translations.transactions.budgetsDialog.noBudgetsDescription}
+                    ))}
+                    {budgetsWithSpending.length > 2 && (
+                      <p className="text-sm text-center text-muted-foreground pt-2">
+                        Click to see all budgets.
                       </p>
-                    </CardContent>
-                  </Card>
+                    )}
+                  </div>
                 ) : (
-                  <motion.div
-                    className="grid gap-6 md:grid-cols-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    {budgetsWithSpending.map((budget, index) => {
-                      const Icon = budget.icon;
-                      const progress = (budget.spent / budget.amount) * 100;
-                      const remaining = budget.amount - budget.spent;
-
-                      return (
-                        <motion.div
-                          key={budget.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                        >
-                          <Card className="glassmorphic">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                              <CardTitle className="text-base font-medium flex items-center gap-2">
-                                <Icon className="h-5 w-5 text-primary" />
-                                {budget.name}
-                              </CardTitle>
-                              <div className="text-sm font-bold">
-                                {formatCurrency(budget.amount)}
-                              </div>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-2">
-                                <Progress value={progress} />
-                                <div className="flex justify-between text-sm">
-                                  <p className="text-muted-foreground">
-                                    {translations.transactions.budgetsDialog.spent}
-                                  </p>
-                                  <p className="font-medium">
-                                    {formatCurrency(budget.spent)}
-                                  </p>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                  <p className="text-muted-foreground">
-                                    {translations.transactions.budgetsDialog.remaining}
-                                  </p>
-                                  <p
-                                    className={`font-medium ${
-                                      remaining < 0 ? 'text-destructive' : ''
-                                    }`}
-                                  >
-                                    {formatCurrency(remaining)}
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                             <DialogFooter className="p-4 pt-0">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                onClick={() => setBudgetToDelete(budget)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </Button>
-                            </DialogFooter>
-                          </Card>
-                        </motion.div>
-                      );
-                    })}
-                  </motion.div>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No budgets created yet.</p>
+                    <p className="text-sm">Click here to add one.</p>
+                  </div>
                 )}
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Your Budgets</DialogTitle>
+              <DialogDescription>
+                Track and manage your monthly spending.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-8 py-4">
+              <div className="flex justify-end">
+                <Dialog
+                  open={addBudgetDialogOpen}
+                  onOpenChange={setAddBudgetDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add New Budget
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Budget</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <Input
+                        value={newBudgetName}
+                        onChange={e => setNewBudgetName(e.target.value)}
+                        placeholder="Budget Name (e.g., Groceries)"
+                      />
+                      <Input
+                        type="number"
+                        value={newBudgetAmount}
+                        onChange={e => setNewBudgetAmount(e.target.value)}
+                        placeholder="Amount (e.g., 5000)"
+                      />
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                          Cancel
+                        </Button>
+                      </DialogClose>
+                      <Button onClick={handleAddBudget}>Add Budget</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog>
+              {budgetsWithSpending.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground">
+                  <p>No budgets created yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {budgetsWithSpending.map(budget => (
+                    <Card key={budget.id} className="glassmorphic">
+                       <CardHeader className="flex flex-row items-start justify-between pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                          <budget.icon className="h-5 w-5 text-primary" />
+                          {budget.name}
+                        </CardTitle>
+                         <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive h-6 w-6 -mt-1 -mr-2"
+                          onClick={() => setBudgetToDelete(budget)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                         <div className="text-xl font-bold mb-2">
+                           {formatCurrency(budget.amount)}
+                         </div>
+                        <Progress
+                          value={(budget.spent / budget.amount) * 100}
+                        />
+                         <div className="flex justify-between text-sm mt-2">
+                           <span>Spent: {formatCurrency(budget.spent)}</span>
+                           <span className={budget.amount - budget.spent < 0 ? 'text-destructive' : ''}>
+                             Remaining: {formatCurrency(budget.amount - budget.spent)}
+                           </span>
+                         </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Savings Goals Card & Dialog */}
+        <Dialog>
             <DialogTrigger asChild>
                 <Card className="glassmorphic h-full cursor-pointer hover:border-primary transition-colors">
                     <CardHeader>
-                        <CardTitle>Savings Goal</CardTitle>
-                        <CardDescription>Track and manage your monthly savings goal.</CardDescription>
+                        <CardTitle>Savings Goals</CardTitle>
+                        <CardDescription>Track your progress towards your financial goals.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      { savingsGoal > 0 ? (
+                      {isLoadingSavingsGoals ? (
+                          <Skeleton className="h-10 w-full" />
+                      ) : savingsGoals.length > 0 ? (
                           <div className="space-y-3">
                               <div className="flex justify-between items-end">
                                   <p className="text-2xl font-bold">{formatCurrency(totalSavings)}</p>
-                                  <p className="text-muted-foreground">of {formatCurrency(savingsGoal)}</p>
+                                  <p className="text-muted-foreground">saved</p>
                               </div>
-                              <Progress value={savingsGoalProgress} />
-                              <p className="text-xs text-muted-foreground pt-2">Click to edit your goal.</p>
+                              <Progress value={overallSavingsProgress} />
+                              <p className="text-xs text-muted-foreground pt-2">
+                                  {Math.round(overallSavingsProgress)}% of your total goals. Click to manage.
+                              </p>
                           </div>
                       ) : (
                           <div className="flex flex-col items-center justify-center h-full text-center py-4">
                                <Target className="w-12 h-12 text-muted-foreground mb-3" />
-                               <p className="text-muted-foreground mb-4">You haven't set a savings goal yet.</p>
+                               <p className="text-muted-foreground mb-4">You haven't set any savings goals yet.</p>
                                <Button variant="outline">Set a Goal</Button>
                           </div>
                       )}
                     </CardContent>
                 </Card>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle>Set Your Savings Goal</DialogTitle>
+                    <DialogTitle>Your Savings Goals</DialogTitle>
                     <DialogDescription>
-                      Define how much you want to save each month. We'll help you track it.
+                      Set, track, and manage your financial goals. Your current total savings are <span className="font-bold text-primary">{formatCurrency(totalSavings)}</span>.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-6 py-4">
-                  <div className="space-y-2">
-                      <Label htmlFor="savingsGoal" className="text-base">Your Monthly Savings Goal (INR)</Label>
-                      <div className="flex items-center gap-2">
-                          <Input 
-                              id="savingsGoal"
-                              type="number" 
-                              placeholder="e.g., 10000"
-                              value={goalInput}
-                              onChange={(e) => setGoalInput(e.target.value)}
-                              className="h-12 text-lg"
-                              disabled={loadingAuth}
-                          />
-                          <Button onClick={handleSetGoal} size="lg" disabled={loadingAuth}>Set Goal</Button>
-                      </div>
-                  </div>
-                   {savingsGoal > 0 && (
-                      <div>
-                          <div className="flex items-center justify-between">
-                            <p className="text-muted-foreground text-sm flex items-center gap-1.5">
-                                <Info className="h-4 w-4" />
-                                Your goal is saved in your browser.
-                            </p>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/>Remove Goal</Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This will remove your monthly savings goal. You can always set a new one later.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={handleRemoveGoal}>Remove</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                      </div>
-                  )}
+                <div className="space-y-8 py-4">
+                    <div className="flex justify-end">
+                        <Dialog open={addGoalDialogOpen} onOpenChange={setAddGoalDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button><PlusCircle className="mr-2 h-4 w-4"/> Add New Goal</Button>
+                            </DialogTrigger>
+                             <DialogContent>
+                                <DialogHeader><DialogTitle>Add New Savings Goal</DialogTitle></DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <Input value={newGoalName} onChange={(e) => setNewGoalName(e.target.value)} placeholder="Goal Name (e.g., New Car)"/>
+                                    <Input type="number" value={newGoalAmount} onChange={(e) => setNewGoalAmount(e.target.value)} placeholder="Target Amount (e.g., 200000)"/>
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                                    <Button onClick={handleAddGoal}>Add Goal</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+
+                    {savingsGoals.length === 0 ? (
+                         <div className="text-center py-10 text-muted-foreground"><p>No savings goals created yet.</p></div>
+                    ) : (
+                        <div className="space-y-4">
+                            {savingsGoals.map(goal => {
+                                const progress = Math.min((totalSavings / goal.targetAmount) * 100, 100);
+                                return (
+                                    <Card key={goal.id} className="glassmorphic">
+                                        <CardContent className="pt-6">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-semibold flex items-center gap-2">
+                                                        {goal.isDefault && <ShieldAlert className="h-5 w-5 text-amber-500"/>}
+                                                        {goal.name}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">Target: {formatCurrency(goal.targetAmount)}</p>
+                                                </div>
+                                                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-6 w-6 -mt-1 -mr-2" onClick={() => setGoalToDelete(goal)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                            <Progress value={progress} className="mt-2"/>
+                                            <p className="text-xs text-right mt-1 text-muted-foreground">{Math.round(progress)}% funded</p>
+                                        </CardContent>
+                                    </Card>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
             </DialogContent>
-          </Dialog>
+        </Dialog>
       </div>
 
-       <AlertDialog open={!!budgetToDelete} onOpenChange={(open) => !open && setBudgetToDelete(null)}>
+      {/* Confirmation Dialogs */}
+      <AlertDialog
+        open={!!budgetToDelete}
+        onOpenChange={open => !open && setBudgetToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Budget: {budgetToDelete?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete Budget: {budgetToDelete?.name}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the "{budgetToDelete?.name}" budget.
+              This will permanently delete the "{budgetToDelete?.name}" budget.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setBudgetToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => budgetToDelete && handleDeleteBudget(budgetToDelete.id)}>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                budgetToDelete && handleDeleteBudget(budgetToDelete.id)
+              }
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
+      
+      <AlertDialog
+        open={!!goalToDelete}
+        onOpenChange={open => !open && setGoalToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete Goal: {goalToDelete?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the "{goalToDelete?.name}" savings goal.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                goalToDelete && handleDeleteGoal(goalToDelete.id)
+              }
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-
-    
