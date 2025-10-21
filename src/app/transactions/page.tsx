@@ -84,6 +84,7 @@ import {
 } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { useLanguage } from '@/hooks/use-language';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const categoryIcons: { [key: string]: React.ElementType } = {
   Groceries: ShoppingBag,
@@ -115,6 +116,9 @@ export default function TransactionsPage() {
     amount: '',
   });
   const [isImporting, setIsImporting] = useState(false);
+  const [isImportDisabled, setIsImportDisabled] = useState(false);
+  const [daysUntilNextImport, setDaysUntilNextImport] = useState(0);
+
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [addTransactionDialogOpen, setAddTransactionDialogOpen] =
@@ -125,6 +129,31 @@ export default function TransactionsPage() {
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
+
+  const getImportCooldownKey = useCallback(() => {
+    return user ? `import-cooldown-${user.uid}` : null;
+  }, [user]);
+
+  useEffect(() => {
+    const cooldownKey = getImportCooldownKey();
+    if (cooldownKey) {
+      const lastImportTimestamp = localStorage.getItem(cooldownKey);
+      if (lastImportTimestamp) {
+        const lastImportDate = new Date(parseInt(lastImportTimestamp, 10));
+        const now = new Date();
+        const thirtyDaysInMillis = 30 * 24 * 60 * 60 * 1000;
+        const timeSinceLastImport = now.getTime() - lastImportDate.getTime();
+
+        if (timeSinceLastImport < thirtyDaysInMillis) {
+          setIsImportDisabled(true);
+          const daysRemaining = Math.ceil((thirtyDaysInMillis - timeSinceLastImport) / (1000 * 60 * 60 * 24));
+          setDaysUntilNextImport(daysRemaining);
+        } else {
+          localStorage.removeItem(cooldownKey);
+        }
+      }
+    }
+  }, [getImportCooldownKey]);
 
   const invalidateDashboardCache = useCallback(() => {
     if (user) {
@@ -394,6 +423,12 @@ export default function TransactionsPage() {
             })
             .then(() => {
               invalidateDashboardCache();
+              const cooldownKey = getImportCooldownKey();
+              if (cooldownKey) {
+                localStorage.setItem(cooldownKey, Date.now().toString());
+                setIsImportDisabled(true);
+                setDaysUntilNextImport(30);
+              }
               toast({
                 title: 'Import Successful',
                 description: `${result.data.transactions.length} ${translations.transactions.toasts.importSuccess}`,
@@ -474,6 +509,24 @@ export default function TransactionsPage() {
     );
   }
 
+  const ImportButtonWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (isImportDisabled) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full sm:w-auto">{children}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Next import available in {daysUntilNextImport} day(s).</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    return <>{children}</>;
+  };
+
   return (
     <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
@@ -507,20 +560,22 @@ export default function TransactionsPage() {
           </AlertDialog>
 
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                disabled={isImporting || showLoginPrompt}
-                className="w-full sm:w-auto"
-              >
-                {isImporting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="mr-2 h-4 w-4" />
-                )}
-                {translations.transactions.import}
-              </Button>
-            </DialogTrigger>
+            <ImportButtonWrapper>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={isImporting || showLoginPrompt || isImportDisabled}
+                  className="w-full sm:w-auto"
+                >
+                  {isImporting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="mr-2 h-4 w-4" />
+                  )}
+                  {translations.transactions.import}
+                </Button>
+              </DialogTrigger>
+            </ImportButtonWrapper>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{translations.transactions.importDialog.title}</DialogTitle>
@@ -889,3 +944,5 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+    
