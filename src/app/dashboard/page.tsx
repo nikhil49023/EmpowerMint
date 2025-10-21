@@ -6,12 +6,15 @@ import {
   PiggyBank,
   TrendingDown,
   Lightbulb,
-  Loader2,
   Target,
   PlusCircle,
+  ShoppingBag,
+  Film,
+  Home,
+  HeartPulse,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { generateDashboardSummaryAction } from '../actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +22,7 @@ import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, onSnapshot, query, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, addDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
   FirestorePermissionError,
@@ -31,12 +34,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { motion } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+
+const categoryIcons: { [key: string]: React.ElementType } = {
+  Groceries: ShoppingBag,
+  Entertainment: Film,
+  Rent: Home,
+  Health: HeartPulse,
+  Default: PiggyBank,
+};
 
 type Budget = {
   id: string;
   name: string;
   amount: number;
   spent: number;
+  icon: React.ElementType;
 };
 
 export default function DashboardPage() {
@@ -53,7 +69,61 @@ export default function DashboardPage() {
   const [savingsGoal] = useLocalStorage<number>(
     `savings-goal-${user?.uid || ''}`, 0
   );
+  const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
+  const [newBudgetName, setNewBudgetName] = useState('');
+  const [newBudgetAmount, setNewBudgetAmount] = useState('');
+  const { toast } = useToast();
 
+  const invalidateDashboardCache = useCallback(() => {
+    if (user) {
+      const cacheKey = `dashboard-summary-${user.uid}`;
+      localStorage.removeItem(cacheKey);
+    }
+  }, [user]);
+
+  const handleAddBudget = async () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: translations.transactions.toasts.errorLoginToAddBudget,
+      });
+      return;
+    }
+    if (!newBudgetName || !newBudgetAmount) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: translations.transactions.toasts.errorFillFields,
+      });
+      return;
+    }
+    const newBudgetData = {
+      name: newBudgetName,
+      amount: parseFloat(newBudgetAmount),
+    };
+
+    const budgetsCollectionRef = collection(db, 'users', user.uid, 'budgets');
+
+    addDoc(budgetsCollectionRef, newBudgetData)
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: budgetsCollectionRef.path,
+          operation: 'create',
+          requestResourceData: newBudgetData,
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+      }).then(() => {
+        setNewBudgetName('');
+        setNewBudgetAmount('');
+        setAddBudgetDialogOpen(false);
+        invalidateDashboardCache();
+        toast({
+          title: 'Success',
+          description: translations.transactions.toasts.successAddBudget,
+        });
+      });
+  };
 
   const getCacheKey = useCallback(() => {
     return user ? `dashboard-summary-${user.uid}` : null;
@@ -120,8 +190,9 @@ export default function DashboardPage() {
         (snapshot) => {
           const budgetsData = snapshot.docs.map(doc => ({
             id: doc.id,
-            ...(doc.data() as Omit<Budget, 'id' | 'spent'>),
-            spent: 0, 
+            ...(doc.data() as Omit<Budget, 'id' | 'spent' | 'icon'>),
+            spent: 0,
+            icon: categoryIcons[doc.data().name] || categoryIcons.Default,
           }));
           setBudgets(budgetsData);
           setIsLoadingBudgets(false);
@@ -325,42 +396,184 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-          <Card className="glassmorphic">
-             <CardHeader>
-                <CardTitle>Budgets</CardTitle>
-                <CardDescription>Your monthly spending budgets.</CardDescription>
-             </CardHeader>
-             <CardContent>
-                {isLoadingBudgets ? (
-                    <div className="space-y-4">
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                ) : budgetsWithSpending.length > 0 ? (
-                     <div className="space-y-4">
-                        {budgetsWithSpending.map(budget => {
-                            const progress = Math.min((budget.spent / budget.amount) * 100, 100);
-                            return (
-                                <div key={budget.id}>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="text-sm font-medium">{budget.name}</span>
-                                        <span className="text-sm text-muted-foreground">{formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}</span>
-                                    </div>
-                                    <Progress value={progress} />
-                                </div>
-                            )
-                        })}
-                     </div>
+          <Dialog>
+            <DialogTrigger asChild>
+                <Card className="glassmorphic cursor-pointer hover:border-primary transition-colors">
+                  <CardHeader>
+                      <CardTitle>{translations.transactions.budgetsDialog.title}</CardTitle>
+                      <CardDescription>{translations.transactions.budgetsDialog.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      {isLoadingBudgets ? (
+                          <div className="space-y-4">
+                              <Skeleton className="h-10 w-full" />
+                              <Skeleton className="h-10 w-full" />
+                          </div>
+                      ) : budgetsWithSpending.length > 0 ? (
+                          <div className="space-y-4">
+                              {budgetsWithSpending.slice(0, 2).map(budget => {
+                                  const progress = Math.min((budget.spent / budget.amount) * 100, 100);
+                                  return (
+                                      <div key={budget.id}>
+                                          <div className="flex justify-between items-center mb-1">
+                                              <span className="text-sm font-medium">{budget.name}</span>
+                                              <span className="text-sm text-muted-foreground">{formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}</span>
+                                          </div>
+                                          <Progress value={progress} />
+                                      </div>
+                                  )
+                              })}
+                              {budgetsWithSpending.length > 2 && <p className="text-sm text-center text-muted-foreground pt-2">Click to see all budgets.</p>}
+                          </div>
+                      ) : (
+                          <div className="text-center py-8 text-muted-foreground">
+                              <p>{translations.transactions.budgetsDialog.noBudgetsTitle}</p>
+                              <p className="text-sm">Click here to add one.</p>
+                          </div>
+                      )}
+                  </CardContent>
+              </Card>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>{translations.transactions.budgetsDialog.title}</DialogTitle>
+                <DialogDescription>
+                  {translations.transactions.budgetsDialog.description}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-8 py-4">
+                <div className="flex justify-end">
+                  <Dialog
+                    open={addBudgetDialogOpen}
+                    onOpenChange={setAddBudgetDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" /> {translations.transactions.budgetsDialog.addNewBudget}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{translations.transactions.addBudgetDialog.title}</DialogTitle>
+                        <DialogDescription>
+                          {translations.transactions.addBudgetDialog.description}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="name" className="text-right">
+                            {translations.transactions.addBudgetDialog.nameLabel}
+                          </Label>
+                          <Input
+                            id="name"
+                            value={newBudgetName}
+                            onChange={e => setNewBudgetName(e.target.value)}
+                            className="col-span-3"
+                            placeholder={translations.transactions.addBudgetDialog.namePlaceholder}
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="amount" className="text-right">
+                            {translations.transactions.addBudgetDialog.amountLabel}
+                          </Label>
+                          <Input
+                            id="amount"
+                            type="number"
+                            value={newBudgetAmount}
+                            onChange={e => setNewBudgetAmount(e.target.value)}
+                            className="col-span-3"
+                            placeholder={translations.transactions.addBudgetDialog.amountPlaceholder}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button type="button" variant="secondary">
+                            {translations.transactions.addBudgetDialog.cancel}
+                          </Button>
+                        </DialogClose>
+                        <Button onClick={handleAddBudget}>{translations.transactions.addBudgetDialog.addBudget}</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                {budgetsWithSpending.length === 0 ? (
+                  <Card className="flex items-center justify-center min-h-[200px] border-dashed shadow-none glassmorphic">
+                    <CardContent className="text-center p-6">
+                      <div className="flex justify-center mb-4">
+                        <PiggyBank className="w-16 h-16 text-muted-foreground" />
+                      </div>
+                      <h2 className="text-xl font-semibold">{translations.transactions.budgetsDialog.noBudgetsTitle}</h2>
+                      <p className="text-muted-foreground mt-2">
+                        {translations.transactions.budgetsDialog.noBudgetsDescription}
+                      </p>
+                    </CardContent>
+                  </Card>
                 ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                        <p>No budgets set yet.</p>
-                        <Button variant="link" asChild>
-                            <Link href="/transactions">Add a budget</Link>
-                        </Button>
-                    </div>
+                  <motion.div
+                    className="grid gap-6 md:grid-cols-2"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {budgetsWithSpending.map((budget, index) => {
+                      const Icon = budget.icon;
+                      const progress = (budget.spent / budget.amount) * 100;
+                      const remaining = budget.amount - budget.spent;
+
+                      return (
+                        <motion.div
+                          key={budget.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                        >
+                          <Card className="glassmorphic">
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                              <CardTitle className="text-base font-medium flex items-center gap-2">
+                                <Icon className="h-5 w-5 text-primary" />
+                                {budget.name}
+                              </CardTitle>
+                              <div className="text-sm font-bold">
+                                {formatCurrency(budget.amount)}
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-2">
+                                <Progress value={progress} />
+                                <div className="flex justify-between text-sm">
+                                  <p className="text-muted-foreground">
+                                    {translations.transactions.budgetsDialog.spent}
+                                  </p>
+                                  <p className="font-medium">
+                                    {formatCurrency(budget.spent)}
+                                  </p>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <p className="text-muted-foreground">
+                                    {translations.transactions.budgetsDialog.remaining}
+                                  </p>
+                                  <p
+                                    className={`font-medium ${
+                                      remaining < 0 ? 'text-destructive' : ''
+                                    }`}
+                                  >
+                                    {formatCurrency(remaining)}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </motion.div>
                 )}
-             </CardContent>
-          </Card>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Link href="/savings" className="block">
             <Card className="glassmorphic h-full hover:border-primary transition-colors">
                 <CardHeader>
@@ -392,3 +605,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

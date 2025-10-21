@@ -25,11 +25,6 @@ import {
   Upload,
   Loader2,
   FileUp,
-  PiggyBank,
-  ShoppingBag,
-  Film,
-  Home,
-  HeartPulse,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -61,12 +56,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { extractTransactionsAction } from '../actions';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import {
@@ -84,28 +77,10 @@ import {
 } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { useLanguage } from '@/hooks/use-language';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-const categoryIcons: { [key: string]: React.ElementType } = {
-  Groceries: ShoppingBag,
-  Entertainment: Film,
-  Rent: Home,
-  Health: HeartPulse,
-  Default: PiggyBank,
-};
-
-type Budget = {
-  id: string;
-  name: string;
-  amount: number;
-  spent: number;
-  icon: React.ElementType;
-};
 
 export default function TransactionsPage() {
   const [user, loadingAuth] = useAuthState(auth);
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const { translations } = useLanguage();
 
@@ -126,9 +101,6 @@ export default function TransactionsPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  const [newBudgetName, setNewBudgetName] = useState('');
-  const [newBudgetAmount, setNewBudgetAmount] = useState('');
-  const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
   const [cooldownAlertOpen, setCooldownAlertOpen] = useState(false);
 
   const getImportCooldownKey = useCallback(() => {
@@ -196,34 +168,10 @@ export default function TransactionsPage() {
           setLoadingData(false);
         }
       );
-
-      const budgetCollectionRef = collection(db, 'users', user.uid, 'budgets');
-      const budgetQuery = query(budgetCollectionRef);
-      const unsubBudgets = onSnapshot(
-        budgetQuery,
-        (snapshot) => {
-          const budgetsData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...(doc.data() as Omit<Budget, 'id' | 'spent' | 'icon'>),
-            spent: 0,
-            icon: categoryIcons[doc.data().name] || categoryIcons.Default,
-          }));
-          setBudgets(budgetsData);
-        },
-        (error) => {
-          console.error("Error fetching budgets: ", error);
-           const permissionError = new FirestorePermissionError({
-            path: `users/${user.uid}/budgets`,
-            operation: 'list',
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-        }
-      );
       
       return () => {
         try {
           unsubTransactions();
-          unsubBudgets();
         } catch (error) {
           console.error('Error unsubscribing from Firestore:', error);
         }
@@ -231,78 +179,9 @@ export default function TransactionsPage() {
     } else if (!loadingAuth) {
       setLoadingData(false);
       setTransactions([]);
-      setBudgets([]);
     }
   }, [user, loadingAuth]);
 
-  const budgetsWithSpending = useMemo(() => {
-    return budgets.map(budget => {
-      const spent = transactions
-        .filter(
-          t =>
-            t.type === 'expense' &&
-            t.description.toLowerCase().includes(budget.name.toLowerCase())
-        )
-        .reduce((sum, t) => {
-          const amount = parseFloat(
-            String(t.amount).replace(/[^0-9.-]+/g, '')
-          );
-          return sum + amount;
-        }, 0);
-      return { ...budget, spent };
-    });
-  }, [budgets, transactions]);
-
-  const handleAddBudget = async () => {
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: translations.transactions.toasts.errorLoginToAddBudget,
-      });
-      return;
-    }
-    if (!newBudgetName || !newBudgetAmount) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: translations.transactions.toasts.errorFillFields,
-      });
-      return;
-    }
-    const newBudgetData = {
-      name: newBudgetName,
-      amount: parseFloat(newBudgetAmount),
-    };
-
-    const budgetsCollectionRef = collection(db, 'users', user.uid, 'budgets');
-
-    addDoc(budgetsCollectionRef, newBudgetData)
-      .catch(async serverError => {
-        const permissionError = new FirestorePermissionError({
-          path: budgetsCollectionRef.path,
-          operation: 'create',
-          requestResourceData: newBudgetData,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      }).then(() => {
-        setNewBudgetName('');
-        setNewBudgetAmount('');
-        setAddBudgetDialogOpen(false);
-        invalidateDashboardCache();
-        toast({
-          title: 'Success',
-          description: translations.transactions.toasts.successAddBudget,
-        });
-      });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
 
   const handleClearData = async () => {
     if (!user) return;
@@ -622,152 +501,6 @@ export default function TransactionsPage() {
           </AlertDialog>
 
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" disabled={showLoginPrompt} className="w-full sm:w-auto">
-                <PiggyBank className="mr-2 h-4 w-4" /> {translations.transactions.viewBudgets}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>{translations.transactions.budgetsDialog.title}</DialogTitle>
-                <DialogDescription>
-                  {translations.transactions.budgetsDialog.description}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-8 py-4">
-                <div className="flex justify-end">
-                  <Dialog
-                    open={addBudgetDialogOpen}
-                    onOpenChange={setAddBudgetDialogOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> {translations.transactions.budgetsDialog.addNewBudget}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>{translations.transactions.addBudgetDialog.title}</DialogTitle>
-                        <DialogDescription>
-                          {translations.transactions.addBudgetDialog.description}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="name" className="text-right">
-                            {translations.transactions.addBudgetDialog.nameLabel}
-                          </Label>
-                          <Input
-                            id="name"
-                            value={newBudgetName}
-                            onChange={e => setNewBudgetName(e.target.value)}
-                            className="col-span-3"
-                            placeholder={translations.transactions.addBudgetDialog.namePlaceholder}
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="amount" className="text-right">
-                            {translations.transactions.addBudgetDialog.amountLabel}
-                          </Label>
-                          <Input
-                            id="amount"
-                            type="number"
-                            value={newBudgetAmount}
-                            onChange={e => setNewBudgetAmount(e.target.value)}
-                            className="col-span-3"
-                            placeholder={translations.transactions.addBudgetDialog.amountPlaceholder}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button type="button" variant="secondary">
-                            {translations.transactions.addBudgetDialog.cancel}
-                          </Button>
-                        </DialogClose>
-                        <Button onClick={handleAddBudget}>{translations.transactions.addBudgetDialog.addBudget}</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                {budgetsWithSpending.length === 0 ? (
-                  <Card className="flex items-center justify-center min-h-[200px] border-dashed shadow-none glassmorphic">
-                    <CardContent className="text-center p-6">
-                      <div className="flex justify-center mb-4">
-                        <PiggyBank className="w-16 h-16 text-muted-foreground" />
-                      </div>
-                      <h2 className="text-xl font-semibold">{translations.transactions.budgetsDialog.noBudgetsTitle}</h2>
-                      <p className="text-muted-foreground mt-2">
-                        {translations.transactions.budgetsDialog.noBudgetsDescription}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <motion.div
-                    className="grid gap-6 md:grid-cols-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    {budgetsWithSpending.map((budget, index) => {
-                      const Icon = budget.icon;
-                      const progress = (budget.spent / budget.amount) * 100;
-                      const remaining = budget.amount - budget.spent;
-
-                      return (
-                        <motion.div
-                          key={budget.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                        >
-                          <Card className="glassmorphic">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                              <CardTitle className="text-base font-medium flex items-center gap-2">
-                                <Icon className="h-5 w-5 text-primary" />
-                                {budget.name}
-                              </CardTitle>
-                              <div className="text-sm font-bold">
-                                {formatCurrency(budget.amount)}
-                              </div>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-2">
-                                <Progress value={progress} />
-                                <div className="flex justify-between text-sm">
-                                  <p className="text-muted-foreground">
-                                    {translations.transactions.budgetsDialog.spent}
-                                  </p>
-                                  <p className="font-medium">
-                                    {formatCurrency(budget.spent)}
-                                  </p>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                  <p className="text-muted-foreground">
-                                    {translations.transactions.budgetsDialog.remaining}
-                                  </p>
-                                  <p
-                                    className={`font-medium ${
-                                      remaining < 0 ? 'text-destructive' : ''
-                                    }`}
-                                  >
-                                    {formatCurrency(remaining)}
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-
           <Dialog
             open={addTransactionDialogOpen}
             onOpenChange={setAddTransactionDialogOpen}
@@ -949,3 +682,5 @@ export default function TransactionsPage() {
     </div>
   );
 }
+
+    
