@@ -48,7 +48,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
@@ -116,7 +115,7 @@ export default function TransactionsPage() {
     amount: '',
   });
   const [isImporting, setIsImporting] = useState(false);
-  const [isImportDisabled, setIsImportDisabled] = useState(false);
+  const [isImportOnCooldown, setIsImportOnCooldown] = useState(false);
   const [daysUntilNextImport, setDaysUntilNextImport] = useState(0);
 
   const { toast } = useToast();
@@ -129,6 +128,7 @@ export default function TransactionsPage() {
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
+  const [cooldownAlertOpen, setCooldownAlertOpen] = useState(false);
 
   const getImportCooldownKey = useCallback(() => {
     return user ? `import-cooldown-${user.uid}` : null;
@@ -145,15 +145,24 @@ export default function TransactionsPage() {
         const timeSinceLastImport = now.getTime() - lastImportDate.getTime();
 
         if (timeSinceLastImport < thirtyDaysInMillis) {
-          setIsImportDisabled(true);
+          setIsImportOnCooldown(true);
           const daysRemaining = Math.ceil((thirtyDaysInMillis - timeSinceLastImport) / (1000 * 60 * 60 * 24));
           setDaysUntilNextImport(daysRemaining);
         } else {
+          setIsImportOnCooldown(false);
           localStorage.removeItem(cooldownKey);
         }
       }
     }
   }, [getImportCooldownKey]);
+
+  const handleImportClick = () => {
+    if (isImportOnCooldown) {
+        setCooldownAlertOpen(true);
+    } else {
+        setImportDialogOpen(true);
+    }
+  };
 
   const invalidateDashboardCache = useCallback(() => {
     if (user) {
@@ -426,7 +435,7 @@ export default function TransactionsPage() {
               const cooldownKey = getImportCooldownKey();
               if (cooldownKey) {
                 localStorage.setItem(cooldownKey, Date.now().toString());
-                setIsImportDisabled(true);
+                setIsImportOnCooldown(true);
                 setDaysUntilNextImport(30);
               }
               toast({
@@ -509,24 +518,6 @@ export default function TransactionsPage() {
     );
   }
 
-  const ImportButtonWrapper = ({ children }: { children: React.ReactNode }) => {
-    if (isImportDisabled) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="w-full sm:w-auto">{children}</div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Next import available in {daysUntilNextImport} day(s).</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-    return <>{children}</>;
-  };
-
   return (
     <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
@@ -558,24 +549,22 @@ export default function TransactionsPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          
+          <Button
+            variant="outline"
+            onClick={handleImportClick}
+            disabled={isImporting || showLoginPrompt}
+            className="w-full sm:w-auto"
+          >
+            {isImporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 h-4 w-4" />
+            )}
+            {translations.transactions.import}
+          </Button>
 
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-            <ImportButtonWrapper>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  disabled={isImporting || showLoginPrompt || isImportDisabled}
-                  className="w-full sm:w-auto"
-                >
-                  {isImporting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="mr-2 h-4 w-4" />
-                  )}
-                  {translations.transactions.import}
-                </Button>
-              </DialogTrigger>
-            </ImportButtonWrapper>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{translations.transactions.importDialog.title}</DialogTitle>
@@ -616,6 +605,21 @@ export default function TransactionsPage() {
               </div>
             </DialogContent>
           </Dialog>
+
+          <AlertDialog open={cooldownAlertOpen} onOpenChange={setCooldownAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Import Limit Reached</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        You can import transactions once every 30 days. Your next import is available in {daysUntilNextImport} day(s).
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogAction onClick={() => setCooldownAlertOpen(false)}>OK</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
 
           <Dialog>
             <DialogTrigger asChild>
@@ -944,5 +948,3 @@ export default function TransactionsPage() {
     </div>
   );
 }
-
-    
