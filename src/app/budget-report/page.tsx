@@ -31,6 +31,7 @@ import {
   type SecurityRuleContext,
 } from '@/firebase/errors';
 import Link from 'next/link';
+import { Progress } from '@/components/ui/progress';
 
 export default function BudgetReportPage() {
   const [user] = useAuthState(auth);
@@ -38,6 +39,7 @@ export default function BudgetReportPage() {
   const [report, setReport] = useState<GenerateBudgetReportOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -71,6 +73,16 @@ export default function BudgetReportPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isGenerating && progress < 90) {
+      timer = setInterval(() => {
+        setProgress(prev => Math.min(prev + 5, 90));
+      }, 500);
+    }
+    return () => clearInterval(timer);
+  }, [isGenerating, progress]);
+
   const handleGenerateReport = async () => {
     if (transactions.length === 0) {
       toast({
@@ -81,9 +93,11 @@ export default function BudgetReportPage() {
       return;
     }
     setIsGenerating(true);
+    setProgress(5);
     setError(null);
     const result = await generateBudgetReportAction({ transactions });
     if (result.success) {
+      setProgress(100);
       setReport(result.data);
     } else {
       setError(result.error);
@@ -159,7 +173,7 @@ export default function BudgetReportPage() {
        <div className="flex gap-2 no-print">
          <Button onClick={handleGenerateReport} disabled={isGenerating}>
           {isGenerating ? <Loader2 className="mr-2 animate-spin" /> : null}
-          Generate Report
+          {isGenerating ? 'Generating...' : 'Generate Report'}
         </Button>
         <Button
           variant="outline"
@@ -187,8 +201,10 @@ export default function BudgetReportPage() {
                 <CardTitle>Generating Your Report...</CardTitle>
                 <CardDescription>The AI is analyzing your transactions. This might take a moment.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                 <div className="space-y-2">
+            <CardContent className="space-y-4 pt-4">
+                 <Progress value={progress} className="w-full" />
+                 <p className="text-center text-sm text-muted-foreground">{Math.round(progress)}% Complete</p>
+                 <div className="space-y-2 pt-4">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
