@@ -12,6 +12,7 @@ import {
   Film,
   Home,
   HeartPulse,
+  Info,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -33,7 +34,6 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import Link from 'next/link';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
@@ -66,13 +66,39 @@ export default function DashboardPage() {
   const [isLoadingBudgets, setIsLoadingBudgets] = useState(true);
   const [greeting, setGreeting] = useState('');
   const { translations } = useLanguage();
-  const [savingsGoal] = useLocalStorage<number>(
+  
+  const [savingsGoal, setSavingsGoal] = useLocalStorage<number>(
     `savings-goal-${user?.uid || ''}`, 0
   );
+  const [goalInput, setGoalInput] = useState<string>('');
+  
   const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (savingsGoal > 0) {
+      setGoalInput(String(savingsGoal));
+    }
+  }, [savingsGoal]);
+  
+  const handleSetGoal = () => {
+    const newGoal = parseFloat(goalInput);
+    if (!isNaN(newGoal) && newGoal >= 0) {
+      setSavingsGoal(newGoal);
+      toast({
+        title: 'Savings Goal Updated',
+        description: `Your new monthly savings goal is ${formatCurrency(newGoal)}.`,
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Input',
+        description: 'Please enter a valid number for your savings goal.',
+      });
+    }
+  };
 
   const invalidateDashboardCache = useCallback(() => {
     if (user) {
@@ -289,7 +315,23 @@ export default function DashboardPage() {
     });
   }, [budgets, transactions]);
   
-  const totalSavings = (summary?.totalIncome ?? 0) - (summary?.totalExpenses ?? 0);
+  const totalSavings = useMemo(() => {
+    if (summary) {
+        return summary.totalIncome - summary.totalExpenses;
+    }
+    let income = 0;
+    let expenses = 0;
+    transactions.forEach(t => {
+      const amount = parseFloat(String(t.amount).replace(/[^0-9.-]+/g, ''));
+      if (t.type === 'income') {
+        income += amount;
+      } else {
+        expenses += amount;
+      }
+    });
+    return income - expenses;
+  }, [summary, transactions]);
+
   const savingsGoalProgress = savingsGoal > 0 ? Math.min((totalSavings / savingsGoal) * 100, 100) : 0;
   
   return (
@@ -574,36 +616,69 @@ export default function DashboardPage() {
             </DialogContent>
           </Dialog>
 
-          <Link href="/savings" className="block">
-            <Card className="glassmorphic h-full hover:border-primary transition-colors">
-                <CardHeader>
-                    <CardTitle>Savings Goal</CardTitle>
-                    <CardDescription>Track your progress towards your monthly savings goal.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  { savingsGoal > 0 ? (
-                      <div className="space-y-3">
-                          <div className="flex justify-between items-end">
-                              <p className="text-2xl font-bold">{formatCurrency(totalSavings)}</p>
-                              <p className="text-muted-foreground">of {formatCurrency(savingsGoal)}</p>
+          <Dialog>
+            <DialogTrigger asChild>
+                <Card className="glassmorphic h-full cursor-pointer hover:border-primary transition-colors">
+                    <CardHeader>
+                        <CardTitle>Savings Goal</CardTitle>
+                        <CardDescription>Track and manage your monthly savings goal.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      { savingsGoal > 0 ? (
+                          <div className="space-y-3">
+                              <div className="flex justify-between items-end">
+                                  <p className="text-2xl font-bold">{formatCurrency(totalSavings)}</p>
+                                  <p className="text-muted-foreground">of {formatCurrency(savingsGoal)}</p>
+                              </div>
+                              <Progress value={savingsGoalProgress} />
+                              <p className="text-xs text-muted-foreground pt-2">Click to edit your goal.</p>
                           </div>
-                          <Progress value={savingsGoalProgress} />
-                          <p className="text-xs text-muted-foreground pt-2">Click to edit your goal.</p>
+                      ) : (
+                          <div className="flex flex-col items-center justify-center h-full text-center py-4">
+                               <Target className="w-12 h-12 text-muted-foreground mb-3" />
+                               <p className="text-muted-foreground mb-4">You haven't set a savings goal yet.</p>
+                               <Button variant="outline">Set a Goal</Button>
+                          </div>
+                      )}
+                    </CardContent>
+                </Card>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Set Your Savings Goal</DialogTitle>
+                    <DialogDescription>
+                      Define how much you want to save each month. We'll help you track it.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-6 py-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="savingsGoal" className="text-base">Your Monthly Savings Goal (INR)</Label>
+                      <div className="flex items-center gap-2">
+                          <Input 
+                              id="savingsGoal"
+                              type="number" 
+                              placeholder="e.g., 10000"
+                              value={goalInput}
+                              onChange={(e) => setGoalInput(e.target.value)}
+                              className="h-12 text-lg"
+                              disabled={loadingAuth}
+                          />
+                          <Button onClick={handleSetGoal} size="lg" disabled={loadingAuth}>Set Goal</Button>
                       </div>
-                  ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-center py-4">
-                           <Target className="w-12 h-12 text-muted-foreground mb-3" />
-                           <p className="text-muted-foreground mb-4">You haven't set a savings goal yet.</p>
-                           <Button variant="outline">Set a Goal</Button>
+                  </div>
+                   {savingsGoal > 0 && (
+                      <div>
+                          <p className="text-muted-foreground text-sm flex items-center gap-1.5">
+                              <Info className="h-4 w-4" />
+                              Your goal of <span className="font-bold">{formatCurrency(savingsGoal)}</span> is saved in your browser.
+                          </p>
                       </div>
                   )}
-                </CardContent>
-            </Card>
-          </Link>
+                </div>
+            </DialogContent>
+          </Dialog>
       </div>
 
     </div>
   );
 }
-
-    
