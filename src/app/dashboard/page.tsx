@@ -50,10 +50,9 @@ export default function DashboardPage() {
   const [isLoadingBudgets, setIsLoadingBudgets] = useState(true);
   const [greeting, setGreeting] = useState('');
   const { translations } = useLanguage();
-  const [savingsGoal, setSavingsGoal] = useLocalStorage<number>(
+  const [savingsGoal] = useLocalStorage<number>(
     `savings-goal-${user?.uid || ''}`, 0
   );
-  const [goalInput, setGoalInput] = useState<string>('');
 
 
   const getCacheKey = useCallback(() => {
@@ -71,12 +70,6 @@ export default function DashboardPage() {
     }
   }, [translations]);
   
-  useEffect(() => {
-    if (savingsGoal > 0) {
-      setGoalInput(String(savingsGoal));
-    }
-  }, [savingsGoal]);
-
 
   // Load initial summary from cache
   useEffect(() => {
@@ -228,14 +221,6 @@ export default function DashboardPage() {
   const totalSavings = (summary?.totalIncome ?? 0) - (summary?.totalExpenses ?? 0);
   const savingsGoalProgress = savingsGoal > 0 ? Math.min((totalSavings / savingsGoal) * 100, 100) : 0;
   
-  const handleSetGoal = () => {
-    const newGoal = parseFloat(goalInput);
-    if (!isNaN(newGoal) && newGoal >= 0) {
-      setSavingsGoal(newGoal);
-    }
-  };
-
-
   return (
     <div className="space-y-6 md:space-y-8">
       <div>
@@ -376,47 +361,32 @@ export default function DashboardPage() {
                 )}
              </CardContent>
           </Card>
-          <Card className="glassmorphic">
-              <CardHeader>
-                  <CardTitle>Savings Goal</CardTitle>
-                  <CardDescription>Track your progress towards your monthly savings goal.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                { savingsGoal > 0 ? (
-                    <div className="space-y-3">
-                        <div className="flex justify-between items-end">
-                            <p className="text-2xl font-bold">{formatCurrency(totalSavings)}</p>
-                            <p className="text-muted-foreground">of {formatCurrency(savingsGoal)}</p>
-                        </div>
-                        <Progress value={savingsGoalProgress} />
-                        <div className="flex items-center gap-2 pt-2">
-                            <Input 
-                                type="number" 
-                                placeholder="Update goal"
-                                value={goalInput}
-                                onChange={(e) => setGoalInput(e.target.value)}
-                                className="h-9"
-                             />
-                            <Button onClick={handleSetGoal} size="sm">Set</Button>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center py-4">
-                         <Target className="w-12 h-12 text-muted-foreground mb-3" />
-                         <p className="text-muted-foreground mb-4">You haven't set a savings goal yet.</p>
-                         <div className="flex items-center gap-2">
-                            <Input 
-                                type="number" 
-                                placeholder="Enter monthly goal"
-                                value={goalInput}
-                                onChange={(e) => setGoalInput(e.target.value)}
-                            />
-                            <Button onClick={handleSetGoal}>Set Goal</Button>
-                        </div>
-                    </div>
-                )}
-              </CardContent>
-          </Card>
+          <Link href="/savings" className="block">
+            <Card className="glassmorphic h-full hover:border-primary transition-colors">
+                <CardHeader>
+                    <CardTitle>Savings Goal</CardTitle>
+                    <CardDescription>Track your progress towards your monthly savings goal.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  { savingsGoal > 0 ? (
+                      <div className="space-y-3">
+                          <div className="flex justify-between items-end">
+                              <p className="text-2xl font-bold">{formatCurrency(totalSavings)}</p>
+                              <p className="text-muted-foreground">of {formatCurrency(savingsGoal)}</p>
+                          </div>
+                          <Progress value={savingsGoalProgress} />
+                          <p className="text-xs text-muted-foreground pt-2">Click to edit your goal.</p>
+                      </div>
+                  ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-center py-4">
+                           <Target className="w-12 h-12 text-muted-foreground mb-3" />
+                           <p className="text-muted-foreground mb-4">You haven't set a savings goal yet.</p>
+                           <Button variant="outline">Set a Goal</Button>
+                      </div>
+                  )}
+                </CardContent>
+            </Card>
+          </Link>
       </div>
 
     </div>
