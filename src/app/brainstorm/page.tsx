@@ -28,12 +28,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '@/lib/firebase';
 
 const investmentIdeaCategories = {
   'AgriTech & Food Processing': {
@@ -73,12 +84,19 @@ const investmentIdeaCategories = {
   },
 };
 
+type Usage = {
+  month: string;
+  count: number;
+};
+
 export default function BrainstormPage() {
   const { toast } = useToast();
   const [userIdea, setUserIdea] = useState('');
   const router = useRouter();
   const { translations } = useLanguage();
-  
+  const [user] = useAuthState(auth);
+  const [showLimitAlert, setShowLimitAlert] = useState(false);
+
   const handleAnalyzeIdea = () => {
     if (!userIdea.trim()) {
       toast({
@@ -88,6 +106,38 @@ export default function BrainstormPage() {
       });
       return;
     }
+
+    if (!user) {
+      toast({ variant: 'destructive', description: 'Please log in to analyze an idea.'});
+      return;
+    }
+
+    const usageKey = `insights-usage-${user.uid}`;
+    const today = new Date();
+    const currentMonth = `${today.getFullYear()}-${today.getMonth()}`;
+    
+    let usage: Usage = { month: currentMonth, count: 0 };
+    try {
+      const storedUsage = localStorage.getItem(usageKey);
+      if (storedUsage) {
+        const parsedUsage: Usage = JSON.parse(storedUsage);
+        if (parsedUsage.month === currentMonth) {
+          usage = parsedUsage;
+        }
+      }
+    } catch (e) {
+      console.error("Could not parse usage data from localStorage", e);
+    }
+    
+    if (usage.count >= 3) {
+      setShowLimitAlert(true);
+      return;
+    }
+
+    // Increment and save usage
+    usage.count++;
+    localStorage.setItem(usageKey, JSON.stringify(usage));
+
     router.push(`/investment-ideas/custom?idea=${encodeURIComponent(userIdea)}`);
   };
 
@@ -205,6 +255,22 @@ export default function BrainstormPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showLimitAlert} onOpenChange={setShowLimitAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Monthly Limit Reached</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have used your quota of 3 free insights for this month. Please try again next month.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowLimitAlert(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
+    
