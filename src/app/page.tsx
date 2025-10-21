@@ -180,8 +180,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-md glassmorphic">
+    <div className="flex items-center justify-center min-h-screen bg-secondary p-4">
+      <Card className="w-full max-w-md">
       <ScrollArea className="h-[85vh] sm:h-auto">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
@@ -327,5 +327,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    

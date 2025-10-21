@@ -312,7 +312,7 @@ function GenerateDPRContent() {
         </Button>
       </div>
 
-       <Card className="glassmorphic">
+       <Card>
         <CardHeader>
           <CardTitle>
             Step {currentStep + 1}: {formSteps[currentStep]}
@@ -369,5 +369,3 @@ export default function GenerateDPRPage() {
     </Suspense>
   );
 }
-
-    

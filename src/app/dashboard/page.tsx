@@ -15,6 +15,7 @@ import {
   Info,
   Trash2,
   ShieldAlert,
+  FilePieChart,
 } from 'lucide-react';
 import {
   Card,
@@ -22,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
@@ -76,6 +78,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const categoryIcons: { [key: string]: React.ElementType } = {
   Groceries: ShoppingBag,
@@ -115,8 +118,10 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState('');
   const { translations } = useLanguage();
   const { toast } = useToast();
+  const router = useRouter();
 
   // Dialog states
+  const [manageBudgetDialogOpen, setManageBudgetDialogOpen] = useState(false);
   const [addBudgetDialogOpen, setAddBudgetDialogOpen] = useState(false);
   const [addGoalDialogOpen, setAddGoalDialogOpen] = useState(false);
   const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
@@ -477,7 +482,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* Summary Cards */}
-        <Card className="glassmorphic h-full">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               {translations.dashboard.yourExpenses}
@@ -496,7 +501,7 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glassmorphic h-full">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               {translations.dashboard.yourIncome}
@@ -515,7 +520,7 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glassmorphic h-full">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
               {translations.dashboard.savingsRate}
@@ -535,21 +540,21 @@ export default function DashboardPage() {
       </div>
 
       {/* Suggestion Card */}
-      <Card className="glassmorphic">
+      <Card>
         <CardHeader>
           <CardTitle>{translations.dashboard.suggestionsTitle}</CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent>
           {isLoading && !summary ? (
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
             </div>
           ) : (
-            <Alert className="border-0 p-0 bg-transparent">
+            <Alert className="border-primary/30 bg-primary/5">
               <div className="flex items-start gap-3">
-                <span className="p-2 bg-accent/20 dark:bg-accent/10 rounded-full">
-                  <Lightbulb className="w-4 h-4 text-accent-foreground" />
+                <span className="p-2 bg-primary/20 rounded-full">
+                  <Lightbulb className="w-4 h-4 text-primary" />
                 </span>
                 <div className="flex-1">
                   <AlertDescription className="text-base">
@@ -563,10 +568,8 @@ export default function DashboardPage() {
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Budgets Card & Dialog */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Card className="glassmorphic cursor-pointer hover:border-primary transition-colors">
+        {/* Budgets Card */}
+        <Card>
               <CardHeader>
                 <CardTitle>Budgets</CardTitle>
                 <CardDescription>
@@ -599,113 +602,32 @@ export default function DashboardPage() {
                     ))}
                     {budgetsWithSpending.length > 2 && (
                       <p className="text-sm text-center text-muted-foreground pt-2">
-                        Click to see all budgets.
+                        Click "Manage Budgets" to see all.
                       </p>
                     )}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>No budgets created yet.</p>
-                    <p className="text-sm">Click here to add one.</p>
+                    <p className="text-sm">Click below to add one.</p>
                   </div>
                 )}
               </CardContent>
-            </Card>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Your Budgets</DialogTitle>
-              <DialogDescription>
-                Track and manage your monthly spending.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-8 py-4">
-              <div className="flex justify-end">
-                <Dialog
-                  open={addBudgetDialogOpen}
-                  onOpenChange={setAddBudgetDialogOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" /> Add New Budget
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Budget</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <Input
-                        value={newBudgetName}
-                        onChange={e => setNewBudgetName(e.target.value)}
-                        placeholder="Budget Name (e.g., Groceries)"
-                      />
-                      <Input
-                        type="number"
-                        value={newBudgetAmount}
-                        onChange={e => setNewBudgetAmount(e.target.value)}
-                        placeholder="Amount (e.g., 5000)"
-                      />
-                    </div>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button type="button" variant="secondary">
-                          Cancel
-                        </Button>
-                      </DialogClose>
-                      <Button onClick={handleAddBudget}>Add Budget</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              {budgetsWithSpending.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  <p>No budgets created yet.</p>
-                </div>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2">
-                  {budgetsWithSpending.map(budget => (
-                    <Card key={budget.id} className="glassmorphic">
-                       <CardHeader className="flex flex-row items-start justify-between pb-2">
-                        <CardTitle className="text-base font-medium flex items-center gap-2">
-                          <budget.icon className="h-5 w-5 text-primary" />
-                          {budget.name}
-                        </CardTitle>
-                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:text-destructive h-6 w-6 -mt-1 -mr-2"
-                          onClick={() => setBudgetToDelete(budget)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </CardHeader>
-                      <CardContent>
-                         <div className="text-xl font-bold mb-2">
-                           {formatCurrency(budget.amount)}
-                         </div>
-                        <Progress
-                          value={(budget.spent / budget.amount) * 100}
-                        />
-                         <div className="flex justify-between text-sm mt-2">
-                           <span>Spent: {formatCurrency(budget.spent)}</span>
-                           <span className={budget.amount - budget.spent < 0 ? 'text-destructive' : ''}>
-                             Remaining: {formatCurrency(budget.amount - budget.spent)}
-                           </span>
-                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+              <CardFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
+                  <Button variant="outline" className="w-full" onClick={() => setManageBudgetDialogOpen(true)}>
+                      Manage Budgets
+                  </Button>
+                  <Button className="w-full" onClick={() => router.push('/budget-report')}>
+                      <FilePieChart className="mr-2 h-4 w-4"/>
+                      Generate Report
+                  </Button>
+              </CardFooter>
+        </Card>
         
-        {/* Savings Goals Card & Dialog */}
+        {/* Savings Goals Card */}
         <Dialog>
             <DialogTrigger asChild>
-                <Card className="glassmorphic h-full cursor-pointer hover:border-primary transition-colors">
+                <Card className="cursor-pointer hover:border-primary transition-colors">
                     <CardHeader>
                         <CardTitle>Savings Goals</CardTitle>
                         <CardDescription>Track your progress towards your financial goals.</CardDescription>
@@ -768,7 +690,7 @@ export default function DashboardPage() {
                             {savingsGoals.map(goal => {
                                 const progress = Math.min((totalSavings / goal.targetAmount) * 100, 100);
                                 return (
-                                    <Card key={goal.id} className="glassmorphic">
+                                    <Card key={goal.id}>
                                         <CardContent className="pt-6">
                                             <div className="flex justify-between items-start">
                                                 <div>
@@ -794,6 +716,98 @@ export default function DashboardPage() {
             </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Budgets Dialog */}
+      <Dialog open={manageBudgetDialogOpen} onOpenChange={setManageBudgetDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Your Budgets</DialogTitle>
+              <DialogDescription>
+                Track and manage your monthly spending.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-8 py-4">
+              <div className="flex justify-end">
+                <Dialog
+                  open={addBudgetDialogOpen}
+                  onOpenChange={setAddBudgetDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add New Budget
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Budget</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <Input
+                        value={newBudgetName}
+                        onChange={e => setNewBudgetName(e.target.value)}
+                        placeholder="Budget Name (e.g., Groceries)"
+                      />
+                      <Input
+                        type="number"
+                        value={newBudgetAmount}
+                        onChange={e => setNewBudgetAmount(e.target.value)}
+                        placeholder="Amount (e.g., 5000)"
+                      />
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                          Cancel
+                        </Button>
+                      </DialogClose>
+                      <Button onClick={handleAddBudget}>Add Budget</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              {budgetsWithSpending.length === 0 ? (
+                <div className="text-center py-10 text-muted-foreground">
+                  <p>No budgets created yet.</p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {budgetsWithSpending.map(budget => (
+                    <Card key={budget.id}>
+                       <CardHeader className="flex flex-row items-start justify-between pb-2">
+                        <CardTitle className="text-base font-medium flex items-center gap-2">
+                          <budget.icon className="h-5 w-5 text-primary" />
+                          {budget.name}
+                        </CardTitle>
+                         <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive h-6 w-6 -mt-1 -mr-2"
+                          onClick={() => setBudgetToDelete(budget)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                         <div className="text-xl font-bold mb-2">
+                           {formatCurrency(budget.amount)}
+                         </div>
+                        <Progress
+                          value={(budget.spent / budget.amount) * 100}
+                        />
+                         <div className="flex justify-between text-sm mt-2">
+                           <span>Spent: {formatCurrency(budget.spent)}</span>
+                           <span className={budget.amount - budget.spent < 0 ? 'text-destructive' : ''}>
+                             Remaining: {formatCurrency(budget.amount - budget.spent)}
+                           </span>
+                         </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
       {/* Confirmation Dialogs */}
       <AlertDialog

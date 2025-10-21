@@ -196,7 +196,7 @@ function InvestmentIdeaContent() {
   }) => {
     const Icon = icon;
     return (
-      <Card className="glassmorphic">
+      <Card>
         <CardHeader className="flex flex-row items-center gap-4">
           <Icon className="h-8 w-8 text-primary" />
           <CardTitle className="text-xl md:text-2xl">{title}</CardTitle>
@@ -232,7 +232,7 @@ function InvestmentIdeaContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="glassmorphic overflow-hidden">
+        <Card className="overflow-hidden">
           <CardHeader>
             {isLoading ? (
               <div className="space-y-2">

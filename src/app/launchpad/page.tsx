@@ -79,7 +79,7 @@ const PortalCard = ({
 }) => (
   <Dialog>
     <DialogTrigger asChild>
-      <Card className="h-full flex flex-col glassmorphic hover:border-primary transition-colors cursor-pointer">
+      <Card className="h-full flex flex-col hover:border-primary transition-colors cursor-pointer">
         <CardHeader className="flex flex-row items-center gap-4">
           <svg
             className="w-12 h-12 text-primary"
@@ -118,7 +118,7 @@ const PortalCard = ({
         </CardContent>
       </Card>
     </DialogTrigger>
-    <DialogContent className="max-w-[90vw] md:max-w-4xl lg:max-w-6xl h-[90vh] flex flex-col p-0 glassmorphic">
+    <DialogContent className="max-w-[90vw] md:max-w-4xl lg:max-w-6xl h-[90vh] flex flex-col p-0">
       <DialogHeader className="p-4 border-b flex-row flex justify-between items-center">
         <DialogTitle className="flex items-center gap-2">
           <Globe className="w-5 h-5" />
@@ -233,7 +233,7 @@ export default function LaunchpadPage() {
                 APMSME ONE
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[90vw] md:max-w-4xl lg:max-w-6xl h-[90vh] flex flex-col p-0 glassmorphic">
+            <DialogContent className="max-w-[90vw] md:max-w-4xl lg:max-w-6xl h-[90vh] flex flex-col p-0">
               <DialogHeader className="p-4 border-b flex-row flex justify-between items-center">
                 <DialogTitle className="flex items-center gap-2">
                   <Globe className="w-5 h-5" />
@@ -484,7 +484,7 @@ export default function LaunchpadPage() {
     </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="glassmorphic lg:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
               <Globe />
@@ -507,7 +507,7 @@ export default function LaunchpadPage() {
           </CardContent>
         </Card>
 
-        <Card className="glassmorphic lg:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-xl md:text-2xl">
               {translations.launchpad.startupJourney.title}
@@ -537,7 +537,7 @@ export default function LaunchpadPage() {
           </CardContent>
         </Card>
 
-        <Card className="glassmorphic lg:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
               <Sparkles />
@@ -566,7 +566,7 @@ export default function LaunchpadPage() {
                     className="md:basis-1/2 lg:basis-1/3"
                   >
                     <div className="p-1 h-full">
-                      <Card className="h-full flex flex-col glassmorphic hover:bg-background/80">
+                      <Card className="h-full flex flex-col hover:bg-accent/50">
                         <CardHeader>
                           <CardTitle className="text-base">
                             {cluster.name}
@@ -588,7 +588,7 @@ export default function LaunchpadPage() {
           </CardContent>
         </Card>
 
-        <Card className="glassmorphic lg:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
               <Banknote />
@@ -616,7 +616,7 @@ export default function LaunchpadPage() {
                     className="md:basis-1/2 lg:basis-1/3"
                   >
                     <div className="p-1 h-full">
-                      <Card className="h-full flex flex-col glassmorphic hover:bg-background/80">
+                      <Card className="h-full flex flex-col hover:bg-accent/50">
                         <CardHeader>
                           <CardTitle className="text-base flex items-center gap-2">
                             <scheme.icon className="h-6 w-6 text-primary" />
@@ -648,7 +648,7 @@ export default function LaunchpadPage() {
           </CardContent>
         </Card>
         
-        <Card className="glassmorphic lg:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
               <MessagesSquare />
@@ -670,7 +670,7 @@ export default function LaunchpadPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="p-4 rounded-lg bg-background/50 border"
+                className="p-4 rounded-lg bg-accent/50 border"
               >
                  <blockquote className="italic text-muted-foreground">
                     &ldquo;{item.message}&rdquo;

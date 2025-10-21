@@ -158,7 +158,7 @@ export default function BrainstormPage() {
         </Button>
       </div>
 
-      <Card className="glassmorphic">
+      <Card>
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-xl md:text-2xl font-semibold flex items-center gap-2">
@@ -197,7 +197,7 @@ export default function BrainstormPage() {
               ([category, { icon: Icon, ideas }]) => (
                 <Dialog key={category}>
                   <DialogTrigger asChild>
-                    <Card className="group cursor-pointer hover:border-primary transition-colors flex flex-col justify-between text-center p-6 glassmorphic">
+                    <Card className="group cursor-pointer hover:border-primary transition-colors flex flex-col justify-between text-center p-6">
                       <div className="flex-1 flex flex-col items-center justify-center">
                         <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary mb-4" />
                         <CardTitle className="text-base sm:text-lg">{category}</CardTitle>
@@ -207,7 +207,7 @@ export default function BrainstormPage() {
                       </Button>
                     </Card>
                   </DialogTrigger>
-                  <DialogContent className="glassmorphic">
+                  <DialogContent>
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-3 text-xl">
                         <Icon className="h-6 w-6 text-primary" />
@@ -223,7 +223,7 @@ export default function BrainstormPage() {
                           key={idea}
                           href={`/investment-ideas/custom?idea=${encodeURIComponent(idea)}`}
                           passHref
-                          className="block p-4 rounded-lg bg-background/50 hover:bg-accent hover:text-accent-foreground transition-colors"
+                          className="block p-4 rounded-lg bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
                         >
                           <div className="flex items-start gap-3">
                             <FileText className="h-5 w-5 mt-1 flex-shrink-0 text-primary" />
@@ -272,5 +272,3 @@ export default function BrainstormPage() {
     </div>
   );
 }
-
-    

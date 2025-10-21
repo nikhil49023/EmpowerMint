@@ -100,7 +100,7 @@ function DPRReportContent() {
     isLoading: boolean;
     className?: string;
   }) => (
-    <Card className={`glassmorphic print:shadow-none print:border-none print-break-before ${className}`}>
+    <Card className={`print:shadow-none print:border-none print-break-before ${className}`}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>

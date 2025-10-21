@@ -119,7 +119,7 @@ export default function MyIdeasPage() {
       </div>
 
       {ideas.length === 0 ? (
-        <Card className="text-center py-10 glassmorphic">
+        <Card className="text-center py-10">
           <CardContent>
             <p className="text-muted-foreground">
               {translations.myIdeas.noIdeas}
@@ -138,7 +138,7 @@ export default function MyIdeasPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
-              <Card className="h-full flex flex-col glassmorphic">
+              <Card className="h-full flex flex-col">
                 <CardHeader>
                   <CardTitle>{idea.title}</CardTitle>
                   <CardDescription className="line-clamp-3">

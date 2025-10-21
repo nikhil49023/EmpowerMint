@@ -610,7 +610,7 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <Card className="glassmorphic">
+      <Card>
         <CardHeader>
           <CardTitle>{translations.transactions.history.title}</CardTitle>
           <CardDescription>{translations.transactions.history.description}</CardDescription>
@@ -682,5 +682,3 @@ export default function TransactionsPage() {
     </div>
   );
 }
-
-    

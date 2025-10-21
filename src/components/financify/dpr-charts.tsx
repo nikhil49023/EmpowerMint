@@ -57,7 +57,7 @@ export function ProjectCostPieChart({ data }: { data: PieChartData[] }) {
   }
 
   return (
-    <Card className="glassmorphic">
+    <Card>
       <CardContent className="pt-6">
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
@@ -114,7 +114,7 @@ export function FinancialProjectionsBarChart({
   }
 
   return (
-    <Card className="glassmorphic">
+    <Card>
       <CardContent className="pt-6">
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={data}>
