@@ -39,6 +39,10 @@ import {
   type GenerateEmergencyFundSuggestionInput,
   type GenerateEmergencyFundSuggestionOutput,
 } from '@/ai/flows/generate-emergency-fund-recommendation';
+import {
+  generateFinBite,
+  type GenerateFinBiteOutput,
+} from '@/ai/flows/generate-fin-bite';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -227,6 +231,22 @@ export async function generateEmergencyFundSuggestionAction(
     return {
       success: false,
       error: 'Failed to generate emergency fund suggestion.',
+    };
+  }
+}
+
+export async function generateFinBiteAction(): Promise<
+  | { success: true; data: GenerateFinBiteOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateFinBite();
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error generating Fin Bite:', error);
+    return {
+      success: false,
+      error: 'Failed to generate the latest update.',
     };
   }
 }

@@ -22,6 +22,8 @@ import {
   Briefcase,
   MessagesSquare,
   Loader2,
+  Bell,
+  Info,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -34,6 +36,13 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
   Carousel,
   CarouselContent,
   CarouselItem,
@@ -44,7 +53,7 @@ import { useLanguage } from '@/hooks/use-language';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Autoplay from 'embla-carousel-autoplay';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -52,6 +61,9 @@ import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
+import { generateFinBiteAction } from '@/app/actions';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 
 const PortalCard = ({
@@ -131,10 +143,31 @@ type Feedback = {
     userName?: string;
 }
 
+type FinBite = {
+  title: string;
+  summary: string;
+};
+
+
 export default function LaunchpadPage() {
   const { translations } = useLanguage();
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
+  const [finBite, setFinBite] = useState<FinBite | null>(null);
+  const [isLoadingFinBite, setIsLoadingFinBite] = useState(false);
+  const [finBiteError, setFinBiteError] = useState<string | null>(null);
+
+  const fetchFinBite = useCallback(async () => {
+    setIsLoadingFinBite(true);
+    setFinBiteError(null);
+    const result = await generateFinBiteAction();
+    if (result.success) {
+      setFinBite(result.data);
+    } else {
+      setFinBiteError(result.error);
+    }
+    setIsLoadingFinBite(false);
+  }, []);
 
   useEffect(() => {
     const feedbackQuery = query(collection(db, 'feedback'), orderBy('createdAt', 'desc'), limit(5));
@@ -396,17 +429,59 @@ export default function LaunchpadPage() {
 
   return (
     <div className="space-y-8 md:space-y-12">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-            <Rocket className="h-8 w-8" />
-            {translations.launchpad.title}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {translations.launchpad.description}
-          </p>
+      <div className="flex justify-between items-center">
+        <div className="flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                <Rocket className="h-8 w-8" />
+                {translations.launchpad.title}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+                {translations.launchpad.description}
+            </p>
         </div>
-      </div>
+        <Sheet>
+            <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="h-12 w-12 flex-shrink-0" onClick={fetchFinBite}>
+                    <Bell className="h-6 w-6" />
+                </Button>
+            </SheetTrigger>
+            <SheetContent>
+                <SheetHeader>
+                    <SheetTitle>Latest Updates</SheetTitle>
+                </SheetHeader>
+                <div className="py-4 space-y-4">
+                    {isLoadingFinBite ? (
+                        <div className="space-y-4">
+                            <Skeleton className="h-8 w-3/4" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-5/6" />
+                        </div>
+                    ) : finBiteError ? (
+                        <Alert variant="destructive">
+                            <AlertDescription>{finBiteError}</AlertDescription>
+                        </Alert>
+                    ) : finBite ? (
+                        <Card className="bg-background">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Info className="h-5 w-5 text-primary" />
+                                    {finBite.title}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-muted-foreground">{finBite.summary}</p>
+                            </CardContent>
+                        </Card>
+                    ) : null}
+                    <Button variant="secondary" onClick={fetchFinBite} disabled={isLoadingFinBite}>
+                        {isLoadingFinBite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Get Latest Update
+                    </Button>
+                </div>
+            </SheetContent>
+        </Sheet>
+    </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="glassmorphic lg:col-span-2">
