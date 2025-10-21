@@ -11,7 +11,6 @@ import {
   Globe,
   MessageSquare,
   Lightbulb,
-  Target,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -73,11 +72,6 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
       href: '/transactions',
       label: translations.sidebar.transactions,
       icon: Wallet,
-    },
-    {
-      href: '/savings',
-      label: "Savings",
-      icon: Target,
     },
     {
       href: '/brainstorm',
