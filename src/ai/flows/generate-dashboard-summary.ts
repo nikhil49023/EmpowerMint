@@ -90,13 +90,10 @@ function parseCurrency(amount: string | number): number {
     return amount;
   }
   if (typeof amount === 'string') {
-    // Attempt to parse directly, then fall back to stripping characters if that fails.
-    const parsed = parseFloat(amount);
-    if (!isNaN(parsed)) {
-      return parsed;
-    }
-    // Remove currency symbols, commas, and whitespace, then parse as a float.
-    return parseFloat(amount.replace(/[^0-9.-]+/g, ''));
+    // Remove currency symbols (like INR, ₹), commas, and any non-numeric characters except for the decimal point.
+    const sanitizedAmount = amount.replace(/[^0-9.-]+/g, '');
+    const parsed = parseFloat(sanitizedAmount);
+    return isNaN(parsed) ? 0 : parsed;
   }
   return 0;
 }
