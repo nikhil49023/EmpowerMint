@@ -13,6 +13,7 @@ import {
   Home,
   HeartPulse,
   Info,
+  Trash2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -23,7 +24,7 @@ import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, onSnapshot, query, doc, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
   FirestorePermissionError,
@@ -35,6 +36,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
@@ -76,10 +88,14 @@ export default function DashboardPage() {
   const [newBudgetName, setNewBudgetName] = useState('');
   const [newBudgetAmount, setNewBudgetAmount] = useState('');
   const { toast } = useToast();
+  
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
 
   useEffect(() => {
     if (savingsGoal > 0) {
       setGoalInput(String(savingsGoal));
+    } else {
+      setGoalInput('');
     }
   }, [savingsGoal]);
   
@@ -98,6 +114,14 @@ export default function DashboardPage() {
         description: 'Please enter a valid number for your savings goal.',
       });
     }
+  };
+
+  const handleRemoveGoal = () => {
+    setSavingsGoal(0);
+    toast({
+      title: 'Savings Goal Removed',
+      description: 'Your monthly savings goal has been cleared.',
+    });
   };
 
   const invalidateDashboardCache = useCallback(() => {
@@ -147,6 +171,33 @@ export default function DashboardPage() {
         toast({
           title: 'Success',
           description: translations.transactions.toasts.successAddBudget,
+        });
+      });
+  };
+
+  const handleDeleteBudget = async (budgetId: string) => {
+    if (!user) return;
+    const budgetDocRef = doc(db, 'users', user.uid, 'budgets', budgetId);
+    
+    deleteDoc(budgetDocRef)
+      .then(() => {
+        toast({
+            title: 'Budget Deleted',
+            description: 'The budget has been successfully removed.',
+        });
+        setBudgetToDelete(null);
+        invalidateDashboardCache();
+      })
+      .catch(async serverError => {
+        const permissionError = new FirestorePermissionError({
+          path: budgetDocRef.path,
+          operation: 'delete',
+        } satisfies SecurityRuleContext);
+        errorEmitter.emit('permission-error', permissionError);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not delete the budget. Please try again.',
         });
       });
   };
@@ -288,7 +339,7 @@ export default function DashboardPage() {
   }, [transactions, user, loadingAuth, translations, getCacheKey]);
 
   const formatCurrency = (amount: number | undefined) => {
-    if (amount === undefined) {
+    if (amount === undefined || typeof amount !== 'number') {
       return <Skeleton className="h-8 w-32" />;
     }
     return new Intl.NumberFormat('en-IN', {
@@ -606,6 +657,17 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                             </CardContent>
+                             <DialogFooter className="p-4 pt-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                onClick={() => setBudgetToDelete(budget)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </Button>
+                            </DialogFooter>
                           </Card>
                         </motion.div>
                       );
@@ -668,10 +730,29 @@ export default function DashboardPage() {
                   </div>
                    {savingsGoal > 0 && (
                       <div>
-                          <p className="text-muted-foreground text-sm flex items-center gap-1.5">
-                              <Info className="h-4 w-4" />
-                              Your goal of <span className="font-bold">{formatCurrency(savingsGoal)}</span> is saved in your browser.
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-muted-foreground text-sm flex items-center gap-1.5">
+                                <Info className="h-4 w-4" />
+                                Your goal is saved in your browser.
+                            </p>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4"/>Remove Goal</Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will remove your monthly savings goal. You can always set a new one later.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={handleRemoveGoal}>Remove</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                       </div>
                   )}
                 </div>
@@ -679,6 +760,25 @@ export default function DashboardPage() {
           </Dialog>
       </div>
 
+       <AlertDialog open={!!budgetToDelete} onOpenChange={(open) => !open && setBudgetToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Budget: {budgetToDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the "{budgetToDelete?.name}" budget.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBudgetToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => budgetToDelete && handleDeleteBudget(budgetToDelete.id)}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
+
+    
