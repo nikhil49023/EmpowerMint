@@ -41,6 +41,7 @@ const prompt = ai.definePrompt({
   4.  **Target Audience**: Describe the ideal customer for this business. Outline a basic marketing and distribution strategy suitable for an early-stage venture in India.
   5.  **Return on Investment (ROI)**: Provide a realistic projection of potential revenue and profit. Explain the factors that influence profitability and a possible timeline to break even and achieve profitability.
   6.  **Future Proofing**: Discuss the long-term viability of the business. Cover aspects like scalability, potential for product diversification, market trends, and a competitive landscape.
+  7.  **Relevant Government Schemes**: Identify 2-3 relevant Indian government schemes (e.g., Startup India, MUDRA, CGTMSE) that could support this business. For each scheme, briefly explain its benefits and eligibility criteria.
 
   Your tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. 
   

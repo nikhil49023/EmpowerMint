@@ -20,6 +20,7 @@ import {
   CheckCircle,
   Loader2,
   ChevronsRight,
+  Landmark,
 } from 'lucide-react';
 import {
   generateInvestmentIdeaAnalysisAction,
@@ -331,6 +332,18 @@ function InvestmentIdeaContent() {
             icon={Shield}
             title={translations.investmentIdea.futureProofing}
             content={analysis?.futureProofing}
+          />
+        </motion.div>
+         <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="md:col-span-2"
+        >
+          <AnalysisCard
+            icon={Landmark}
+            title="Relevant Government Schemes"
+            content={analysis?.relevantSchemes}
           />
         </motion.div>
       </div>

@@ -31,6 +31,11 @@ export const GenerateInvestmentIdeaAnalysisOutputSchema = z.object({
     .describe(
       'An analysis of the future-proofing of the business, including scalability, competition, and market trends.'
     ),
+  relevantSchemes: z
+    .string()
+    .describe(
+      'A summary of 2-3 relevant Indian government schemes or policies that could support this type of business. Include what the scheme offers and who is eligible.'
+    ),
 });
 export type GenerateInvestmentIdeaAnalysisOutput = z.infer<
   typeof GenerateInvestmentIdeaAnalysisOutputSchema
