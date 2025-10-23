@@ -4,9 +4,9 @@
 import { useState, useRef, useEffect, type ElementRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Sparkles, User, Loader2 } from 'lucide-react';
+import { Send, Sparkles, User, Loader2, Speaker, VolumeX } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { askAIAdvisorAction } from '@/app/actions';
+import { askAIAdvisorAction, generateTtsAction } from '@/app/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
@@ -20,6 +20,7 @@ import {
 } from '@/firebase/errors';
 import { useLanguage } from '@/hooks/use-language';
 import { usePathname } from 'next/navigation';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type Message = {
   id: string;
@@ -29,11 +30,15 @@ type Message = {
 
 type AIAdvisorChatProps = {
   initialMessage?: string;
+  onIsPlayingChange?: (isPlaying: boolean) => void;
 };
 
 const getUniqueMessageId = () => `msg-${Date.now()}-${Math.random()}`;
 
-export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
+export default function AIAdvisorChat({
+  initialMessage,
+  onIsPlayingChange,
+}: AIAdvisorChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +48,26 @@ export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
   const { translations } = useLanguage();
   const pathname = usePathname();
 
+  const [isVoiceEnabled, setIsVoiceEnabled] = useLocalStorage(
+    'finbox-voice-enabled',
+    true
+  );
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(
+    null
+  );
+
   const useTransactionContext = !pathname.includes('/generate-dpr');
+
+  useEffect(() => {
+    // Stop any playing audio when the component unmounts
+    return () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        onIsPlayingChange?.(false);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAudio]);
 
   useEffect(() => {
     const welcomeMessage: Message = {
@@ -54,7 +78,7 @@ export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
 
     const initialUserMessage: Message | null = initialMessage
       ? {
-          id: getUniqueMessageId(),
+          id: getUniqueMessage-id(),
           text: initialMessage,
           sender: 'user',
         }
@@ -116,6 +140,19 @@ export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
     scrollToBottom();
   }, [messages]);
 
+  const playAudio = (audioDataUri: string) => {
+    if (currentAudio) {
+      currentAudio.pause();
+    }
+
+    const audio = new Audio(audioDataUri);
+    audio.onplay = () => onIsPlayingChange?.(true);
+    audio.onended = () => onIsPlayingChange?.(false);
+    audio.onerror = () => onIsPlayingChange?.(false);
+    audio.play();
+    setCurrentAudio(audio);
+  };
+
   const handleSendMessage = async (
     e?: React.FormEvent,
     messageText?: string
@@ -123,6 +160,12 @@ export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
     e?.preventDefault();
     const queryText = messageText || input;
     if (!queryText.trim() || isLoading) return;
+
+    // Stop any currently playing audio
+    if (currentAudio) {
+      currentAudio.pause();
+      onIsPlayingChange?.(false);
+    }
 
     if (!messageText) {
       const newUserMessage: Message = {
@@ -148,6 +191,14 @@ export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
         sender: 'ai',
       };
       setMessages(prev => [...prev, newAiMessage]);
+
+      // Generate and play TTS if enabled
+      if (isVoiceEnabled) {
+        const ttsResult = await generateTtsAction({ text: result.data.advice });
+        if (ttsResult.success) {
+          playAudio(ttsResult.data.audioDataUri);
+        }
+      }
     } else {
       const errorAiMessage: Message = {
         id: getUniqueMessageId(),
@@ -160,8 +211,28 @@ export default function AIAdvisorChat({ initialMessage }: AIAdvisorChatProps) {
     setIsLoading(false);
   };
 
+  const toggleVoice = () => {
+    setIsVoiceEnabled(prev => {
+      const newValue = !prev;
+      if (!newValue && currentAudio) {
+        currentAudio.pause();
+        onIsPlayingChange?.(false);
+      }
+      return newValue;
+    });
+  };
+
   return (
     <div className="flex-1 flex flex-col justify-between">
+      <div className="absolute top-4 right-16 z-10">
+        <Button variant="ghost" size="icon" onClick={toggleVoice}>
+          {isVoiceEnabled ? (
+            <Speaker className="h-5 w-5" />
+          ) : (
+            <VolumeX className="h-5 w-5" />
+          )}
+        </Button>
+      </div>
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
         <div className="space-y-6 p-6">
           <AnimatePresence>

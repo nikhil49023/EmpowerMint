@@ -47,6 +47,11 @@ import {
   generateBudgetReport,
 } from '@/ai/flows/generate-budget-report';
 import type { GenerateBudgetReportInput, GenerateBudgetReportOutput } from '@/ai/schemas/budget-report';
+import {
+  generateTts,
+  type GenerateTtsInput,
+  type GenerateTtsOutput,
+} from '@/ai/flows/generate-tts';
 
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -270,6 +275,25 @@ export async function generateBudgetReportAction(
     return {
       success: false,
       error: 'Failed to generate budget report.',
+    };
+  }
+}
+
+export async function generateTtsAction(
+  input: GenerateTtsInput
+): Promise<
+  | { success: true; data: GenerateTtsOutput }
+  | { success: false; error: string }
+> {
+  try {
+    const result = await generateTts(input);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Error in TTS action:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown TTS error occurred.';
+    return {
+      success: false,
+      error: `Failed to generate audio: ${errorMessage}`,
     };
   }
 }
