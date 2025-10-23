@@ -19,6 +19,7 @@ export const ExtractedTransactionSchema = z.object({
   amount: z
     .string()
     .describe('The transaction amount, formatted as a string with currency.'),
+  invoiceUrl: z.string().optional().describe("The URL of the attached invoice file in Firebase Storage."),
 });
 export type ExtractedTransaction = z.infer<typeof ExtractedTransactionSchema>;
 

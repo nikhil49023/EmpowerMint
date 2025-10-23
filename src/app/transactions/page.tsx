@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -25,6 +25,7 @@ import {
   Upload,
   Loader2,
   FileUp,
+  File as FileIcon,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -72,6 +73,12 @@ import {
   doc,
 } from 'firebase/firestore';
 import {
+    getStorage,
+    ref as storageRef,
+    uploadBytes,
+    getDownloadURL,
+} from 'firebase/storage';
+import {
   FirestorePermissionError,
   type SecurityRuleContext,
 } from '@/firebase/errors';
@@ -90,6 +97,9 @@ export default function TransactionsPage() {
     type: 'expense' as 'income' | 'expense',
     amount: '',
   });
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
+  const [isAddingTransaction, setIsAddingTransaction] = useState(false);
+
   const [isImporting, setIsImporting] = useState(false);
   const [isImportOnCooldown, setIsImportOnCooldown] = useState(false);
   const [daysUntilNextImport, setDaysUntilNextImport] = useState(0);
@@ -237,35 +247,57 @@ export default function TransactionsPage() {
       return;
     }
 
-    const transactionsCollectionRef = collection(
-      db,
-      'users',
-      user.uid,
-      'transactions'
-    );
-    addDoc(transactionsCollectionRef, newTransaction)
-      .catch(async serverError => {
-        const permissionError = new FirestorePermissionError({
-          path: transactionsCollectionRef.path,
-          operation: 'create',
-          requestResourceData: newTransaction,
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-      })
-      .then(() => {
-        setNewTransaction({
-          description: '',
-          date: '',
-          type: 'expense',
-          amount: '',
+    setIsAddingTransaction(true);
+
+    try {
+        let invoiceUrl: string | undefined = undefined;
+
+        if (invoiceFile) {
+            const storage = getStorage();
+            const filePath = `invoices/${user.uid}/${Date.now()}-${invoiceFile.name}`;
+            const fileRef = storageRef(storage, filePath);
+            
+            await uploadBytes(fileRef, invoiceFile);
+            invoiceUrl = await getDownloadURL(fileRef);
+        }
+
+        const transactionData: ExtractedTransaction = {
+            ...newTransaction,
+            ...(invoiceUrl && { invoiceUrl }),
+        };
+
+        const transactionsCollectionRef = collection(db, 'users', user.uid, 'transactions');
+        await addDoc(transactionsCollectionRef, transactionData).catch(serverError => {
+            const permissionError = new FirestorePermissionError({
+              path: transactionsCollectionRef.path,
+              operation: 'create',
+              requestResourceData: transactionData,
+            } satisfies SecurityRuleContext);
+            errorEmitter.emit('permission-error', permissionError);
+            // Re-throw to be caught by the outer try-catch
+            throw serverError;
         });
+
+        // Reset form state on success
+        setNewTransaction({ description: '', date: '', type: 'expense', amount: '' });
+        setInvoiceFile(null);
         setAddTransactionDialogOpen(false);
         invalidateDashboardCache();
         toast({
           title: 'Success',
           description: translations.transactions.toasts.successAddTransaction,
         });
-      });
+
+    } catch (error) {
+        console.error("Error adding transaction:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Error Adding Transaction',
+          description: "Could not save the transaction. Please check your connection or permissions.",
+        });
+    } finally {
+        setIsAddingTransaction(false);
+    }
   };
 
   const processFile = async (file: File) => {
@@ -360,6 +392,13 @@ export default function TransactionsPage() {
       processFile(file);
     }
   };
+
+    const handleInvoiceFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            setInvoiceFile(event.target.files[0]);
+        }
+    };
+
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -596,14 +635,36 @@ export default function TransactionsPage() {
                     placeholder={translations.transactions.addTransactionDialog.amountPlaceholder}
                   />
                 </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="invoice" className="text-right">
+                    Invoice
+                  </Label>
+                    <div className="col-span-3">
+                        <Input
+                            id="invoice"
+                            type="file"
+                            onChange={handleInvoiceFileChange}
+                            className="text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                        />
+                        {invoiceFile && (
+                            <div className="mt-2 text-xs text-muted-foreground flex items-center gap-2">
+                                <FileIcon className="h-3 w-3" />
+                                <span>{invoiceFile.name}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="secondary">
+                  <Button type="button" variant="secondary" disabled={isAddingTransaction}>
                     {translations.transactions.addTransactionDialog.cancel}
                   </Button>
                 </DialogClose>
-                <Button onClick={handleAddTransaction}>{translations.transactions.addTransactionDialog.addTransaction}</Button>
+                <Button onClick={handleAddTransaction} disabled={isAddingTransaction}>
+                  {isAddingTransaction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {isAddingTransaction ? 'Adding...' : translations.transactions.addTransactionDialog.addTransaction}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -682,5 +743,3 @@ export default function TransactionsPage() {
     </div>
   );
 }
-
-    
