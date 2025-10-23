@@ -74,7 +74,7 @@ import {
 } from 'firebase/firestore';
 import {
     getStorage,
-    ref as storageRef,
+    ref,
     uploadBytes,
     getDownloadURL,
 } from 'firebase/storage';
@@ -255,7 +255,7 @@ export default function TransactionsPage() {
         if (invoiceFile) {
             const storage = getStorage();
             const filePath = `invoices/${user.uid}/${Date.now()}-${invoiceFile.name}`;
-            const fileRef = storageRef(storage, filePath);
+            const fileRef = ref(storage, filePath);
             
             await uploadBytes(fileRef, invoiceFile);
             invoiceUrl = await getDownloadURL(fileRef);
