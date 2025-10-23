@@ -129,44 +129,6 @@ export async function generateInvestmentIdeaAnalysisAction(
   }
 }
 
-export async function saveFeedbackAction(input: {
-  message: string;
-  userId?: string;
-  userName?: string | null;
-  userEmail?: string | null;
-}): Promise<{ success: true } | { success: false; error: string }> {
-  if (!input.message) {
-    return { success: false, error: 'Feedback message cannot be empty.' };
-  }
-
-  try {
-    const feedbackCollectionRef = collection(db, 'feedback');
-    const feedbackData = {
-      ...input,
-      createdAt: serverTimestamp(),
-    };
-
-    addDoc(feedbackCollectionRef, feedbackData).catch(async serverError => {
-      const permissionError = new FirestorePermissionError({
-        path: feedbackCollectionRef.path,
-        operation: 'create',
-        requestResourceData: feedbackData,
-      } satisfies SecurityRuleContext);
-      errorEmitter.emit('permission-error', permissionError);
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error saving feedback:', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred.';
-    return {
-      success: false,
-      error: `Failed to save feedback: ${errorMessage}`,
-    };
-  }
-}
-
 export async function askAIAdvisorAction(
   input: GenerateFinancialAdviceInput
 ): Promise<

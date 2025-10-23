@@ -54,13 +54,6 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import Autoplay from 'embla-carousel-autoplay';
 import React, { useState, useEffect, useCallback } from 'react';
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { errorEmitter } from '@/firebase/error-emitter';
-import {
-  FirestorePermissionError,
-  type SecurityRuleContext,
-} from '@/firebase/errors';
 import { generateFinBiteAction } from '@/app/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -137,12 +130,6 @@ const PortalCard = ({
   </Dialog>
 );
 
-type Feedback = {
-    id: string;
-    message: string;
-    userName?: string;
-}
-
 type FinBite = {
   title: string;
   summary: string;
@@ -151,8 +138,6 @@ type FinBite = {
 
 export default function LaunchpadPage() {
   const { translations } = useLanguage();
-  const [feedback, setFeedback] = useState<Feedback[]>([]);
-  const [isLoadingFeedback, setIsLoadingFeedback] = useState(true);
   const [finBite, setFinBite] = useState<FinBite | null>(null);
   const [isLoadingFinBite, setIsLoadingFinBite] = useState(false);
   const [finBiteError, setFinBiteError] = useState<string | null>(null);
@@ -167,34 +152,6 @@ export default function LaunchpadPage() {
       setFinBiteError(result.error);
     }
     setIsLoadingFinBite(false);
-  }, []);
-
-  useEffect(() => {
-    const feedbackQuery = query(collection(db, 'feedback'), orderBy('createdAt', 'desc'), limit(5));
-    const unsubscribe = onSnapshot(feedbackQuery, (snapshot) => {
-        const feedbackData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        })) as Feedback[];
-        setFeedback(feedbackData);
-        setIsLoadingFeedback(false);
-    }, async (error) => {
-        console.error("Error fetching feedback: ", error);
-        const permissionError = new FirestorePermissionError({
-            path: 'feedback', // Simplified path for collection queries
-            operation: 'list'
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        setIsLoadingFeedback(false);
-    });
-
-    return () => {
-      try {
-        unsubscribe();
-      } catch (e) {
-        console.error("Error unsubscribing from feedback listener:", e);
-      }
-    };
   }, []);
 
   const startupSteps = [
@@ -647,47 +604,6 @@ export default function LaunchpadPage() {
             </Carousel>
           </CardContent>
         </Card>
-        
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl md:text-2xl">
-              <MessagesSquare />
-              Voices from the Ground
-            </CardTitle>
-            <CardDescription>
-              See what our community of founders is saying about FIn-Box.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isLoadingFeedback ? (
-                <div className="flex items-center justify-center h-24">
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-            ) : feedback.length > 0 ? (
-              feedback.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="p-4 rounded-lg bg-accent/50 border"
-              >
-                 <blockquote className="italic text-muted-foreground">
-                    &ldquo;{item.message}&rdquo;
-                  </blockquote>
-                <p className="text-right font-semibold mt-2 text-sm">
-                  - {item.userName || 'Anonymous Founder'}
-                </p>
-              </motion.div>
-            ))
-            ) : (
-                 <div className="text-center text-muted-foreground py-8">
-                    No feedback submitted yet. Be the first to share your thoughts!
-                </div>
-            )}
-          </CardContent>
-        </Card>
-
       </div>
     </div>
   );
