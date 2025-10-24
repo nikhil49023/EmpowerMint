@@ -11,6 +11,7 @@ import AIAdvisorFab from '@/components/financify/ai-advisor-fab';
 import { FirebaseProvider } from '@/firebase/provider';
 import { LanguageProvider } from '@/context/language-provider';
 import AppHeader from '@/components/financify/app-header';
+import BottomNavbar from '@/components/financify/bottom-navbar';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -55,9 +56,11 @@ export default function RootLayout({
 
               <div className="flex flex-col w-0 flex-1 md:overflow-hidden print:overflow-visible">
                 {/* Mobile Header */}
-                <AppHeader />
+                <div className="md:hidden">
+                    <AppHeader />
+                </div>
                 
-                <main className="flex-1 relative md:overflow-y-auto focus:outline-none print:overflow-visible">
+                <main className="flex-1 relative md:overflow-y-auto focus:outline-none print:overflow-visible pb-16 md:pb-0">
                   <div className="py-6 px-4 sm:px-6 lg:px-8">
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -76,6 +79,7 @@ export default function RootLayout({
               </div>
             </div>
             <AIAdvisorFab />
+            <BottomNavbar />
             <Toaster />
           </LanguageProvider>
         </FirebaseProvider>

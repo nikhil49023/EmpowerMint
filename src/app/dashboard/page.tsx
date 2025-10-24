@@ -434,11 +434,13 @@ export default function DashboardPage() {
 
   const formatCurrency = (amount: number | undefined) => {
     if (amount === undefined || typeof amount !== 'number') {
-      return <Skeleton className="h-8 w-32" />;
+      return <Skeleton className="h-8 w-24" />;
     }
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount);
   };
 
@@ -473,14 +475,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      <div>
+      {/* Hidden on desktop */}
+      <div className="md:hidden">
         <h1 className="text-2xl md:text-3xl font-bold">
           {translations.dashboard.title}
         </h1>
         <p className="text-muted-foreground">{greeting}</p>
       </div>
 
-      <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2">
         {/* Summary Cards */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -492,30 +495,11 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl md:text-3xl font-bold">
+            <div className="text-xl md:text-3xl font-bold">
               {isLoading && !summary ? (
-                <Skeleton className="h-8 w-36" />
+                <Skeleton className="h-8 w-24" />
               ) : (
                 formatCurrency(summary?.totalExpenses)
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              {translations.dashboard.yourIncome}
-            </CardTitle>
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-md">
-              <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl md:text-3xl font-bold">
-              {isLoading && !summary ? (
-                <Skeleton className="h-8 w-36" />
-              ) : (
-                formatCurrency(summary?.totalIncome)
               )}
             </div>
           </CardContent>
@@ -528,9 +512,9 @@ export default function DashboardPage() {
             <PiggyBank className="w-5 h-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl md:text-3xl font-bold">
+            <div className="text-xl md:text-3xl font-bold">
               {isLoading && !summary ? (
-                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-16" />
               ) : (
                 `${summary?.savingsRate ?? 0}%`
               )}
@@ -538,6 +522,26 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium">
+            {translations.dashboard.yourIncome}
+          </CardTitle>
+          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-md">
+            <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl md:text-3xl font-bold">
+            {isLoading && !summary ? (
+              <Skeleton className="h-8 w-36" />
+            ) : (
+              formatCurrency(summary?.totalIncome)
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
 
       {/* Suggestion Card */}
       <Card>
@@ -553,11 +557,11 @@ export default function DashboardPage() {
           ) : (
             <Alert className="border-primary/30 bg-primary/5">
               <div className="flex items-start gap-3">
-                <span className="p-2 bg-primary/20 rounded-full">
+                <span className="pt-1">
                   <Lightbulb className="w-4 h-4 text-primary" />
                 </span>
                 <div className="flex-1">
-                  <AlertDescription className="text-base">
+                  <AlertDescription className="text-sm text-foreground">
                     {summary?.suggestion}
                   </AlertDescription>
                 </div>
@@ -609,7 +613,7 @@ export default function DashboardPage() {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>No budgets created yet.</p>
-                    <p className="text-sm">Click below to add one.</p>
+                    <Button variant="link" className="p-0 h-auto" onClick={() => setAddBudgetDialogOpen(true)}>Click here to add one.</Button>
                   </div>
                 )}
               </CardContent>
