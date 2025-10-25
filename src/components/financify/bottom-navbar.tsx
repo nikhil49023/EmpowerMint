@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Wallet, BrainCircuit, Rocket } from 'lucide-react';
+import { Home, Wallet, BrainCircuit, Rocket, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/hooks/use-language';
 
@@ -16,11 +16,12 @@ export default function BottomNavbar() {
     { href: '/transactions', label: translations.sidebar.transactions, icon: Wallet },
     { href: '/brainstorm', label: translations.sidebar.brainstorm, icon: BrainCircuit },
     { href: '/launchpad', label: translations.sidebar.launchpad, icon: Rocket },
+    { href: '/profile', label: translations.sidebar.myProfile, icon: User },
   ];
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-card border-t print:hidden">
-      <div className="grid h-full max-w-lg grid-cols-4 mx-auto font-medium">
+      <div className="grid h-full max-w-lg grid-cols-5 mx-auto font-medium">
         {navItems.map(item => {
           const isActive = pathname.startsWith(item.href);
           return (
