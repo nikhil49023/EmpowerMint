@@ -120,7 +120,7 @@ export default function MyIdeasPage() {
 
       {ideas.length === 0 ? (
         <Card className="text-center py-10">
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0">
             <p className="text-muted-foreground">
               {translations.myIdeas.noIdeas}
             </p>
@@ -139,14 +139,14 @@ export default function MyIdeasPage() {
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
               <Card className="h-full flex flex-col">
-                <CardHeader>
+                <CardHeader className="p-4 md:p-6">
                   <CardTitle>{idea.title}</CardTitle>
                   <CardDescription className="line-clamp-3">
                     {idea.summary}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow" />
-                <CardContent className="flex flex-col gap-2">
+                <CardContent className="p-4 md:p-6 pt-0 flex flex-col gap-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Button asChild variant="outline" className="w-full">
                         <Link

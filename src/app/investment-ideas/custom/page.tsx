@@ -198,11 +198,11 @@ function InvestmentIdeaContent() {
     const Icon = icon;
     return (
       <Card>
-        <CardHeader className="flex flex-row items-center gap-4">
+        <CardHeader className="flex flex-row items-center gap-4 p-4 md:p-6">
           <Icon className="h-8 w-8 text-primary" />
-          <CardTitle className="text-xl md:text-2xl">{title}</CardTitle>
+          <CardTitle className="text-xl">{title}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0">
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
@@ -234,7 +234,7 @@ function InvestmentIdeaContent() {
         transition={{ duration: 0.5 }}
       >
         <Card className="overflow-hidden">
-          <CardHeader>
+          <CardHeader className="p-4 md:p-6">
             {isLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-8 w-1/2" />
@@ -247,7 +247,7 @@ function InvestmentIdeaContent() {
               </>
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0">
             {isLoading ? (
               <div className="flex gap-2">
                 <Skeleton className="h-10 w-32" />

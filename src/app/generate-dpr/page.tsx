@@ -313,7 +313,7 @@ function GenerateDPRContent() {
       </div>
 
        <Card>
-        <CardHeader>
+        <CardHeader className="p-4 md:p-6">
           <CardTitle>
             Step {currentStep + 1}: {formSteps[currentStep]}
           </CardTitle>
@@ -321,7 +321,7 @@ function GenerateDPRContent() {
             Please provide the following details to generate your report.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6">
             <div className="my-4">
                 <Progress value={progress} className="w-full" />
             </div>

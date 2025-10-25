@@ -672,11 +672,11 @@ export default function TransactionsPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 md:p-6">
           <CardTitle>{translations.transactions.history.title}</CardTitle>
           <CardDescription>{translations.transactions.history.description}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 md:p-6 md:pt-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -699,12 +699,12 @@ export default function TransactionsPage() {
               ) : transactions.length > 0 ? (
                 transactions.map((transaction, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium p-4">
                       {transaction.description}
                       <div className="text-muted-foreground text-xs sm:hidden">{transaction.date}</div>
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">{transaction.date}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell p-4">{transaction.date}</TableCell>
+                    <TableCell className="p-4">
                       <Badge
                         variant={
                           transaction.type === 'income'
@@ -721,7 +721,7 @@ export default function TransactionsPage() {
                         {transaction.type}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right p-4">
                       {transaction.amount}
                     </TableCell>
                   </TableRow>

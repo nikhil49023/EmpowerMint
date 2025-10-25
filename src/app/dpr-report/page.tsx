@@ -101,10 +101,10 @@ function DPRReportContent() {
     className?: string;
   }) => (
     <Card className={`print:shadow-none print:border-none print-break-before ${className}`}>
-      <CardHeader>
+      <CardHeader className="p-4 md:p-6">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 md:p-6 pt-0">
         {isLoading ? (
           <div className="space-y-2">
             <Skeleton className="h-4 w-full" />
@@ -274,10 +274,10 @@ function DPRReportContent() {
 
       {error && !isLoading && (
         <Card className="text-center py-10 bg-destructive/10 border-destructive no-print">
-          <CardHeader>
+          <CardHeader className="p-4 md:p-6">
             <CardTitle>Error Loading Report</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0">
             <p className="text-destructive">{error}</p>
             <Button asChild className="mt-4">
               <Link href="/brainstorm">Start Over</Link>

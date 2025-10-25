@@ -486,7 +486,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 grid-cols-2">
         {/* Summary Cards */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6 pb-2">
             <CardTitle className="text-sm font-medium">
               {translations.dashboard.yourExpenses}
             </CardTitle>
@@ -494,7 +494,7 @@ export default function DashboardPage() {
               <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0">
             <div className="text-xl md:text-3xl font-bold">
               {isLoading && !summary ? (
                 <Skeleton className="h-8 w-24" />
@@ -505,13 +505,13 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6 pb-2">
             <CardTitle className="text-sm font-medium">
               {translations.dashboard.savingsRate}
             </CardTitle>
             <PiggyBank className="w-5 h-5 text-primary" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0">
             <div className="text-xl md:text-3xl font-bold">
               {isLoading && !summary ? (
                 <Skeleton className="h-8 w-16" />
@@ -523,7 +523,7 @@ export default function DashboardPage() {
         </Card>
       </div>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6 pb-2">
           <CardTitle className="text-sm font-medium">
             {translations.dashboard.yourIncome}
           </CardTitle>
@@ -531,7 +531,7 @@ export default function DashboardPage() {
             <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0">
           <div className="text-2xl md:text-3xl font-bold">
             {isLoading && !summary ? (
               <Skeleton className="h-8 w-36" />
@@ -545,10 +545,10 @@ export default function DashboardPage() {
 
       {/* Suggestion Card */}
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 md:p-6">
           <CardTitle>{translations.dashboard.suggestionsTitle}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0">
           {isLoading && !summary ? (
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
@@ -574,13 +574,13 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2">
         {/* Budgets Card */}
         <Card>
-              <CardHeader>
+              <CardHeader className="p-4 md:p-6">
                 <CardTitle>Budgets</CardTitle>
                 <CardDescription>
                   Track your monthly category spending.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6 pt-0">
                 {isLoadingBudgets ? (
                   <div className="space-y-4">
                     <Skeleton className="h-10 w-full" />
@@ -617,7 +617,7 @@ export default function DashboardPage() {
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex-col sm:flex-row gap-2 pt-4 border-t">
+              <CardFooter className="p-4 md:p-6 flex-col sm:flex-row gap-2 pt-4 border-t">
                   <Button variant="outline" className="w-full" onClick={() => setManageBudgetDialogOpen(true)}>
                       Manage Budgets
                   </Button>
@@ -632,11 +632,11 @@ export default function DashboardPage() {
         <Dialog>
             <DialogTrigger asChild>
                 <Card className="cursor-pointer hover:border-primary transition-colors">
-                    <CardHeader>
+                    <CardHeader className="p-4 md:p-6">
                         <CardTitle>Savings Goals</CardTitle>
                         <CardDescription>Track your progress towards your financial goals.</CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-4 md:p-6 pt-0">
                       {isLoadingSavingsGoals ? (
                           <Skeleton className="h-10 w-full" />
                       ) : savingsGoals.length > 0 ? (
@@ -660,7 +660,7 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-full sm:max-w-md md:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Your Savings Goals</DialogTitle>
                     <DialogDescription>
@@ -695,7 +695,7 @@ export default function DashboardPage() {
                                 const progress = Math.min((totalSavings / goal.targetAmount) * 100, 100);
                                 return (
                                     <Card key={goal.id}>
-                                        <CardContent className="pt-6">
+                                        <CardContent className="p-4 md:p-6">
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <p className="font-semibold flex items-center gap-2">
@@ -723,7 +723,7 @@ export default function DashboardPage() {
       
       {/* Budgets Dialog */}
       <Dialog open={manageBudgetDialogOpen} onOpenChange={setManageBudgetDialogOpen}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-full sm:max-w-md md:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Your Budgets</DialogTitle>
               <DialogDescription>
@@ -777,7 +777,7 @@ export default function DashboardPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                   {budgetsWithSpending.map(budget => (
                     <Card key={budget.id}>
-                       <CardHeader className="flex flex-row items-start justify-between pb-2">
+                       <CardHeader className="flex flex-row items-start justify-between p-4 md:p-6 pb-2">
                         <CardTitle className="text-base font-medium flex items-center gap-2">
                           <budget.icon className="h-5 w-5 text-primary" />
                           {budget.name}
@@ -791,7 +791,7 @@ export default function DashboardPage() {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="p-4 md:p-6 pt-0">
                          <div className="text-xl font-bold mb-2">
                            {formatCurrency(budget.amount)}
                          </div>

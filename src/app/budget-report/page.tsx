@@ -186,10 +186,10 @@ export default function BudgetReportPage() {
 
       {error && !isGenerating && (
         <Card className="text-center py-10 bg-destructive/10 border-destructive no-print">
-          <CardHeader>
+          <CardHeader className="p-4 md:p-6">
             <CardTitle>Error Generating Report</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0">
             <p className="text-destructive">{error}</p>
           </CardContent>
         </Card>
@@ -197,11 +197,11 @@ export default function BudgetReportPage() {
 
       {isGenerating && (
          <Card>
-            <CardHeader>
+            <CardHeader className="p-4 md:p-6">
                 <CardTitle>Generating Your Report...</CardTitle>
                 <CardDescription>The AI is analyzing your transactions. This might take a moment.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 pt-4">
+            <CardContent className="p-4 md:p-6 pt-0 space-y-4">
                  <Progress value={progress} className="w-full" />
                  <p className="text-center text-sm text-muted-foreground">{Math.round(progress)}% Complete</p>
                  <div className="space-y-2 pt-4">
@@ -215,8 +215,8 @@ export default function BudgetReportPage() {
       )}
       
       {!report && !isGenerating && transactions.length > 0 && (
-         <Card className="text-center py-20">
-             <CardContent>
+         <Card className="text-center py-10 md:py-20">
+             <CardContent className="p-4 md:p-6 pt-0">
                  <FilePieChart className="h-16 w-16 mx-auto text-muted-foreground mb-4"/>
                 <h3 className="text-xl font-semibold">Ready to Analyze Your Budget?</h3>
                 <p className="text-muted-foreground mt-2">Click "Generate Report" to get a detailed breakdown of your spending.</p>
@@ -225,8 +225,8 @@ export default function BudgetReportPage() {
       )}
 
        {!report && !isGenerating && transactions.length === 0 && (
-         <Card className="text-center py-20">
-             <CardContent>
+         <Card className="text-center py-10 md:py-20">
+             <CardContent className="p-4 md:p-6 pt-0">
                 <h3 className="text-xl font-semibold">No Transaction Data</h3>
                 <p className="text-muted-foreground mt-2">Please add some transactions before generating a report.</p>
                 <Button asChild className="mt-4"><Link href="/transactions">Add Transactions</Link></Button>
@@ -237,7 +237,7 @@ export default function BudgetReportPage() {
       {report && !isGenerating && (
         <div id="print-section" className="space-y-6">
             <Card>
-                <CardHeader>
+                <CardHeader className="p-4 md:p-6">
                     <CardTitle>Monthly Expense Report</CardTitle>
                     <CardDescription>
                         An AI-generated analysis of your spending habits.
@@ -246,18 +246,18 @@ export default function BudgetReportPage() {
                 </CardHeader>
             </Card>
             <Card>
-                <CardHeader>
+                <CardHeader className="p-4 md:p-6">
                     <CardTitle>AI-Powered Summary</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 md:p-6 pt-0">
                     <FormattedText text={report.summary} />
                 </CardContent>
             </Card>
              <Card>
-                <CardHeader>
+                <CardHeader className="p-4 md:p-6">
                     <CardTitle>Expense Breakdown</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 md:p-6 pt-0">
                      <ProjectCostPieChart data={report.expenseBreakdown} />
                 </CardContent>
             </Card>

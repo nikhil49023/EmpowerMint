@@ -159,7 +159,7 @@ export default function BrainstormPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="p-4 md:p-6">
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-xl md:text-2xl font-semibold flex items-center gap-2">
               <svg
@@ -191,13 +191,13 @@ export default function BrainstormPage() {
             {translations.brainstorm.ideasDescription}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+        <CardContent className="p-4 md:p-6 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Object.entries(investmentIdeaCategories).map(
               ([category, { icon: Icon, ideas }]) => (
                 <Dialog key={category}>
                   <DialogTrigger asChild>
-                    <Card className="group cursor-pointer hover:border-primary transition-colors flex flex-col justify-between text-center p-6">
+                    <Card className="group cursor-pointer hover:border-primary transition-colors flex flex-col justify-between text-center p-4 md:p-6">
                       <div className="flex-1 flex flex-col items-center justify-center">
                         <Icon className="h-10 w-10 md:h-12 md:w-12 text-primary mb-4" />
                         <CardTitle className="text-base sm:text-lg">{category}</CardTitle>
