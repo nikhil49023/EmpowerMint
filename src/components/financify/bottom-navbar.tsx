@@ -32,18 +32,10 @@ export default function BottomNavbar() {
             >
               <item.icon
                 className={cn(
-                  'w-6 h-6 mb-1 text-muted-foreground group-hover:text-primary',
+                  'w-6 h-6 text-muted-foreground group-hover:text-primary',
                   isActive && 'text-primary'
                 )}
               />
-              <span
-                className={cn(
-                  'text-xs text-muted-foreground group-hover:text-primary',
-                  isActive && 'text-primary font-semibold'
-                )}
-              >
-                {item.label}
-              </span>
             </Link>
           );
         })}
