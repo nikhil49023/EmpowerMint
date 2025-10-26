@@ -21,8 +21,10 @@ import type {
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import {
   generateFinancialAdvice,
-  type GenerateFinancialAdviceInput,
-  type GenerateFinancialAdviceOutput,
+} from '@/ai/flows/generate-financial-advice';
+import type {
+  GenerateFinancialAdviceInput,
+  GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
 import {
   generateDpr,

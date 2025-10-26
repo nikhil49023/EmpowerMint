@@ -13,4 +13,3 @@ import '@/ai/flows/generate-dpr-section';
 import '@/ai/flows/generate-emergency-fund-recommendation';
 import '@/ai/flows/generate-fin-bite';
 import '@/ai/flows/generate-budget-report';
-import '@/ai/flows/generate-financial-advice';

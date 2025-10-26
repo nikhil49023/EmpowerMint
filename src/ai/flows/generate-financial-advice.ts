@@ -2,18 +2,25 @@
 'use server';
 
 /**
- * @fileOverview A Genkit flow for providing financial advice using SarvamAI.
+ * @fileOverview A function for providing financial advice using SarvamAI.
+ * This is NOT a Genkit flow and is called directly.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import { ExtractedTransactionSchema } from '../schemas/transactions';
+import { z } from 'zod';
+import type { ExtractedTransaction } from '../schemas/transactions';
 import { SarvamAIClient } from 'sarvamai';
 
 const GenerateFinancialAdviceInputSchema = z.object({
   query: z.string().describe("The user's financial question."),
   transactions: z
-    .array(ExtractedTransactionSchema)
+    .array(
+      z.object({
+        description: z.string(),
+        date: z.string(),
+        type: z.enum(['income', 'expense']),
+        amount: z.union([z.string(), z.number()]),
+      })
+    )
     .optional()
     .describe("An optional array of the user's financial transactions."),
 });
@@ -33,59 +40,53 @@ type GenerateFinancialAdviceOutput = z.infer<
 export async function generateFinancialAdvice(
   input: GenerateFinancialAdviceInput
 ): Promise<GenerateFinancialAdviceOutput> {
-  return generateFinancialAdviceFlow(input);
-}
+  let transactionContext = '';
+  if (input.transactions && input.transactions.length > 0) {
+    const recentTransactions = input.transactions.slice(-15); // Use last 15 transactions
+    const transactionsText = recentTransactions
+      .map(t => `- ${t.description}: ${t.amount} (${t.type}) on ${t.date}`)
+      .join('\n');
+    transactionContext = `Here is the user's recent transaction history for context:\n${transactionsText}\n\n`;
+  }
 
-const generateFinancialAdviceFlow = ai.defineFlow(
-  {
-    name: 'generateFinancialAdviceFlow',
-    inputSchema: GenerateFinancialAdviceInputSchema,
-    outputSchema: GenerateFinancialAdviceOutputSchema,
-  },
-  async ({ query, transactions }) => {
-    let transactionContext = '';
-    if (transactions && transactions.length > 0) {
-      const recentTransactions = transactions.slice(-15); // Use last 15 transactions
-      const transactionsText = recentTransactions
-        .map(t => `- ${t.description}: ${t.amount} (${t.type}) on ${t.date}`)
-        .join('\n');
-      transactionContext = `Here is the user's recent transaction history for context:\n${transactionsText}\n\n`;
-    }
-
-    const userPrompt = `${transactionContext}The user's question is: "${query}"
+  const userPrompt = `${transactionContext}The user's question is: "${input.query}"
 
 Provide a simple, crisp, and concise answer.`;
 
-    try {
-      const client = new SarvamAIClient({
-        apiSubscriptionKey: process.env.SARVAM_API_KEY,
-      });
+  try {
+    const client = new SarvamAIClient({
+      apiSubscriptionKey: process.env.SARVAM_API_KEY,
+    });
 
-      const response = await client.chat.completions({
-        model: 'sarvam-2b-v0.3',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are "FIn-Box", a friendly and helpful AI financial advisor for entrepreneurs in India, powered by SarvamAI. Your goal is to provide clear, simple, and actionable financial advice. Keep your answers concise and always start your response by mentioning you are using SarvamAI.',
-          },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: 256,
-        temperature: 0.4,
-      });
+    const response = await client.chat.completions({
+      model: 'sarvam-2b-v0.3',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are "FIn-Box", a friendly and helpful AI financial advisor for entrepreneurs in India, powered by SarvamAI. Your goal is to provide clear, simple, and actionable financial advice. Keep your answers concise and always start your response by mentioning you are using SarvamAI.',
+        },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 256,
+      temperature: 0.4,
+    });
 
-      const advice = response.choices[0]?.message?.content;
-      if (!advice) {
-        throw new Error('Received empty content from AI service.');
-      }
-
-      return { advice };
-    } catch (e: any) {
-      console.error('Failed to process SarvamAI response:', e.message);
-      throw new Error(
-        `An error occurred while processing the AI response: ${e.message}`
-      );
+    const advice = response.choices[0]?.message?.content;
+    if (!advice) {
+      throw new Error('Received empty content from AI service.');
     }
+
+    return { advice };
+  } catch (e: any) {
+    console.error('Failed to process SarvamAI response:', e.message);
+    throw new Error(
+      `An error occurred while processing the AI response: ${e.message}`
+    );
   }
-);
+}
+
+export type {
+  GenerateFinancialAdviceInput,
+  GenerateFinancialAdviceOutput
+};
