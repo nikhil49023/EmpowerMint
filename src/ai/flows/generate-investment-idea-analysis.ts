@@ -22,7 +22,7 @@ import { SarvamAIClient } from 'sarvamai';
 
 // Initialize the SarvamAI client
 const sarvamClient = new SarvamAIClient({
-  apiSubscriptionKey: 'sk_rwksevkv_TwVnTobosDGGrfIGl7bvxhg6',
+  apiSubscriptionKey: 'sk_vi9aj7ku_pTMZo21osceGQ451IGb1OKs0',
 });
 
 export async function generateInvestmentIdeaAnalysis(
