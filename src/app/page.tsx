@@ -16,8 +16,23 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff } from 'lucide-react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithZoho } from '@/lib/catalyst-auth';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+} from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
+
+const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px" {...props}>
+        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+        <path fill="#4CAF50" d="M24,44c5.166,0,9.6-1.879,12.9-5.093l-5.657-5.657C30.046,35.947,27.21,37,24,37c-4.411,0-8.29-2.731-9.865-6.571l-6.571,4.819C9.656,40.971,16.318,44,24,44z" />
+        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l5.657,5.657C42.44,35.933,44,30.433,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+    </svg>
+);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,55 +41,70 @@ export default function LoginPage() {
   const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
   const handleAuthAction = async () => {
     setError(null);
+    setIsLoading(true);
     try {
-      let result;
       if (isSignUp) {
         if (!name || !email || !password) {
           setError("Please fill in all fields for sign up.");
+          setIsLoading(false);
           return;
         }
-        result = await createUserWithEmailAndPassword(name, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
+        
         toast({
           title: "Account Created",
           description: "Welcome! You can now log in.",
         });
-        // Switch to login view after successful registration
         setIsSignUp(false); 
-        setPassword(''); // Clear password field
+        setPassword('');
       } else {
-        result = await signInWithEmailAndPassword(email, password);
-        if (result && result.data?.user) {
-             // Simulate session management
-            sessionStorage.setItem('catalyst_user', JSON.stringify({
-                uid: result.data.user.user_id,
-                email: result.data.user.email_address,
-                displayName: result.data.user.name,
-            }));
-            router.push('/dashboard');
-        } else {
-            throw new Error(result.message || "Login failed. Please check your credentials.");
-        }
+        await signInWithEmailAndPassword(auth, email, password);
+        router.push('/dashboard');
       }
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      handleFirebaseError(err);
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  const handleZohoSignIn = async () => {
+  const handleGoogleSignIn = async () => {
     setError(null);
+    setIsGoogleLoading(true);
     try {
-      // This will redirect the user to the Zoho login page.
-      // The server-side will handle the callback and token exchange.
-      await signInWithZoho();
+      await signInWithPopup(auth, googleProvider);
+      router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Zoho sign-in failed. Please try again.');
+      handleFirebaseError(err);
+    } finally {
+        setIsGoogleLoading(false);
     }
   };
+
+  const handleFirebaseError = (err: any) => {
+    let message = "An unexpected error occurred.";
+    switch (err.code) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+            message = "Invalid credentials. Please check your email and password.";
+            break;
+        case 'auth/email-already-in-use':
+            message = "This email is already registered. Please log in.";
+            break;
+        case 'auth/weak-password':
+            message = "Password should be at least 6 characters long.";
+            break;
+    }
+    setError(message);
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary p-4">
@@ -140,7 +170,8 @@ export default function LoginPage() {
               </Button>
             </div>
           </div>
-           <Button className="w-full" onClick={handleAuthAction}>
+           <Button className="w-full" onClick={handleAuthAction} disabled={isLoading || isGoogleLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSignUp ? "Sign Up" : "Login"}
           </Button>
 
@@ -155,8 +186,9 @@ export default function LoginPage() {
                 </div>
             </div>
             
-             <Button variant="outline" className="w-full" onClick={handleZohoSignIn}>
-                Sign in with Zoho
+             <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2" />}
+                Sign in with Google
             </Button>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 px-6 pb-6">

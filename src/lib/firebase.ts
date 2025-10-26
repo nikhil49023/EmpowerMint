@@ -1,10 +1,8 @@
 
-// This file is no longer the primary source for Firebase services.
-// The app has been refactored to use Zoho Catalyst for authentication.
-// Firestore logic remains but depends on a user ID from the new auth system.
-
-import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgHs-SMz1uWVineex7tjZBWy9steLQiCc",
@@ -15,16 +13,18 @@ const firebaseConfig = {
   appId: "1:1017273967743:web:64f163722cb5e56f2e4b4a"
 };
 
-let app: FirebaseApp;
-let db: Firestore;
 
-if (getApps().length === 0) {
+// Initialize Firebase
+let app: FirebaseApp;
+if (!getApps().length) {
   app = initializeApp(firebaseConfig);
 } else {
-  app = getApps()[0];
+  app = getApp();
 }
 
-db = getFirestore(app);
+const db: Firestore = getFirestore(app);
+const auth: Auth = getAuth(app);
+const storage = getStorage(app);
+const googleProvider = new GoogleAuthProvider();
 
-// Auth is no longer exported from here
-export { app, db };
+export { app, db, auth, storage, googleProvider };

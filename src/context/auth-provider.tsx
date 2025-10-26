@@ -2,14 +2,9 @@
 'use client';
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import { onAuthStateChanged, signOut as firebaseSignOut, User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
-import { signOut as catalystSignOut } from '@/lib/catalyst-auth';
-
-interface User {
-  uid: string;
-  email: string;
-  displayName?: string;
-}
 
 interface AuthContextType {
   user: User | null;
@@ -24,23 +19,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real Catalyst app, you'd check for a session or token here.
-    // For now, we simulate checking session storage.
-    try {
-      const storedUser = sessionStorage.getItem('catalyst_user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (e) {
-      console.error('Failed to parse user from session storage', e);
-      sessionStorage.removeItem('catalyst_user');
-    }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   const signOut = async () => {
-    await catalystSignOut();
-    sessionStorage.removeItem('catalyst_user');
+    await firebaseSignOut(auth);
     setUser(null);
   };
 
