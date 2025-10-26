@@ -7,7 +7,6 @@ import Sidebar from '@/components/financify/sidebar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { Inter } from 'next/font/google';
-import AIAdvisorFab from '@/components/financify/ai-advisor-fab';
 import { AuthProvider, useAuth } from '@/context/auth-provider';
 import { LanguageProvider } from '@/context/language-provider';
 import AppHeader from '@/components/financify/app-header';
@@ -57,7 +56,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
-      <AIAdvisorFab />
       <BottomNavbar />
       <Toaster />
     </div>
