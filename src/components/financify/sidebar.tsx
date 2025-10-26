@@ -9,8 +9,6 @@ import {
   BrainCircuit,
   Rocket,
   Globe,
-  MessageSquare,
-  Lightbulb,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -34,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/hooks/use-language';
-import { auth } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-provider';
 
 type SidebarProps = {
   onLinkClick?: () => void;
@@ -44,6 +42,8 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, translations } = useLanguage();
+  const { signOut } = useAuth();
+
 
   const navItems = [
     { href: '/dashboard', label: translations.sidebar.dashboard, icon: Home },
@@ -61,7 +61,7 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
   ];
 
   const handleLogout = () => {
-    auth.signOut();
+    signOut();
     router.push('/');
   };
 
@@ -145,10 +145,14 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
         </DropdownMenu>
         <Button
           variant="ghost"
+          asChild
           className="w-full justify-start text-muted-foreground font-normal hover:text-primary hover:bg-primary/10"
+          onClick={handleLinkClick}
         >
-          <User className="mr-3 h-5 w-5" />
-          {translations.sidebar.myProfile}
+          <Link href="/profile">
+            <User className="mr-3 h-5 w-5" />
+            {translations.sidebar.myProfile}
+          </Link>
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>

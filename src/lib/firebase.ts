@@ -1,10 +1,11 @@
 
-// Import the functions you need from the SDKs you need
+// This file is no longer the primary source for Firebase services.
+// The app has been refactored to use Zoho Catalyst for authentication.
+// Firestore logic remains but depends on a user ID from the new auth system.
+
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBgHs-SMz1uWVineex7tjZBWy9steLQiCc",
   authDomain: "studio-7694557123-a611b.firebaseapp.com",
@@ -15,7 +16,6 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-let auth: Auth;
 let db: Firestore;
 
 if (getApps().length === 0) {
@@ -24,8 +24,7 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-auth = getAuth(app);
 db = getFirestore(app);
 
-// No longer exporting initializeFirebase as it's run directly here.
-export { app, auth, db };
+// Auth is no longer exported from here
+export { app, db };

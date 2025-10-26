@@ -31,8 +31,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { FormattedText } from '@/components/financify/formatted-text';
-import { auth, db } from '@/lib/firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import {
   collection,
@@ -64,7 +64,7 @@ function InvestmentIdeaContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
   const { toast } = useToast();
   const { translations } = useLanguage();
 
@@ -117,7 +117,7 @@ function InvestmentIdeaContent() {
         return;
       }
       if (!user) {
-        // If user is not logged in, just generate, don't cache.
+        // If user is not logged in, just generate, don't check cache or save.
         setIsLoading(true);
         const result = await generateInvestmentIdeaAnalysisAction({ idea });
         if (result.success) {

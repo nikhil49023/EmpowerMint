@@ -13,15 +13,21 @@ import { Button } from '../ui/button';
 import { MessageSquare } from 'lucide-react';
 import AIAdvisorChat from './ai-advisor-chat';
 import { useLanguage } from '@/hooks/use-language';
+import { useAuth } from '@/context/auth-provider';
 
 export default function AIAdvisorFab() {
   const { translations } = useLanguage();
+  const { user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <Sheet>
       <SheetTrigger asChild>
         <Button
-          className="fixed bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
+          className="fixed bottom-20 md:bottom-8 right-8 h-16 w-16 rounded-full shadow-lg"
           size="icon"
         >
           <MessageSquare className="h-8 w-8" />

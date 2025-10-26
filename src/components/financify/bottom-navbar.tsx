@@ -6,10 +6,12 @@ import { usePathname } from 'next/navigation';
 import { Home, Wallet, BrainCircuit, Rocket, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/hooks/use-language';
+import { useAuth } from '@/context/auth-provider';
 
 export default function BottomNavbar() {
   const pathname = usePathname();
   const { translations } = useLanguage();
+  const { user } = useAuth();
 
   const navItems = [
     { href: '/dashboard', label: translations.sidebar.dashboard, icon: Home },
@@ -18,6 +20,10 @@ export default function BottomNavbar() {
     { href: '/launchpad', label: translations.sidebar.launchpad, icon: Rocket },
     { href: '/profile', label: translations.sidebar.myProfile, icon: User },
   ];
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-card border-t print:hidden">

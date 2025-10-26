@@ -61,8 +61,8 @@ import { useToast } from '@/hooks/use-toast';
 import { extractTransactionsAction } from '../actions';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { cn } from '@/lib/utils';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-provider';
+import { db } from '@/lib/firebase';
 import {
   collection,
   addDoc,
@@ -84,12 +84,14 @@ import {
 } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { useLanguage } from '@/hooks/use-language';
+import { useRouter } from 'next/navigation';
 
 export default function TransactionsPage() {
-  const [user, loadingAuth] = useAuthState(auth);
+  const { user, loading: loadingAuth } = useAuth();
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const { translations } = useLanguage();
+  const router = useRouter();
 
   const [newTransaction, setNewTransaction] = useState({
     description: '',
@@ -189,8 +191,9 @@ export default function TransactionsPage() {
     } else if (!loadingAuth) {
       setLoadingData(false);
       setTransactions([]);
+      router.push('/');
     }
-  }, [user, loadingAuth]);
+  }, [user, loadingAuth, router]);
 
 
   const handleClearData = async () => {

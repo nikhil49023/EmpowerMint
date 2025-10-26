@@ -1,10 +1,8 @@
 
 'use client';
 
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -13,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User, LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,14 +24,15 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/hooks/use-language';
+import { useAuth } from '@/context/auth-provider';
 
 export default function ProfilePage() {
-  const [user, loading] = useAuthState(auth);
+  const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const { translations } = useLanguage();
 
   const handleLogout = () => {
-    auth.signOut();
+    signOut();
     router.push('/');
   };
 
@@ -56,7 +55,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    router.push('/login');
+    router.push('/');
     return null;
   }
 

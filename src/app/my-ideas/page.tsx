@@ -2,14 +2,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { useAuth } from '@/context/auth-provider';
 import {
   collection,
   query,
   orderBy,
   onSnapshot,
 } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import {
   Card,
   CardContent,
@@ -29,7 +29,6 @@ import {
 } from '@/firebase/errors';
 import { useLanguage } from '@/hooks/use-language';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
 
 type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
   id: string;
@@ -40,7 +39,7 @@ type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
 };
 
 export default function MyIdeasPage() {
-  const [user, loadingAuth] = useAuthState(auth);
+  const { user, loading: loadingAuth } = useAuth();
   const [ideas, setIdeas] = useState<SavedIdea[]>([]);
   const [loadingIdeas, setLoadingIdeas] = useState(true);
   const { translations } = useLanguage();
@@ -75,8 +74,9 @@ export default function MyIdeasPage() {
       return () => unsubscribe();
     } else if (!loadingAuth) {
       setLoadingIdeas(false);
+      router.push('/');
     }
-  }, [user, loadingAuth]);
+  }, [user, loadingAuth, router]);
 
   const handleBuildDpr = (idea: GenerateInvestmentIdeaAnalysisOutput) => {
     if (!idea || !user) return;

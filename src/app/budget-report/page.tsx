@@ -2,13 +2,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { useAuth } from '@/context/auth-provider';
 import {
   collection,
   query,
   onSnapshot,
 } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import {
   Card,
   CardContent,
@@ -32,9 +32,10 @@ import {
 } from '@/firebase/errors';
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
+import { useRouter } from 'next/navigation';
 
 export default function BudgetReportPage() {
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
   const [report, setReport] = useState<GenerateBudgetReportOutput | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +43,7 @@ export default function BudgetReportPage() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     if (user) {
@@ -70,8 +72,9 @@ export default function BudgetReportPage() {
       return () => unsubscribe();
     } else {
       setIsLoading(false);
+      router.push('/');
     }
-  }, [user]);
+  }, [user, router]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;

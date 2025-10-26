@@ -2,15 +2,15 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { FileText, FileDown, ArrowLeft, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormattedText } from '@/components/financify/formatted-text';
 import Link from 'next/link';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-provider';
+import { db } from '@/lib/firebase';
 import { collection, getDocs, doc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
@@ -40,10 +40,11 @@ const dprChapterTitles = [
 
 function DPRReportContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [report, setReport] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
   const ideaTitle = searchParams.get('idea');
   const promoterName = user?.displayName || 'Entrepreneur';
 
@@ -52,6 +53,7 @@ function DPRReportContent() {
       if (!user || !ideaTitle) {
         setError('Could not load report. User or idea is missing.');
         setIsLoading(false);
+        if (!user) router.push('/');
         return;
       }
       setIsLoading(true);
@@ -83,7 +85,7 @@ function DPRReportContent() {
     };
 
     fetchReport();
-  }, [user, ideaTitle]);
+  }, [user, ideaTitle, router]);
 
   const handleExport = () => {
     window.print();

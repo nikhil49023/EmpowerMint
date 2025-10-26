@@ -43,8 +43,7 @@ import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/hooks/use-language';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-provider';
 
 const investmentIdeaCategories = {
   'AgriTech & Food Processing': {
@@ -94,7 +93,7 @@ export default function BrainstormPage() {
   const [userIdea, setUserIdea] = useState('');
   const router = useRouter();
   const { translations } = useLanguage();
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
   const [showLimitAlert, setShowLimitAlert] = useState(false);
 
   const handleAnalyzeIdea = () => {
@@ -109,6 +108,7 @@ export default function BrainstormPage() {
 
     if (!user) {
       toast({ variant: 'destructive', description: 'Please log in to analyze an idea.'});
+      router.push('/');
       return;
     }
 

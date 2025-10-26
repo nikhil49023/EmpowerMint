@@ -10,8 +10,8 @@ import { askAIAdvisorAction } from '@/app/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-provider';
+import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
@@ -40,7 +40,7 @@ export default function AIAdvisorChat({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
-  const [user, loadingAuth] = useAuthState(auth);
+  const { user, loading: loadingAuth } = useAuth();
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
   const { translations } = useLanguage();
   const pathname = usePathname();

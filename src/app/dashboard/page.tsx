@@ -12,7 +12,6 @@ import {
   Film,
   Home,
   HeartPulse,
-  Info,
   Trash2,
   ShieldAlert,
   FilePieChart,
@@ -34,8 +33,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-provider';
+import { db } from '@/lib/firebase';
 import {
   collection,
   onSnapshot,
@@ -75,7 +74,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -104,7 +102,7 @@ type SavingsGoal = {
 };
 
 export default function DashboardPage() {
-  const [user, loadingAuth] = useAuthState(auth);
+  const { user, loading: loadingAuth } = useAuth();
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
   const [summary, setSummary] = useState<GenerateDashboardSummaryOutput | null>(
     null
@@ -223,6 +221,7 @@ export default function DashboardPage() {
       return () => unsubscribes.forEach(unsub => unsub());
     } else if (!loadingAuth) {
       // No user, reset all data
+      router.push('/');
       setIsLoading(false);
       setIsLoadingBudgets(false);
       setIsLoadingSavingsGoals(false);
@@ -230,7 +229,7 @@ export default function DashboardPage() {
       setBudgets([]);
       setSavingsGoals([]);
     }
-  }, [user, loadingAuth]);
+  }, [user, loadingAuth, router]);
 
   // Effect to generate summary when transactions change
   useEffect(() => {

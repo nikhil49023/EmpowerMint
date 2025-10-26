@@ -14,175 +14,60 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useLanguage } from '@/hooks/use-language';
-import { errorEmitter } from '@/firebase/error-emitter';
-import {
-  FirestorePermissionError,
-  type SecurityRuleContext,
-} from '@/firebase/errors';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Eye, EyeOff } from 'lucide-react';
-
-const indianStates = [
-  'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
-];
-
-const GoogleIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px">
-    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
-    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
-    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
-    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571l6.19,5.238C42.012,36.49,44,30.651,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
-  </svg>
-);
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from '@/lib/catalyst-auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [age, setAge] = useState('');
-  const [occupation, setOccupation] = useState('');
-  const [annualIncome, setAnnualIncome] = useState('');
-  const [state, setState] = useState('');
-  const [district, setDistrict] = useState('');
-
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { translations } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
-
-  const handleGoogleSignIn = async () => {
-    setError(null);
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const userDocRef = doc(db, 'users', user.uid);
-      
-      const docSnap = await getDoc(userDocRef).catch(serverError => {
-        const permissionError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'get',
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        throw serverError; // re-throw to be caught by outer try-catch
-      });
-
-      if (!docSnap.exists()) {
-        const newUser = {
-          name: user.displayName || '',
-          email: user.email,
-          age: '',
-          occupation: '',
-          annualIncome: '',
-          state: '',
-          district: '',
-        };
-        setDoc(userDocRef, newUser).catch(async serverError => {
-          const permissionError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'create',
-            requestResourceData: newUser,
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-        });
-      }
-
-      toast({
-        title: translations.loginPage.accountCreated,
-        description: translations.loginPage.welcome,
-      });
-      router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
 
   const handleAuthAction = async () => {
     setError(null);
     try {
+      let result;
       if (isSignUp) {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          email,
-          password
-        );
-        const user = userCredential.user;
-        const userDocRef = doc(db, 'users', user.uid);
-        const newUser = {
-          name,
-          age,
-          occupation,
-          annualIncome,
-          state,
-          district,
-          email: user.email,
-        };
-
-        setDoc(userDocRef, newUser).catch(async serverError => {
-          const permissionError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'create',
-            requestResourceData: newUser,
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-        });
-
+        if (!name || !email || !password) {
+          setError("Please fill in all fields for sign up.");
+          return;
+        }
+        result = await createUserWithEmailAndPassword(name, email, password);
         toast({
-          title: translations.loginPage.accountCreated,
-          description: translations.loginPage.welcome,
+          title: "Account Created",
+          description: "Welcome! You can now log in.",
         });
-        router.push('/dashboard');
+        // Switch to login view after successful registration
+        setIsSignUp(false); 
+        setPassword(''); // Clear password field
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        router.push('/dashboard');
+        result = await signInWithEmailAndPassword(email, password);
+        if (result && result.data?.user) {
+             // Simulate session management
+            sessionStorage.setItem('catalyst_user', JSON.stringify({
+                uid: result.data.user.user_id,
+                email: result.data.user.email_address,
+                displayName: result.data.user.name,
+            }));
+            router.push('/dashboard');
+        } else {
+            throw new Error(result.message || "Login failed. Please check your credentials.");
+        }
       }
     } catch (err: any) {
-      let errorMessage = translations.loginPage.error.unexpected;
-      switch (err.code) {
-        case 'auth/user-not-found':
-          errorMessage = translations.loginPage.error.userNotFound;
-          break;
-        case 'auth/wrong-password':
-          errorMessage = translations.loginPage.error.wrongPassword;
-          break;
-        case 'auth/email-already-in-use':
-          errorMessage = translations.loginPage.error.emailInUse;
-          break;
-        case 'auth/weak-password':
-          errorMessage = translations.loginPage.error.weakPassword;
-          break;
-        default:
-          errorMessage = err.message;
-          break;
-      }
-      setError(errorMessage);
+      setError(err.message || "An unexpected error occurred.");
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary p-4">
       <Card className="w-full max-w-md">
-      <ScrollArea className="h-[85vh] sm:h-auto">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-primary">
@@ -191,12 +76,12 @@ export default function LoginPage() {
             </svg>
           </div>
           <CardTitle className="text-2xl">
-            {isSignUp ? translations.loginPage.signUpTitle : translations.loginPage.title}
+            {isSignUp ? "Create an Account" : "Welcome to FIn-Box"}
           </CardTitle>
           <CardDescription>
             {isSignUp
-              ? translations.loginPage.signUpDescription
-              : translations.loginPage.description}
+              ? "Enter your details to get started."
+              : "Enter your credentials to access your dashboard."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 px-6">
@@ -206,65 +91,17 @@ export default function LoginPage() {
             </Alert>
           )}
           {isSignUp && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="name">{translations.loginPage.nameLabel}</Label>
-                <Input id="name" placeholder={translations.loginPage.namePlaceholder} required={isSignUp} value={name} onChange={e => setName(e.target.value)} suppressHydrationWarning />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="age">{translations.loginPage.ageLabel}</Label>
-                  <Input id="age" type="number" placeholder="25" required={isSignUp} value={age} onChange={e => setAge(e.target.value)} suppressHydrationWarning />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="occupation">{translations.loginPage.occupationLabel}</Label>
-                  <Select onValueChange={setOccupation} value={occupation}>
-                    <SelectTrigger id="occupation" suppressHydrationWarning>
-                      <SelectValue placeholder={translations.loginPage.occupationPlaceholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="public">{translations.loginPage.publicSector}</SelectItem>
-                      <SelectItem value="private">{translations.loginPage.privateSector}</SelectItem>
-                      <SelectItem value="student">{translations.loginPage.student}</SelectItem>
-                      <SelectItem value="self-employed">{translations.loginPage.selfEmployed}</SelectItem>
-                      <SelectItem value="other">{translations.loginPage.other}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="annualIncome">{translations.loginPage.annualIncomeLabel}</Label>
-                <Input id="annualIncome" type="number" placeholder="500000" required={isSignUp} value={annualIncome} onChange={e => setAnnualIncome(e.target.value)} suppressHydrationWarning />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="state">{translations.loginPage.stateLabel}</Label>
-                  <Select onValueChange={setState} value={state}>
-                    <SelectTrigger id="state" suppressHydrationWarning>
-                      <SelectValue placeholder={translations.loginPage.statePlaceholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {indianStates.map(stateName => (
-                        <SelectItem key={stateName} value={stateName}>
-                          {stateName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="district">{translations.loginPage.districtLabel}</Label>
-                  <Input id="district" placeholder={translations.loginPage.districtPlaceholder} required={isSignUp} value={district} onChange={e => setDistrict(e.target.value)} suppressHydrationWarning />
-                </div>
-              </div>
-            </>
+            <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" placeholder="John Doe" required={isSignUp} value={name} onChange={e => setName(e.target.value)} />
+            </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">{translations.loginPage.emailLabel}</Label>
-            <Input id="email" type="email" placeholder={translations.loginPage.emailPlaceholder} required value={email} onChange={e => setEmail(e.target.value)} suppressHydrationWarning />
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">{translations.loginPage.passwordLabel}</Label>
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -272,7 +109,6 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                suppressHydrationWarning
                 className="pr-10"
               />
               <Button
@@ -295,34 +131,17 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4 px-6 pb-6">
-          <Button className="w-full" onClick={handleAuthAction} suppressHydrationWarning>
-            {isSignUp ? translations.loginPage.signUpButton : translations.loginPage.loginButton}
-          </Button>
-
-          <div className="relative w-full">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                {translations.loginPage.continueWith}
-              </span>
-            </div>
-          </div>
-
-          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} suppressHydrationWarning >
-            <GoogleIcon />
-            <span className="ml-2">{translations.loginPage.googleSignIn}</span>
+          <Button className="w-full" onClick={handleAuthAction}>
+            {isSignUp ? "Sign Up" : "Login"}
           </Button>
 
           <p className="text-xs text-center text-muted-foreground pt-4">
-            {isSignUp ? translations.loginPage.haveAccount : translations.loginPage.dontHaveAccount}{' '}
-            <Button variant="link" className="p-0 h-auto text-primary" onClick={() => { setIsSignUp(!isSignUp); setError(null); }} suppressHydrationWarning >
-              {isSignUp ? translations.loginPage.loginButton : translations.loginPage.signUpButton}
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}{' '}
+            <Button variant="link" className="p-0 h-auto text-primary" onClick={() => { setIsSignUp(!isSignUp); setError(null); }}>
+              {isSignUp ? "Login" : "Sign Up"}
             </Button>
           </p>
         </CardFooter>
-      </ScrollArea>
       </Card>
     </div>
   );

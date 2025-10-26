@@ -6,9 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import Sidebar from './sidebar';
+import { useAuth } from '@/context/auth-provider';
 
 export default function AppHeader() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { user } = useAuth();
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 z-10 flex h-16 flex-shrink-0 items-center justify-between border-b bg-background/80 backdrop-blur-lg px-4 print:hidden">
@@ -42,7 +48,7 @@ export default function AppHeader() {
         </svg>
         <div>
           <h1 className="text-lg font-bold">FIn-Box</h1>
-          <p className="text-xs text-muted-foreground">Good Evening, there!</p>
+          <p className="text-xs text-muted-foreground">Welcome, {user?.displayName || 'there'}!</p>
         </div>
       </div>
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>

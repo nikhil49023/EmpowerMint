@@ -19,8 +19,8 @@ import Link from 'next/link';
 import { generateDprSectionAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
+import { useAuth } from '@/context/auth-provider';
+import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
@@ -60,7 +60,7 @@ function GenerateDPRContent() {
   const router = useRouter();
   const { toast } = useToast();
   const idea = searchParams.get('idea');
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -108,6 +108,7 @@ function GenerateDPRContent() {
   const handleGenerateDPR = async () => {
       if(!user) {
           toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to generate a DPR.' });
+          router.push('/');
           return;
       }
       setIsGenerating(true);
