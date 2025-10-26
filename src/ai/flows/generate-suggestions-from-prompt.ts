@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -23,7 +24,7 @@ const GenerateSuggestionsFromPromptOutputSchema = z.object({
   componentSuggestions: z.array(z.string()).describe('A list of suggested UI components.'),
   stylingSuggestions: z.string().describe('A suggestion for the styling of the UI components.'),
 });
-export type GenerateSuggestionsFromPromptOutput = z.infer<typeof GenerateSuggestionsFromPromptOutputSchema>;
+type GenerateSuggestionsFromPromptOutput = z.infer<typeof GenerateSuggestionsFromPromptOutputSchema>;
 
 export async function generateSuggestionsFromPrompt(
   input: GenerateSuggestionsFromPromptInput

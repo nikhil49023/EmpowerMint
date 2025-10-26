@@ -21,7 +21,7 @@ import {
 export type GenerateDashboardSummaryInput = z.infer<
   typeof GenerateDashboardSummaryInputSchema
 >;
-export type GenerateDashboardSummaryOutput = z.infer<
+type GenerateDashboardSummaryOutput = z.infer<
   typeof GenerateDashboardSummaryOutputSchema
 >;
 

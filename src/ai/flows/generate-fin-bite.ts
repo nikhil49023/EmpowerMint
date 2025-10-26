@@ -16,7 +16,7 @@ const GenerateFinBiteOutputSchema = z.object({
   title: z.string().describe('The name of the scheme or policy.'),
   summary: z.string().describe('A brief, easy-to-understand summary of its key benefits for an early-stage entrepreneur.'),
 });
-export type GenerateFinBiteOutput = z.infer<
+type GenerateFinBiteOutput = z.infer<
   typeof GenerateFinBiteOutputSchema
 >;
 

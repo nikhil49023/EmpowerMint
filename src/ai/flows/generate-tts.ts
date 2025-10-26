@@ -10,15 +10,15 @@ import { z } from 'genkit';
 import wav from 'wav';
 import { googleAI } from '@genkit-ai/google-genai';
 
-export const GenerateTtsInputSchema = z.object({
+const GenerateTtsInputSchema = z.object({
   text: z.string().describe('The text to convert to speech.'),
 });
 export type GenerateTtsInput = z.infer<typeof GenerateTtsInputSchema>;
 
-export const GenerateTtsOutputSchema = z.object({
+const GenerateTtsOutputSchema = z.object({
   audioDataUri: z.string().describe('The generated audio as a data URI.'),
 });
-export type GenerateTtsOutput = z.infer<typeof GenerateTtsOutputSchema>;
+type GenerateTtsOutput = z.infer<typeof GenerateTtsOutputSchema>;
 
 export async function generateTts(
   input: GenerateTtsInput

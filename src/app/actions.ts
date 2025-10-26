@@ -4,7 +4,6 @@
 import {
   generateSuggestionsFromPrompt,
   GenerateSuggestionsFromPromptInput,
-  GenerateSuggestionsFromPromptOutput,
 } from '@/ai/flows/generate-suggestions-from-prompt';
 import { extractTransactionsFromDocument } from '@/ai/flows/extract-transactions-from-document';
 import type {
@@ -12,7 +11,8 @@ import type {
   ExtractTransactionsOutput,
 } from '@/ai/schemas/transactions';
 import { generateDashboardSummary } from '@/ai/flows/generate-dashboard-summary';
-import type { GenerateDashboardSummaryOutput } from '@/ai/flows/generate-dashboard-summary';
+import type { GenerateDashboardSummaryInput } from '@/ai/flows/generate-dashboard-summary';
+import type { GenerateDashboardSummaryOutput } from '@/ai/schemas/dashboard-summary';
 import { generateInvestmentIdeaAnalysis } from '@/ai/flows/generate-investment-idea-analysis';
 import type {
   GenerateInvestmentIdeaAnalysisInput,
@@ -20,6 +20,7 @@ import type {
 } from '@/ai/schemas/sarvam-schemas';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import {
+  generateFinancialAdvice,
   type GenerateFinancialAdviceInput,
   type GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
@@ -35,17 +36,17 @@ import {
 } from '@/ai/flows/generate-dpr-section';
 import {
   generateEmergencyFundSuggestion,
-  type GenerateEmergencyFundSuggestionInput,
-  type GenerateEmergencyFundSuggestionOutput,
 } from '@/ai/flows/generate-emergency-fund-recommendation';
+import type { GenerateEmergencyFundSuggestionInput, GenerateEmergencyFundSuggestionOutput } from '@/ai/schemas/savings-goal';
 import {
   generateFinBite,
-  type GenerateFinBiteOutput,
 } from '@/ai/flows/generate-fin-bite';
-
+import type { GenerateFinBiteOutput } from '@/ai/flows/generate-fin-bite';
 import { generateBudgetReport } from '@/ai/flows/generate-budget-report';
-import type { GenerateBudgetReportInput, GenerateBudgetReportOutput } from '@/ai/schemas/sarvam-schemas';
-
+import type {
+  GenerateBudgetReportInput,
+  GenerateBudgetReportOutput,
+} from '@/ai/schemas/sarvam-schemas';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -58,7 +59,7 @@ import { db } from '@/lib/firebase';
 export async function generateSuggestionsAction(
   input: GenerateSuggestionsFromPromptInput
 ): Promise<
-  | { success: true; data: GenerateSuggestionsFromPromptOutput }
+  | { success: true; data: any }
   | { success: false; error: string }
 > {
   try {
@@ -133,14 +134,16 @@ export async function askAIAdvisorAction(
   | { success: true; data: GenerateFinancialAdviceOutput }
   | { success: false; error: string }
 > {
-  // The AI logic has been removed as per the user's request.
-  // Return a static response.
-  return {
-    success: true,
-    data: {
-      advice: "I'm sorry, the AI advisor is currently unavailable.",
-    },
-  };
+  try {
+    const result = await generateFinancialAdvice(input);
+    return { success: true, data: result };
+  } catch (error: any) {
+    console.error('Error in askAIAdvisorAction:', error);
+    return {
+      success: false,
+      error: `Failed to get advice from AI: ${error.message}`,
+    };
+  }
 }
 
 export async function generateDprAction(
@@ -160,7 +163,6 @@ export async function generateDprAction(
     };
   }
 }
-
 
 export async function generateDprSectionAction(
   input: GenerateDprSectionInput

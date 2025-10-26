@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Zod schemas and TypeScript types for the savings goal recommendation.
  */
@@ -8,6 +9,7 @@ export const GenerateEmergencyFundSuggestionInputSchema = z.object({
   totalIncome: z.number().describe('The user\'s total monthly income.'),
   totalExpenses: z.number().describe('The user\'s total monthly expenses.'),
 });
+export type GenerateEmergencyFundSuggestionInput = z.infer<typeof GenerateEmergencyFundSuggestionInputSchema>;
 
 export const GenerateEmergencyFundSuggestionOutputSchema = z.object({
   recommendedAmount: z
@@ -17,3 +19,4 @@ export const GenerateEmergencyFundSuggestionOutputSchema = z.object({
     .string()
     .describe('A brief explanation for the recommended amount.'),
 });
+export type GenerateEmergencyFundSuggestionOutput = z.infer<typeof GenerateEmergencyFundSuggestionOutputSchema>;
