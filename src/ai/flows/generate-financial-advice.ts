@@ -17,7 +17,7 @@ const GenerateFinancialAdviceInputSchema = z.object({
     .optional()
     .describe("An optional array of the user's financial transactions."),
 });
-export type GenerateFinancialAdviceInput = z.infer<
+type GenerateFinancialAdviceInput = z.infer<
   typeof GenerateFinancialAdviceInputSchema
 >;
 
@@ -26,7 +26,7 @@ const GenerateFinancialAdviceOutputSchema = z.object({
     .string()
     .describe('A simple, crisp, and concise response to the user\'s query.'),
 });
-export type GenerateFinancialAdviceOutput = z.infer<
+type GenerateFinancialAdviceOutput = z.infer<
   typeof GenerateFinancialAdviceOutputSchema
 >;
 
@@ -67,7 +67,7 @@ Provide a simple, crisp, and concise answer.`;
           {
             role: 'system',
             content:
-              'You are "FIn-Box", a friendly and helpful AI financial advisor for entrepreneurs in India. Your goal is to provide clear, simple, and actionable financial advice. Keep your answers concise.',
+              'You are "FIn-Box", a friendly and helpful AI financial advisor for entrepreneurs in India, powered by SarvamAI. Your goal is to provide clear, simple, and actionable financial advice. Keep your answers concise and always start your response by mentioning you are using SarvamAI.',
           },
           { role: 'user', content: userPrompt },
         ],
