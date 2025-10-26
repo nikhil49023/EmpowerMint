@@ -14,6 +14,7 @@ import {
   type GenerateBudgetReportInput,
   type GenerateBudgetReportOutput,
 } from '@/ai/schemas/sarvam-schemas';
+import { SarvamAIClient } from 'sarvamai';
 
 // This is the exported function that the UI will call.
 export async function generateBudgetReport(
@@ -54,28 +55,18 @@ Example of expenseBreakdown:
 Provide only the JSON object in your response.`;
 
     try {
-      const response = await fetch('https://api.sarvam.ai/text-generation/v1/chat-completion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SARVAM_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'sarvam-2b-v0.3',
-          messages: [{ role: 'system', content: prompt }],
-          max_tokens: 1024,
-          temperature: 0.2,
-        }),
+      const client = new SarvamAIClient({
+        apiSubscriptionKey: process.env.SARVAM_API_KEY,
+      });
+      
+      const response = await client.chat.completions({
+        model: 'sarvam-2b-v0.3',
+        messages: [{ role: 'system', content: prompt }],
+        max_tokens: 1024,
+        temperature: 0.2,
       });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("SarvamAI API request failed:", response.status, errorBody);
-        throw new Error(`SarvamAI API request failed with status ${response.status}`);
-      }
-      
-      const responseData = await response.json();
-      const content = responseData.choices[0]?.message?.content;
+      const content = response.choices[0]?.message?.content;
       
       if (!content) {
         throw new Error("Received empty content from AI service.");
