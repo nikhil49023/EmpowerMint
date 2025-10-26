@@ -40,3 +40,13 @@ export async function signOut() {
   // For now, we'll just clear client state.
   return Promise.resolve();
 }
+
+export async function signInWithZoho() {
+  // This is a placeholder. In a real app, this would redirect
+  // to the Zoho authentication URL. The backend would handle the callback.
+  console.log('Redirecting to Zoho for authentication...');
+  // Example: window.location.href = 'https://accounts.zoho.com/oauth/v2/auth?scope=...&client_id=...&redirect_uri=...';
+  
+  // For now, we'll simulate a failed login for demonstration purposes.
+  return Promise.reject(new Error("Zoho Sign-In is not configured yet. This is a placeholder."));
+}

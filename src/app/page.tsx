@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff } from 'lucide-react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from '@/lib/catalyst-auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithZoho } from '@/lib/catalyst-auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -62,6 +62,17 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
+    }
+  };
+  
+  const handleZohoSignIn = async () => {
+    setError(null);
+    try {
+      // This will redirect the user to the Zoho login page.
+      // The server-side will handle the callback and token exchange.
+      await signInWithZoho();
+    } catch (err: any) {
+      setError(err.message || 'Zoho sign-in failed. Please try again.');
     }
   };
 
@@ -129,12 +140,26 @@ export default function LoginPage() {
               </Button>
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4 px-6 pb-6">
-          <Button className="w-full" onClick={handleAuthAction}>
+           <Button className="w-full" onClick={handleAuthAction}>
             {isSignUp ? "Sign Up" : "Login"}
           </Button>
 
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                    </span>
+                </div>
+            </div>
+            
+             <Button variant="outline" className="w-full" onClick={handleZohoSignIn}>
+                Sign in with Zoho
+            </Button>
+        </CardContent>
+        <CardFooter className="flex flex-col gap-4 px-6 pb-6">
           <p className="text-xs text-center text-muted-foreground pt-4">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{' '}
             <Button variant="link" className="p-0 h-auto text-primary" onClick={() => { setIsSignUp(!isSignUp); setError(null); }}>
