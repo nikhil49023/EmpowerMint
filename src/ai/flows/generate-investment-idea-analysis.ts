@@ -27,9 +27,7 @@ const generateInvestmentIdeaAnalysisFlow = ai.defineFlow(
     outputSchema: GenerateInvestmentIdeaAnalysisOutputSchema,
   },
   async ({ idea }) => {
-    const prompt = `You are "FIn-Box," a specialized financial mentor for early-stage entrepreneurs in India.
-
-Your task is to provide a detailed, structured, and organized analysis of the following business idea:
+    const userPrompt = `Your task is to provide a detailed, structured, and organized analysis of the following business idea:
 "${idea}"
 
 Your response must be a valid JSON object that covers the following sections:
@@ -41,7 +39,6 @@ Your response must be a valid JSON object that covers the following sections:
 6.  **futureProofing**: Discuss the long-term viability of the business. Cover aspects like scalability, potential for product diversification, market trends, and a competitive landscape. Use simple, easy-to-understand language and **bold** important keywords and phrases.
 7.  **relevantSchemes**: Identify 2-3 relevant Indian government schemes (e.g., Startup India, MUDRA, CGTMSE) that could support this business. For each scheme, briefly explain its benefits and eligibility criteria. Use simple, easy-to-understand language and **bold** important keywords and phrases.
 
-The tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. 
 Provide only the JSON object in your response.`;
 
     try {
@@ -51,7 +48,10 @@ Provide only the JSON object in your response.`;
 
       const response = await client.chat.completions({
         model: 'sarvam-2b-v0.3',
-        messages: [{ role: 'system', content: prompt }],
+        messages: [
+          { role: 'system', content: 'You are "FIn-Box," a specialized financial mentor for early-stage entrepreneurs in India.' },
+          { role: 'user', content: userPrompt }
+        ],
         max_tokens: 4000,
         temperature: 0.7,
       });
@@ -61,8 +61,11 @@ Provide only the JSON object in your response.`;
       if (!content) {
         throw new Error('Received empty content from AI service.');
       }
+      
+      // The response might be wrapped in markdown, so let's clean it.
+      const jsonString = content.replace(/```json\n|```/g, '').trim();
+      const jsonResponse = JSON.parse(jsonString);
 
-      const jsonResponse = JSON.parse(content);
       const validationResult =
         GenerateInvestmentIdeaAnalysisOutputSchema.safeParse(jsonResponse);
 
@@ -77,6 +80,10 @@ Provide only the JSON object in your response.`;
       return validationResult.data;
     } catch (e: any) {
       console.error('Failed to process SarvamAI response:', e.message);
+      // Log the raw content for debugging if it exists
+      if (e instanceof SyntaxError) {
+          console.error("Raw content from AI:", (await new SarvamAIClient({apiSubscriptionKey: process.env.SARVAM_API_KEY}).chat.completions({model: 'sarvam-2b-v0.3', messages: [{role:'user', content: userPrompt}], max_tokens: 4000, temperature: 0.7})).choices[0]?.message?.content);
+      }
       throw new Error(
         `An error occurred while processing the AI response: ${e.message}`
       );

@@ -37,7 +37,7 @@ const generateBudgetReportFlow = ai.defineFlow(
       )
       .join('\n');
 
-    const prompt = `You are a financial analyst. Based on the following transactions, provide a spending analysis and an expense breakdown.
+    const userPrompt = `Based on the following transactions, provide a spending analysis and an expense breakdown.
 
 Transactions:
 ${transactionsText}
@@ -61,7 +61,10 @@ Provide only the JSON object in your response.`;
       
       const response = await client.chat.completions({
         model: 'sarvam-2b-v0.3',
-        messages: [{ role: 'system', content: prompt }],
+        messages: [
+            { role: 'system', content: 'You are a financial analyst.' },
+            { role: 'user', content: userPrompt }
+        ],
         max_tokens: 1024,
         temperature: 0.2,
       });
@@ -72,7 +75,10 @@ Provide only the JSON object in your response.`;
         throw new Error("Received empty content from AI service.");
       }
 
-      const jsonResponse = JSON.parse(content);
+      // The response might be wrapped in markdown, so let's clean it.
+      const jsonString = content.replace(/```json\n|```/g, '').trim();
+      const jsonResponse = JSON.parse(jsonString);
+
       const validationResult = GenerateBudgetReportOutputSchema.safeParse(jsonResponse);
       
       if (!validationResult.success) {
