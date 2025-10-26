@@ -42,9 +42,7 @@ import {
   generateFinBite,
   type GenerateFinBiteOutput,
 } from '@/ai/flows/generate-fin-bite';
-import {
-  generateBudgetReport,
-} from '@/ai/flows/generate-budget-report';
+
 import type { GenerateBudgetReportInput, GenerateBudgetReportOutput } from '@/ai/schemas/budget-report';
 
 
@@ -221,14 +219,8 @@ export async function generateBudgetReportAction(
   | { success: true; data: GenerateBudgetReportOutput }
   | { success: false; error: string }
 > {
-  try {
-    const result = await generateBudgetReport(input);
-    return { success: true, data: result };
-  } catch (error) {
-    console.error('Error in budget report action:', error);
-    return {
-      success: false,
-      error: 'Failed to generate budget report.',
-    };
-  }
+  return {
+    success: false,
+    error: 'The AI budget report feature is currently unavailable.',
+  };
 }
