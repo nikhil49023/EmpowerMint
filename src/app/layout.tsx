@@ -11,6 +11,11 @@ import { AuthProvider, useAuth } from '@/context/auth-provider';
 import { LanguageProvider } from '@/context/language-provider';
 import AppHeader from '@/components/financify/app-header';
 import BottomNavbar from '@/components/financify/bottom-navbar';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import AIAdvisorChat from '@/components/financify/ai-advisor-chat';
+import { MessagesSquare } from 'lucide-react';
+import { useState } from 'react';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -20,6 +25,7 @@ const inter = Inter({
 function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Special layout for the login page
   if (pathname === '/' || pathname === '/login' || !user) {
@@ -56,6 +62,25 @@ function AppContent({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+
+       {/* Floating AI Chat Button */}
+      <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
+        <SheetTrigger asChild>
+          <Button
+            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 h-14 w-14 rounded-full shadow-lg"
+            size="icon"
+          >
+            <MessagesSquare className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent className="w-full sm:w-[440px] p-0 flex flex-col">
+           <SheetHeader className="p-4 border-b">
+                <SheetTitle>AI Financial Advisor</SheetTitle>
+            </SheetHeader>
+          <AIAdvisorChat />
+        </SheetContent>
+      </Sheet>
+
       <BottomNavbar />
       <Toaster />
     </div>
