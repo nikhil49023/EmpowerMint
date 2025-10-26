@@ -20,7 +20,6 @@ import type {
 } from '@/ai/schemas/investment-idea-analysis';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import {
-  generateFinancialAdvice,
   type GenerateFinancialAdviceInput,
   type GenerateFinancialAdviceOutput,
 } from '@/ai/flows/generate-financial-advice';
@@ -135,16 +134,14 @@ export async function askAIAdvisorAction(
   | { success: true; data: GenerateFinancialAdviceOutput }
   | { success: false; error: string }
 > {
-  try {
-    const result = await generateFinancialAdvice(input);
-    return { success: true, data: result };
-  } catch (error) {
-    console.error(error);
-    return {
-      success: false,
-      error: 'Failed to get a response from the AI Advisor.',
-    };
-  }
+  // The AI logic has been removed as per the user's request.
+  // Return a static response.
+  return {
+    success: true,
+    data: {
+      advice: "I'm sorry, the AI advisor is currently unavailable.",
+    },
+  };
 }
 
 export async function generateDprAction(
