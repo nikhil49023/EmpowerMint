@@ -18,6 +18,12 @@ import {
   type GenerateInvestmentIdeaAnalysisInput,
   type GenerateInvestmentIdeaAnalysisOutput,
 } from '@/ai/schemas/investment-idea-analysis';
+import { SarvamAIClient } from 'sarvamai';
+
+// Initialize the SarvamAI client
+const sarvamClient = new SarvamAIClient({
+  apiSubscriptionKey: 'sk_rwksevkv_TwVnTobosDGGrfIGl7bvxhg6',
+});
 
 export async function generateInvestmentIdeaAnalysis(
   input: GenerateInvestmentIdeaAnalysisInput
@@ -25,39 +31,55 @@ export async function generateInvestmentIdeaAnalysis(
   return generateInvestmentIdeaAnalysisFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateInvestmentIdeaAnalysisPrompt',
-  input: { schema: GenerateInvestmentIdeaAnalysisInputSchema },
-  output: { schema: GenerateInvestmentIdeaAnalysisOutputSchema },
-  prompt: `You are "FIn-Box," a specialized financial mentor for early-stage entrepreneurs in India.
-
-  Your task is to provide a detailed, structured, and organized analysis of the following business idea:
-  "{{{idea}}}"
-
-  The analysis must be comprehensive and cover the following sections:
-  1.  **Title**: The name of the business idea.
-  2.  **Summary**: A brief overview of the business concept.
-  3.  **Investment Strategy**: Detail the required initial investment. Include estimates for equipment, raw materials, location (if applicable), and initial operational costs. Be specific about what an entrepreneur needs to get started.
-  4.  **Target Audience**: Describe the ideal customer for this business. Outline a basic marketing and distribution strategy suitable for an early-stage venture in India.
-  5.  **Return on Investment (ROI)**: Provide a realistic projection of potential revenue and profit. Explain the factors that influence profitability and a possible timeline to break even and achieve profitability.
-  6.  **Future Proofing**: Discuss the long-term viability of the business. Cover aspects like scalability, potential for product diversification, market trends, and a competitive landscape.
-  7.  **Relevant Government Schemes**: Identify 2-3 relevant Indian government schemes (e.g., Startup India, MUDRA, CGTMSE) that could support this business. For each scheme, briefly explain its benefits and eligibility criteria.
-
-  Your tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. 
-  
-  Use simple, easy-to-understand language and **bold** important keywords and phrases.
-
-  Ensure the output is in the specified JSON format.`,
-});
-
 const generateInvestmentIdeaAnalysisFlow = ai.defineFlow(
   {
     name: 'generateInvestmentIdeaAnalysisFlow',
     inputSchema: GenerateInvestmentIdeaAnalysisInputSchema,
     outputSchema: GenerateInvestmentIdeaAnalysisOutputSchema,
   },
-  async input => {
-    const { output } = await prompt(input);
-    return output!;
+  async ({ idea }) => {
+    // Construct a detailed prompt for SarvamAI
+    const prompt = `You are "FIn-Box," a specialized financial mentor for early-stage entrepreneurs in India.
+
+Your task is to provide a detailed, structured, and organized analysis of the following business idea:
+"${idea}"
+
+Your response must be a valid JSON object that covers the following sections:
+1.  **title**: The name of the business idea.
+2.  **summary**: A brief overview of the business concept.
+3.  **investmentStrategy**: Detail the required initial investment. Include estimates for equipment, raw materials, location (if applicable), and initial operational costs. Be specific about what an entrepreneur needs to get started. Use simple, easy-to-understand language and **bold** important keywords and phrases.
+4.  **targetAudience**: Describe the ideal customer for this business. Outline a basic marketing and distribution strategy suitable for an early-stage venture in India. Use simple, easy-to-understand language and **bold** important keywords and phrases.
+5.  **roi**: Provide a realistic projection of potential revenue and profit. Explain the factors that influence profitability and a possible timeline to break even and achieve profitability. Use simple, easy-to-understand language and **bold** important keywords and phrases.
+6.  **futureProofing**: Discuss the long-term viability of the business. Cover aspects like scalability, potential for product diversification, market trends, and a competitive landscape. Use simple, easy-to-understand language and **bold** important keywords and phrases.
+7.  **relevantSchemes**: Identify 2-3 relevant Indian government schemes (e.g., Startup India, MUDRA, CGTMSE) that could support this business. For each scheme, briefly explain its benefits and eligibility criteria. Use simple, easy-to-understand language and **bold** important keywords and phrases.
+
+The tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. 
+Provide only the JSON object in your response.`;
+
+    // Call SarvamAI's text generation endpoint
+    const response = await sarvamClient.text.completions.create({
+      model: 'Open-Hathi-7B-v0.1-Base',
+      prompt: prompt,
+      max_tokens: 2048, // Increased tokens for a more detailed analysis
+      temperature: 0.3,
+    });
+
+    try {
+      // The model's response text needs to be parsed as JSON.
+      const jsonResponse = JSON.parse(response.choices[0].text);
+      
+      // Validate the parsed JSON against our output schema.
+      const validationResult = GenerateInvestmentIdeaAnalysisOutputSchema.safeParse(jsonResponse);
+      
+      if (!validationResult.success) {
+        console.error("SarvamAI response did not match Zod schema:", validationResult.error);
+        throw new Error("Received malformed data from AI service.");
+      }
+
+      return validationResult.data;
+    } catch (e) {
+      console.error("Failed to parse or validate SarvamAI response:", e);
+      throw new Error("An error occurred while processing the AI response.");
+    }
   }
 );
