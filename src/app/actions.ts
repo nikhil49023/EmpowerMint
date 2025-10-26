@@ -17,7 +17,7 @@ import { generateInvestmentIdeaAnalysis } from '@/ai/flows/generate-investment-i
 import type {
   GenerateInvestmentIdeaAnalysisInput,
   GenerateInvestmentIdeaAnalysisOutput,
-} from '@/ai/schemas/investment-idea-analysis';
+} from '@/ai/schemas/sarvam-schemas';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import {
   type GenerateFinancialAdviceInput,
@@ -44,7 +44,7 @@ import {
 } from '@/ai/flows/generate-fin-bite';
 
 import { generateBudgetReport } from '@/ai/flows/generate-budget-report';
-import type { GenerateBudgetReportInput, GenerateBudgetReportOutput } from '@/ai/schemas/budget-report';
+import type { GenerateBudgetReportInput, GenerateBudgetReportOutput } from '@/ai/schemas/sarvam-schemas';
 
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -118,11 +118,11 @@ export async function generateInvestmentIdeaAnalysisAction(
   try {
     const result = await generateInvestmentIdeaAnalysis(input);
     return { success: true, data: result };
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     return {
       success: false,
-      error: 'Failed to generate investment idea analysis. Please try again.',
+      error: `Failed to generate investment idea analysis: ${error.message}`,
     };
   }
 }
@@ -223,12 +223,11 @@ export async function generateBudgetReportAction(
   try {
     const result = await generateBudgetReport(input);
     return { success: true, data: result };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in budget report action:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     return {
       success: false,
-      error: `Failed to generate budget report: ${errorMessage}`,
+      error: `Failed to generate budget report: ${error.message}`,
     };
   }
 }

@@ -27,7 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
+import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/sarvam-schemas';
 import { FormattedText } from '@/components/financify/formatted-text';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-provider';

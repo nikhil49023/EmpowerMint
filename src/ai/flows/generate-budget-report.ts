@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -11,18 +12,13 @@ import {
   GenerateBudgetReportInputSchema,
   GenerateBudgetReportOutputSchema,
   type GenerateBudgetReportInput,
-} from '@/ai/schemas/budget-report';
-import { SarvamAIClient } from 'sarvamai';
-
-// Initialize the SarvamAI client
-const sarvamClient = new SarvamAIClient({
-  apiSubscriptionKey: 'sk_rwksevkv_TwVnTobosDGGrfIGl7bvxhg6',
-});
+  type GenerateBudgetReportOutput,
+} from '@/ai/schemas/sarvam-schemas';
 
 // This is the exported function that the UI will call.
 export async function generateBudgetReport(
   input: GenerateBudgetReportInput
-): Promise<any> {
+): Promise<GenerateBudgetReportOutput> {
   return generateBudgetReportFlow(input);
 }
 
@@ -57,19 +53,35 @@ Example of expenseBreakdown:
 
 Provide only the JSON object in your response.`;
 
-    // Call SarvamAI's text generation endpoint
-    const response = await sarvamClient.text.completions.create({
-      model: 'Open-Hathi-7B-v0.1-Base', // Using a generic powerful model from Sarvam
-      prompt: prompt,
-      max_tokens: 1024,
-      temperature: 0.2,
-    });
-
     try {
-      // The model's response text needs to be parsed as JSON.
-      const jsonResponse = JSON.parse(response.choices[0].text);
+      const response = await fetch('https://api.sarvam.ai/text-generation/v1/chat-completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SARVAM_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'sarvam-2b-v0.3',
+          messages: [{ role: 'system', content: prompt }],
+          max_tokens: 1024,
+          temperature: 0.2,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("SarvamAI API request failed:", response.status, errorBody);
+        throw new Error(`SarvamAI API request failed with status ${response.status}`);
+      }
       
-      // Validate the parsed JSON against our output schema.
+      const responseData = await response.json();
+      const content = responseData.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error("Received empty content from AI service.");
+      }
+
+      const jsonResponse = JSON.parse(content);
       const validationResult = GenerateBudgetReportOutputSchema.safeParse(jsonResponse);
       
       if (!validationResult.success) {
@@ -78,9 +90,9 @@ Provide only the JSON object in your response.`;
       }
 
       return validationResult.data;
-    } catch (e) {
-      console.error("Failed to parse or validate SarvamAI response:", e);
-      throw new Error("An error occurred while processing the AI response.");
+    } catch (e: any) {
+      console.error("Failed to process SarvamAI response:", e.message);
+      throw new Error(`An error occurred while processing the AI response: ${e.message}`);
     }
   }
 );

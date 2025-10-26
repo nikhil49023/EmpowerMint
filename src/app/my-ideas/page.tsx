@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Lightbulb, Loader2, ChevronsRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
+import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/sarvam-schemas';
 import { errorEmitter } from '@/firebase/error-emitter';
 import {
   FirestorePermissionError,

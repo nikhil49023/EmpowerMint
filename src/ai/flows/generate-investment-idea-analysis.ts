@@ -3,12 +3,6 @@
 
 /**
  * @fileOverview A Genkit flow for generating a detailed analysis of a business investment idea.
- *
- * This flow takes a business idea as input and returns a structured analysis covering
- * investment strategy, target audience, ROI, and future-proofing.
- * - generateInvestmentIdeaAnalysis - A function that generates the analysis.
- * - GenerateInvestmentIdeaAnalysisInput - The input type for the function.
- * - GenerateInvestmentIdeaAnalysisOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -17,13 +11,7 @@ import {
   GenerateInvestmentIdeaAnalysisOutputSchema,
   type GenerateInvestmentIdeaAnalysisInput,
   type GenerateInvestmentIdeaAnalysisOutput,
-} from '@/ai/schemas/investment-idea-analysis';
-import { SarvamAIClient } from 'sarvamai';
-
-// Initialize the SarvamAI client
-const sarvamClient = new SarvamAIClient({
-  apiSubscriptionKey: 'sk_vi9aj7ku_pTMZo21osceGQ451IGb1OKs0',
-});
+} from '@/ai/schemas/sarvam-schemas';
 
 export async function generateInvestmentIdeaAnalysis(
   input: GenerateInvestmentIdeaAnalysisInput
@@ -56,30 +44,46 @@ Your response must be a valid JSON object that covers the following sections:
 The tone should be encouraging, clear, and practical, providing actionable insights for an aspiring entrepreneur. 
 Provide only the JSON object in your response.`;
 
-    // Call SarvamAI's text generation endpoint
-    const response = await sarvamClient.text.completions.create({
-      model: 'Open-Hathi-7B-v0.1-Base',
-      prompt: prompt,
-      max_tokens: 2048, // Increased tokens for a more detailed analysis
-      temperature: 0.3,
-    });
-
     try {
-      // The model's response text needs to be parsed as JSON.
-      const jsonResponse = JSON.parse(response.choices[0].text);
+      const response = await fetch('https://api.sarvam.ai/text-generation/v1/chat-completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SARVAM_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'sarvam-2b-v0.3',
+          messages: [{ role: 'system', content: prompt }],
+          max_tokens: 4000,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("SarvamAI API request failed:", response.status, errorBody);
+        throw new Error(`SarvamAI API request failed with status ${response.status}`);
+      }
+
+      const responseData = await response.json();
+      const content = responseData.choices[0]?.message?.content;
+
+      if (!content) {
+        throw new Error("Received empty content from AI service.");
+      }
       
-      // Validate the parsed JSON against our output schema.
+      const jsonResponse = JSON.parse(content);
       const validationResult = GenerateInvestmentIdeaAnalysisOutputSchema.safeParse(jsonResponse);
       
       if (!validationResult.success) {
-        console.error("SarvamAI response did not match Zod schema:", validationResult.error);
+        console.error("SarvamAI response did not match Zod schema:", validationResult.error.flatten());
         throw new Error("Received malformed data from AI service.");
       }
 
       return validationResult.data;
-    } catch (e) {
-      console.error("Failed to parse or validate SarvamAI response:", e);
-      throw new Error("An error occurred while processing the AI response.");
+    } catch (e: any) {
+      console.error("Failed to process SarvamAI response:", e.message);
+      throw new Error(`An error occurred while processing the AI response: ${e.message}`);
     }
   }
 );
