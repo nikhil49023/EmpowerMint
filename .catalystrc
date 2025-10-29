@@ -1,0 +1,30 @@
+{
+  "defaults": {
+    "project": 1,
+    "env": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "24392000000011167",
+      "name": "Fin-Box",
+      "domain": {
+        "id": "50035180989",
+        "name": "fin-box-60056122667.development"
+      },
+      "timezone": "Asia/Kolkata",
+      "env": [
+        {
+          "idx": 1,
+          "id": "60056122667",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}

@@ -1,70 +1,49 @@
 
-import { z } from 'genkit';
+import { z } from 'zod';
 
-const MsmeDetailsSchema = z.object({
-  promoterName: z.string().describe("The entrepreneur's name."),
-  businessName: z.string().describe('The name of the business/project.'),
-  businessType: z.string().describe('The type of business (e.g., Manufacturing, Service).'),
-  location: z.string().describe('The proposed city/state for the business.'),
-});
+// This file is now split into dpr.ts and dpr-elaboration.ts
 
-// Schema for the full, monolithic DPR generation.
-export const GenerateDprInputSchema = z.object({
-  msmeDetails: MsmeDetailsSchema,
-  projectScope: z.string().describe("A definition of the project's scope, objectives, and deliverables."),
-  targetMarket: z.string().describe('A description of the target market, customer segments, and competition.'),
-  financialData: z.string().describe('A summary of financial data, including estimated startup costs, funding sources, and revenue projections.'),
-  additionalInfo: z.string().describe('Any other relevant information, unique selling propositions, or specific details.'),
+// Schema for the AI-ELABORATED business profile. This is the output of the first stage.
+export const ElaboratedBusinessProfileSchema = z.object({
+    promoterName: z.string(),
+    businessName: z.string(),
+    businessType: z.string(),
+    location: z.string(),
+    detailedProjectDescription: z.string(),
+    targetAudienceAnalysis: z.string(),
+    competitiveLandscape: z.string(),
+    marketingStrategy: z.string(),
+    financialSummary: z.string(),
+    usp: z.string(),
 });
-export type GenerateDprInput = z.infer<typeof GenerateDprInputSchema>;
-
-// Schema for generating a single DPR section
-export const GenerateDprSectionInputSchema = GenerateDprInputSchema.extend({
-    section: z.string().describe('The specific DPR section to generate (e.g., "Market Analysis").'),
-});
-export type GenerateDprSectionInput = z.infer<typeof GenerateDprSectionInputSchema>;
+export type ElaboratedBusinessProfile = z.infer<typeof ElaboratedBusinessProfileSchema>;
 
 
 const FinancialProjectionsSchema = z.object({
-  summaryText: z
-    .string()
-    .describe('A brief summary of the financial outlook in markdown format.'),
-  projectCost: z.string().describe('Breakdown of total project costs in markdown format.'),
-  meansOfFinance: z
-    .string()
-    .describe('How the project will be financed (equity, debt) in markdown format.'),
-  costBreakdown: z
-    .array(z.object({ name: z.string(), value: z.number() }))
-    .describe('A JSON array for a pie chart of cost breakdown.'),
-  yearlyProjections: z
-    .array(z.object({ year: z.string(), sales: z.number(), profit: z.number() }))
-    .describe('A JSON array for a bar chart of yearly sales and profit.'),
-  profitabilityAnalysis: z.string().describe('Analysis of profitability in markdown format.'),
-  cashFlowStatement: z.string().describe('Projected cash flow statement in markdown format.'),
-  loanRepaymentSchedule: z.string().describe('Loan repayment schedule in markdown format.'),
-  breakEvenAnalysis: z.string().describe('Break-even point analysis in markdown format.'),
+  summaryText: z.string().describe('A brief summary of the financial outlook in markdown format. Prepend "*(Powered by FIn-Box AI)*".'),
+  projectCost: z.string().describe('Breakdown of total project costs in markdown format. Prepend "*(Powered by FIn-Box AI)*".'),
+  meansOfFinance: z.string().describe('How the project will be financed (equity, debt) in markdown format. Prepend "*(Powered by FIn-Box AI)*".'),
+  costBreakdown: z.array(z.object({ name: z.string(), value: z.number() })).describe('A JSON array for a pie chart of cost breakdown. The values must be credible numbers.'),
+  yearlyProjections: z.array(z.object({ year: z.string(), sales: z.number(), profit: z.number() })).describe('A JSON array for a bar chart of yearly sales and profit. The values must be credible numbers.'),
+  profitabilityAnalysis: z.string().describe('Analysis of profitability in markdown format. Prepend "*(Powered by FIn-Box AI)*".'),
+  cashFlowStatement: z.string().describe('Projected cash flow statement in markdown format. Prepend "*(Powered by FIn-Box AI)*".'),
+  loanRepaymentSchedule: z.string().describe('Loan repayment schedule in markdown format. Prepend "*(Powered by FIn-Box AI)*".'),
+  breakEvenAnalysis: z.string().describe('Break-even point analysis in markdown format. Prepend "*(Powered by FIn-Box AI)*".'),
 });
 
 export const GenerateDprOutputSchema = z.object({
-  executiveSummary: z.string(),
-  projectIntroduction: z.string(),
-  promoterDetails: z.string(),
-  businessModel: z.string(),
-  marketAnalysis: z.string(),
-  locationAndSite: z.string(),
-  technicalFeasibility: z.string(),
-  implementationSchedule: z.string(),
+  executiveSummary: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  projectIntroduction: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  promoterDetails: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  businessModel: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  marketAnalysis: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  locationAndSite: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  technicalFeasibility: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  implementationSchedule: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
   financialProjections: FinancialProjectionsSchema,
-  swotAnalysis: z.string(),
-  regulatoryCompliance: z.string(),
-  riskAssessment: z.string(),
-  annexures: z.string(),
+  swotAnalysis: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  regulatoryCompliance: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  riskAssessment: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
+  annexures: z.string().describe('Must be a markdown string. Prepend "*(Powered by FIn-Box AI)*".'),
 });
-export type GenerateDprOutput = z.infer<
-  typeof GenerateDprOutputSchema
->;
-
-export const GenerateDprSectionOutputSchema = z.object({
-    content: z.union([z.string(), FinancialProjectionsSchema]).describe('The generated content for the section. This will be a string for most sections, but an object for Financial Projections.'),
-});
-export type GenerateDprSectionOutput = z.infer<typeof GenerateDprSectionOutputSchema>;
+export type GenerateDprOutput = z.infer<typeof GenerateDprOutputSchema>;

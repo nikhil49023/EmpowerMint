@@ -6,20 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Sparkles, User, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { askAIAdvisorAction } from '@/app/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { useAuth } from '@/context/auth-provider';
-import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import {
-  FirestorePermissionError,
-  type SecurityRuleContext,
-} from '@/firebase/errors';
 import { useLanguage } from '@/hooks/use-language';
-import { usePathname } from 'next/navigation';
+import { getFirestore, collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+
+const db = getFirestore(app);
 
 type Message = {
   id: string;
@@ -40,12 +35,24 @@ export default function AIAdvisorChat({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<ElementRef<typeof ScrollArea>>(null);
+
   const { user, loading: loadingAuth } = useAuth();
   const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
   const { translations } = useLanguage();
-  const pathname = usePathname();
 
-  const useTransactionContext = !pathname.includes('/generate-dpr');
+  useEffect(() => {
+    if (user) {
+        const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+        // Get the last 20 transactions to use as context
+        const q = query(transactionsRef, orderBy('date', 'desc'), limit(20));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedTransactions = snapshot.docs.map(doc => doc.data()) as ExtractedTransaction[];
+            setTransactions(fetchedTransactions);
+        });
+        return () => unsubscribe();
+    }
+  }, [user]);
+
 
   useEffect(() => {
     const welcomeMessage: Message = {
@@ -73,30 +80,6 @@ export default function AIAdvisorChat({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [translations, initialMessage]);
-
-  useEffect(() => {
-    if (user && useTransactionContext) {
-      const transCollectionRef = collection(db, 'users', user.uid, 'transactions');
-      const q = query(transCollectionRef);
-      const unsubscribe = onSnapshot(
-        q,
-        querySnapshot => {
-          const transactionsData = querySnapshot.docs.map(
-            doc => doc.data() as ExtractedTransaction
-          );
-          setTransactions(transactionsData);
-        },
-        async serverError => {
-          const permissionError = new FirestorePermissionError({
-            path: `users/${user.uid}/transactions`,
-            operation: 'list',
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-        }
-      );
-      return () => unsubscribe();
-    }
-  }, [user, useTransactionContext]);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -138,25 +121,36 @@ export default function AIAdvisorChat({
     setInput('');
     setIsLoading(true);
 
-    const result = await askAIAdvisorAction({
-      query: queryText,
-      transactions: useTransactionContext ? transactions : [],
-    });
+    try {
+        const response = await fetch('/api/rag-answer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: queryText, transactions: transactions })
+        });
+        
+        const result = await response.json();
 
-    if (result.success) {
-      const newAiMessage: Message = {
-        id: getUniqueMessageId(),
-        text: result.data.advice,
-        sender: 'ai',
-      };
-      setMessages(prev => [...prev, newAiMessage]);
-    } else {
-      const errorAiMessage: Message = {
-        id: getUniqueMessageId(),
-        text: translations.aiAdvisor.error,
-        sender: 'ai',
-      };
-      setMessages(prev => [...prev, errorAiMessage]);
+        if (response.ok) {
+            const newAiMessage: Message = {
+                id: getUniqueMessageId(),
+                text: result.answer,
+                sender: 'ai',
+            };
+            setMessages(prev => [...prev, newAiMessage]);
+        } else {
+            throw new Error(result.message || 'Failed to get a response from the AI.');
+        }
+
+    } catch (error) {
+        console.error('Error calling RAG API:', error);
+        const errorAiMessage: Message = {
+            id: getUniqueMessageId(),
+            text: translations.aiAdvisor.error,
+            sender: 'ai',
+        };
+        setMessages(prev => [...prev, errorAiMessage]);
     }
 
     setIsLoading(false);
@@ -165,7 +159,7 @@ export default function AIAdvisorChat({
   return (
     <div className="flex-1 flex flex-col justify-between">
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-4 sm:p-6">
           <AnimatePresence>
             {messages.map(message => (
               <motion.div
@@ -224,21 +218,21 @@ export default function AIAdvisorChat({
         </div>
       </ScrollArea>
       <div className="p-4 border-t">
-        <form onSubmit={handleSendMessage} className="relative">
+        <form onSubmit={handleSendMessage} className="relative flex gap-2">
           <Input
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder={translations.aiAdvisor.inputPlaceholder}
-            className="pr-12 h-12"
+            className="h-11"
             disabled={isLoading || (!user && !loadingAuth)}
           />
           <Button
             type="submit"
             size="icon"
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9"
+            className="h-11 w-11 flex-shrink-0"
             disabled={isLoading || !input.trim() || (!user && !loadingAuth)}
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-5 w-5" />
           </Button>
         </form>
       </div>

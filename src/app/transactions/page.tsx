@@ -58,37 +58,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { extractTransactionsAction } from '../actions';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-provider';
-import { db } from '@/lib/firebase';
-import {
-  collection,
-  addDoc,
-  query,
-  onSnapshot,
-  writeBatch,
-  getDocs,
-  doc,
-} from 'firebase/firestore';
-import {
-    getStorage,
-    ref,
-    uploadBytes,
-    getDownloadURL,
-} from 'firebase/storage';
-import {
-  FirestorePermissionError,
-  type SecurityRuleContext,
-} from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
 import { useLanguage } from '@/hooks/use-language';
 import { useRouter } from 'next/navigation';
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  addDoc,
+  writeBatch,
+  getDocs,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { app } from '@/lib/firebase';
+
+const db = getFirestore(app);
+const storage = getStorage(app);
 
 export default function TransactionsPage() {
   const { user, loading: loadingAuth } = useAuth();
-  const [transactions, setTransactions] = useState<ExtractedTransaction[]>([]);
+  const [transactions, setTransactions] = useState<(ExtractedTransaction & { id: string })[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const { translations } = useLanguage();
   const router = useRouter();
@@ -159,35 +152,16 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (user) {
       setLoadingData(true);
-      const transCollectionRef = collection(db, 'users', user.uid, 'transactions');
-      const transQuery = query(transCollectionRef);
-      const unsubTransactions = onSnapshot(
-        transQuery,
-        (snapshot) => {
-          const transData = snapshot.docs.map(doc => ({
-            ...(doc.data() as ExtractedTransaction),
-          }));
-          setTransactions(transData);
-          setLoadingData(false); 
-        },
-        (error) => {
-          console.error("Error fetching transactions: ", error);
-          const permissionError = new FirestorePermissionError({
-            path: `users/${user.uid}/transactions`,
-            operation: 'list',
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-          setLoadingData(false);
-        }
-      );
-      
-      return () => {
-        try {
-          unsubTransactions();
-        } catch (error) {
-          console.error('Error unsubscribing from Firestore:', error);
-        }
-      };
+      const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+      const unsubscribe = onSnapshot(transactionsRef, (snapshot) => {
+        const fetchedTransactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as (ExtractedTransaction & { id: string })[];
+        setTransactions(fetchedTransactions);
+        setLoadingData(false);
+      }, (error) => {
+        console.error("Error fetching transactions:", error);
+        setLoadingData(false);
+      });
+      return () => unsubscribe();
     } else if (!loadingAuth) {
       setLoadingData(false);
       setTransactions([]);
@@ -195,37 +169,21 @@ export default function TransactionsPage() {
     }
   }, [user, loadingAuth, router]);
 
-
   const handleClearData = async () => {
     if (!user) return;
-    const transQuery = query(
-      collection(db, 'users', user.uid, 'transactions')
-    );
-    const budgetQuery = query(collection(db, 'users', user.uid, 'budgets'));
-
+    const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+    const querySnapshot = await getDocs(transactionsRef);
     const batch = writeBatch(db);
-    
-    try {
-        const transSnapshot = await getDocs(transQuery);
-        transSnapshot.forEach(doc => batch.delete(doc.ref));
+    querySnapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
 
-        const budgetSnapshot = await getDocs(budgetQuery);
-        budgetSnapshot.forEach(doc => batch.delete(doc.ref));
-
-        await batch.commit();
-        invalidateDashboardCache();
-
-        toast({
-        title: 'Success',
-        description: translations.transactions.toasts.successClearData,
-        });
-    } catch(e: any) {
-        const permissionError = new FirestorePermissionError({
-            path: `users/${user.uid}/transactions`,
-            operation: 'delete'
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-    }
+    invalidateDashboardCache();
+    toast({
+      title: 'Success',
+      description: translations.transactions.toasts.successClearData,
+    });
   };
 
   const handleAddTransaction = async () => {
@@ -256,32 +214,20 @@ export default function TransactionsPage() {
         let invoiceUrl: string | undefined = undefined;
 
         if (invoiceFile) {
-            const storage = getStorage();
-            const filePath = `invoices/${user.uid}/${Date.now()}-${invoiceFile.name}`;
-            const fileRef = ref(storage, filePath);
-            
-            await uploadBytes(fileRef, invoiceFile);
-            invoiceUrl = await getDownloadURL(fileRef);
+            const storageRef = ref(storage, `invoices/${user.uid}/${Date.now()}-${invoiceFile.name}`);
+            const uploadResult = await uploadBytes(storageRef, invoiceFile);
+            invoiceUrl = await getDownloadURL(uploadResult.ref);
         }
 
-        const transactionData: ExtractedTransaction = {
+        const transactionData: Omit<ExtractedTransaction, 'invoiceUrl'> & { invoiceUrl?: string } = {
             ...newTransaction,
-            ...(invoiceUrl && { invoiceUrl }),
         };
+        if (invoiceUrl) {
+            transactionData.invoiceUrl = invoiceUrl;
+        }
+        
+        await addDoc(collection(db, 'users', user.uid, 'transactions'), transactionData);
 
-        const transactionsCollectionRef = collection(db, 'users', user.uid, 'transactions');
-        await addDoc(transactionsCollectionRef, transactionData).catch(serverError => {
-            const permissionError = new FirestorePermissionError({
-              path: transactionsCollectionRef.path,
-              operation: 'create',
-              requestResourceData: transactionData,
-            } satisfies SecurityRuleContext);
-            errorEmitter.emit('permission-error', permissionError);
-            // Re-throw to be caught by the outer try-catch
-            throw serverError;
-        });
-
-        // Reset form state on success
         setNewTransaction({ description: '', date: '', type: 'expense', amount: '' });
         setInvoiceFile(null);
         setAddTransactionDialogOpen(false);
@@ -296,7 +242,7 @@ export default function TransactionsPage() {
         toast({
           variant: 'destructive',
           title: 'Error Adding Transaction',
-          description: "Could not save the transaction. Please check your connection or permissions.",
+          description: "Could not save the transaction. Please check your connection.",
         });
     } finally {
         setIsAddingTransaction(false);
@@ -320,50 +266,39 @@ export default function TransactionsPage() {
       reader.readAsDataURL(file);
       reader.onload = async () => {
         const documentDataUri = reader.result as string;
-        const result = await extractTransactionsAction({ documentDataUri });
 
-        if (result.success) {
-          const batch = writeBatch(db);
-          const transactionsCol = collection(
-            db,
-            'users',
-            user.uid,
-            'transactions'
-          );
-          result.data.transactions.forEach(transaction => {
-            const docRef = doc(transactionsCol); // Automatically generate unique ID
-            batch.set(docRef, transaction);
-          });
+        const response = await fetch('/api/extract-transactions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ documentDataUri })
+        });
 
-          batch
-            .commit()
-            .catch(async serverError => {
-              const permissionError = new FirestorePermissionError({
-                path: transactionsCol.path,
-                operation: 'create',
-                requestResourceData: result.data.transactions, // This is an array, but should give enough context
-              } satisfies SecurityRuleContext);
-              errorEmitter.emit('permission-error', permissionError);
-            })
-            .then(() => {
-              invalidateDashboardCache();
-              const cooldownKey = getImportCooldownKey();
-              if (cooldownKey) {
+        const result = await response.json();
+        
+        if (response.ok) {
+            const batch = writeBatch(db);
+            const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+            result.transactions.forEach((transaction: ExtractedTransaction) => {
+              const docRef = doc(transactionsRef);
+              batch.set(docRef, transaction);
+            });
+            await batch.commit();
+
+            invalidateDashboardCache();
+            const cooldownKey = getImportCooldownKey();
+            if (cooldownKey) {
                 localStorage.setItem(cooldownKey, Date.now().toString());
                 setIsImportOnCooldown(true);
                 setDaysUntilNextImport(30);
-              }
-              toast({
+            }
+            toast({
                 title: 'Import Successful',
-                description: `${result.data.transactions.length} ${translations.transactions.toasts.importSuccess}`,
-              });
+                description: `${result.transactions.length} ${translations.transactions.toasts.importSuccess}`,
             });
         } else {
-          toast({
-            variant: 'destructive',
-            title: translations.transactions.toasts.importFailed,
-            description: result.error,
-          });
+            throw new Error(result.message || 'Failed to extract transactions.');
         }
         setIsImporting(false);
       };
@@ -376,12 +311,12 @@ export default function TransactionsPage() {
         });
         setIsImporting(false);
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('File processing error:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: translations.transactions.toasts.errorProcessingFile,
+        title: translations.transactions.toasts.importFailed,
+        description: error.message || translations.transactions.toasts.errorProcessingFile,
       });
       setIsImporting(false);
     }
@@ -449,10 +384,10 @@ export default function TransactionsPage() {
             {translations.transactions.description}
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" disabled={showLoginPrompt} className="w-full sm:w-auto">
+              <Button variant="destructive" disabled={showLoginPrompt} className="w-full">
                 <Trash2 className="mr-2 h-4 w-4" /> {translations.transactions.clearAllData}
               </Button>
             </AlertDialogTrigger>
@@ -476,7 +411,7 @@ export default function TransactionsPage() {
             variant="outline"
             onClick={handleImportClick}
             disabled={isImporting || showLoginPrompt}
-            className="w-full sm:w-auto"
+            className="w-full"
           >
             {isImporting ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -487,7 +422,7 @@ export default function TransactionsPage() {
           </Button>
 
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>{translations.transactions.importDialog.title}</DialogTitle>
                 <DialogDescription>
@@ -548,11 +483,11 @@ export default function TransactionsPage() {
             onOpenChange={setAddTransactionDialogOpen}
           >
             <DialogTrigger asChild>
-              <Button disabled={showLoginPrompt} className="w-full sm:w-auto">
+              <Button disabled={showLoginPrompt} className="w-full">
                 <PlusCircle className="mr-2 h-4 w-4" /> {translations.transactions.addTransaction}
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>{translations.transactions.addTransactionDialog.title}</DialogTitle>
                 <DialogDescription>
@@ -675,11 +610,11 @@ export default function TransactionsPage() {
       </div>
 
       <Card>
-        <CardHeader className="p-4 md:p-6">
+        <CardHeader>
           <CardTitle>{translations.transactions.history.title}</CardTitle>
           <CardDescription>{translations.transactions.history.description}</CardDescription>
         </CardHeader>
-        <CardContent className="p-0 md:p-6 md:pt-0">
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -702,12 +637,12 @@ export default function TransactionsPage() {
               ) : transactions.length > 0 ? (
                 transactions.map((transaction, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium p-4">
+                    <TableCell className="font-medium">
                       {transaction.description}
                       <div className="text-muted-foreground text-xs sm:hidden">{transaction.date}</div>
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell p-4">{transaction.date}</TableCell>
-                    <TableCell className="p-4">
+                    <TableCell className="hidden sm:table-cell">{transaction.date}</TableCell>
+                    <TableCell>
                       <Badge
                         variant={
                           transaction.type === 'income'
@@ -717,14 +652,14 @@ export default function TransactionsPage() {
                         className={cn(
                           'capitalize',
                           transaction.type === 'income'
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : 'bg-red-100 text-red-800 border-red-200'
+                            ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800'
+                            : 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-800'
                         )}
                       >
                         {transaction.type}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right p-4">
+                    <TableCell className="text-right">
                       {transaction.amount}
                     </TableCell>
                   </TableRow>

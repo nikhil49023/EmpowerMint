@@ -5,25 +5,25 @@
 
 @layer base {
   :root {
-    --background: 246 60% 97%; /* Light Lavender */
+    --background: 210 17% 98%; /* #F8F9FA */
     --foreground: 224 71% 4%;
     --card: 0 0% 100%;
     --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
-    --primary: 262 83% 58%;
+    --primary: 217 99% 44%; /* #0165E1 */
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 224 71% 4%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 246 60% 92%;
+    --accent: 42 100% 48%; /* #F4B400 */
     --accent-foreground: 224 71% 4%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262 83% 58%;
+    --ring: 217 99% 44%; /* #0165E1 */
     --chart-1: 221 83% 53%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -33,11 +33,11 @@
   }
 
   .dark {
-    --background: 222 47% 11%;
+    --background: 0 0% 11%; /* #1B1B1B */
     --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
+    --card: 0 0% 11%; /* #1B1B1B */
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
+    --popover: 0 0% 11%; /* #1B1B1B */
     --popover-foreground: 210 40% 98%;
     --primary: 217 91% 60%;
     --primary-foreground: 222 47% 11%;
@@ -45,7 +45,7 @@
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
+    --accent: 42 100% 48%; /* #F4B400 */
     --accent-foreground: 210 40% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
@@ -67,6 +67,22 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+    @keyframes pulse-record {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 hsl(var(--destructive) / 0.7);
+        }
+        50% {
+            opacity: 0.9;
+            box-shadow: 0 0 0 8px hsl(var(--destructive) / 0);
+        }
+    }
+    .animate-pulse-record {
+        animation: pulse-record 2s infinite;
+    }
 }
 
 @layer components {

@@ -2,47 +2,87 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating a "Fin Bite", a concise update on startup schemes in India.
- *
- * This flow does not take any input and returns a single update.
- * - generateFinBite - A function that generates a single startup scheme update.
- * - GenerateFinBiteOutput - The return type for the generateFinBite function.
+ * @fileOverview This file defines a function for generating "Fin Bites",
+ * concise updates on startup schemes and financial news in India, using Sarvam AI.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import type { GenerateFinBiteOutput } from '@/ai/schemas/fin-bite';
+import fetch from 'node-fetch';
 
-const GenerateFinBiteOutputSchema = z.object({
-  title: z.string().describe('The name of the scheme or policy.'),
-  summary: z.string().describe('A brief, easy-to-understand summary of its key benefits for an early-stage entrepreneur.'),
-});
-type GenerateFinBiteOutput = z.infer<
-  typeof GenerateFinBiteOutputSchema
->;
+const SARVAM_API_KEY = process.env.SARVAM_API_KEY;
+const API_URL = 'https://api.sarvam.ai/v1/chat/completions';
 
 export async function generateFinBite(): Promise<GenerateFinBiteOutput> {
-  return generateFinBiteFlow();
+  const prompt = `You are "FIn-Box," a specialized financial news anchor for early-stage entrepreneurs in India.
+Your task is to provide the single latest, most relevant news update for EACH of the following 3 categories: "MSME Schemes", "Finance & Tax", and "Market News".
+
+Your response MUST be a valid JSON object.
+
+Example Output:
+\`\`\`json
+{
+  "updates": [
+    {
+      "category": "MSME Schemes",
+      "title": "New 'Udyam Assist' Platform Launched",
+      "summary": "The government has launched the Udyam Assist Platform to formalize Informal Micro Enterprises (IMEs) and help them avail benefits under Priority Sector Lending."
+    },
+    {
+      "category": "Finance & Tax",
+      "title": "GST Council Announces Changes to E-Invoicing",
+      "summary": "The threshold for e-invoicing for B2B transactions has been reduced to ₹5 crore, impacting a larger number of small businesses."
+    },
+    {
+      "category": "Market News",
+      "title": "SEBI Introduces New Framework for SME IPOs",
+      "summary": "The new framework aims to make it easier for small and medium enterprises to raise capital through Initial Public Offerings (IPOs) on the SME platforms of stock exchanges."
+    }
+  ]
 }
+\`\`\`
+`;
 
-const generateFinBitePrompt = ai.definePrompt({
-  name: 'generateFinBitePrompt',
-  output: { schema: GenerateFinBiteOutputSchema },
-  prompt: `You are "FIn-Box," a specialized financial mentor. Your task is to provide the latest, most relevant update on a startup scheme or policy from the Indian central government, RBI, or Startup India.
+  const headers = {
+    Authorization: `Bearer ${SARVAM_API_KEY}`,
+    'Content-Type': 'application/json',
+  };
 
-  Generate a concise bulletin that includes:
-  1.  **Title**: The name of the scheme or policy.
-  2.  **Summary**: A brief, easy-to-understand summary of its key benefits for an early-stage entrepreneur.
+  const data = {
+    model: 'sarvam-1',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a helpful AI assistant for financial news.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.7,
+  };
 
-  The information must be up-to-date and factual. Your tone should be informative and encouraging. Ensure the output is in the specified JSON format.`,
-});
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
 
-const generateFinBiteFlow = ai.defineFlow(
-  {
-    name: 'generateFinBiteFlow',
-    outputSchema: GenerateFinBiteOutputSchema,
-  },
-  async () => {
-    const { output } = await generateFinBitePrompt({});
-    return output!;
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("Sarvam AI Error Body:", errorBody);
+        throw new Error(`Sarvam AI API request failed with status: ${response.status}`);
+    }
+
+    const responseJson: any = await response.json();
+    const message = responseJson.choices[0].message.content;
+
+    const jsonString = message
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+    const parsedOutput = JSON.parse(jsonString);
+    return parsedOutput;
+  } catch (error: any) {
+    console.error('Sarvam AI (generateFinBite) Error:', error);
+    throw new Error(`Failed to generate FinBite updates: ${error.message}`);
   }
-);
+}

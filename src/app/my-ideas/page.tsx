@@ -4,13 +4,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/auth-provider';
 import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import {
   Card,
   CardContent,
   CardDescription,
@@ -21,14 +14,13 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Lightbulb, Loader2, ChevronsRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/sarvam-schemas';
-import { errorEmitter } from '@/firebase/error-emitter';
-import {
-  FirestorePermissionError,
-  type SecurityRuleContext,
-} from '@/firebase/errors';
+import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { useLanguage } from '@/hooks/use-language';
 import { useRouter } from 'next/navigation';
+import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+
+const db = getFirestore(app);
 
 type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
   id: string;
@@ -47,34 +39,16 @@ export default function MyIdeasPage() {
 
   useEffect(() => {
     if (user) {
-      const ideasCollectionRef = collection(db, 'users', user.uid, 'ideas');
-      const ideasQuery = query(
-        ideasCollectionRef,
-        orderBy('savedAt', 'desc')
-      );
-      const unsubscribe = onSnapshot(
-        ideasQuery,
-        snapshot => {
-          const ideasData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as SavedIdea[];
-          setIdeas(ideasData);
-          setLoadingIdeas(false);
-        },
-        async serverError => {
-          const permissionError = new FirestorePermissionError({
-            path: `users/${user.uid}/ideas`,
-            operation: 'list',
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-          setLoadingIdeas(false);
-        }
-      );
+      const ideasRef = collection(db, 'users', user.uid, 'savedIdeas');
+      const unsubscribe = onSnapshot(ideasRef, (snapshot) => {
+        const fetchedIdeas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SavedIdea[];
+        setIdeas(fetchedIdeas.sort((a, b) => b.savedAt.seconds - a.savedAt.seconds));
+        setLoadingIdeas(false);
+      });
       return () => unsubscribe();
     } else if (!loadingAuth) {
       setLoadingIdeas(false);
-      router.push('/');
+      router.push('/login');
     }
   }, [user, loadingAuth, router]);
 
@@ -101,7 +75,7 @@ export default function MyIdeasPage() {
       <div className="text-center">
         <p>{translations.myIdeas.loginPrompt}</p>
         <Button asChild className="mt-4">
-          <Link href="/">{translations.myIdeas.loginButton}</Link>
+          <Link href="/login">{translations.myIdeas.loginButton}</Link>
         </Button>
       </div>
     );

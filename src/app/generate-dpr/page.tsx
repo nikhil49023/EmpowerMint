@@ -8,52 +8,15 @@ import {
   Loader2,
   ArrowLeft,
   ChevronsRight,
-  Info,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
-import { generateDprSectionAction } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { useAuth } from '@/context/auth-provider';
-import { db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import {
-  FirestorePermissionError,
-  type SecurityRuleContext,
-} from '@/firebase/errors';
 import { Progress } from '@/components/ui/progress';
-
-const formSteps = [
-    "MSME Details",
-    "Project Scope",
-    "Target Market",
-    "Financial Data",
-    "Additional Info",
-    "Review & Generate"
-];
-
-const dprSections = [
-    'ExecutiveSummary',
-    'ProjectIntroduction',
-    'PromoterDetails',
-    'BusinessModel',
-    'MarketAnalysis',
-    'LocationAndSite',
-    'TechnicalFeasibility',
-    'ImplementationSchedule',
-    'FinancialProjections',
-    'SWOTAnalysis',
-    'RegulatoryCompliance',
-    'RiskAssessment',
-    'Annexures',
-];
-
 
 function GenerateDPRContent() {
   const searchParams = useSearchParams();
@@ -62,48 +25,25 @@ function GenerateDPRContent() {
   const idea = searchParams.get('idea');
   const { user } = useAuth();
 
-  const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [generationStatusText, setGenerationStatusText] = useState('');
   
-  // Form State
-  const [promoterName, setPromoterName] = useState('');
   const [businessName, setBusinessName] = useState('');
-  const [businessType, setBusinessType] = useState('');
-  const [location, setLocation] = useState('');
-  const [projectScope, setProjectScope] = useState('');
-  const [targetMarket, setTargetMarket] = useState('');
-  const [financialData, setFinancialData] = useState('');
-  const [additionalInfo, setAdditionalInfo] = useState('');
   
   useEffect(() => {
     const analysisDataString = localStorage.getItem('dprAnalysis');
     if (analysisDataString) {
-      const parsedAnalysis: GenerateInvestmentIdeaAnalysisOutput = JSON.parse(analysisDataString);
-      setBusinessName(parsedAnalysis.title);
-      setProjectScope(parsedAnalysis.summary);
-      setTargetMarket(parsedAnalysis.targetAudience);
+      try {
+        const parsedAnalysis: GenerateInvestmentIdeaAnalysisOutput = JSON.parse(analysisDataString);
+        setBusinessName(parsedAnalysis.title);
+      } catch (e) {
+        console.error("Failed to parse DPR analysis from localStorage", e);
+      }
     } else if (idea) {
         setBusinessName(idea);
     }
-
-    if (user?.displayName) {
-        setPromoterName(user.displayName);
-    }
-  }, [idea, user]);
-
-  const handleNext = () => {
-      if (currentStep < formSteps.length - 1) {
-          setCurrentStep(currentStep + 1);
-      }
-  }
-
-  const handleBack = () => {
-      if (currentStep > 0) {
-          setCurrentStep(currentStep - 1);
-      }
-  }
+  }, [idea]);
 
   const handleGenerateDPR = async () => {
       if(!user) {
@@ -111,6 +51,12 @@ function GenerateDPRContent() {
           router.push('/');
           return;
       }
+
+      if(!businessName) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Business idea is missing.' });
+          return;
+      }
+
       setIsGenerating(true);
       setGenerationProgress(0);
       toast({
@@ -118,164 +64,59 @@ function GenerateDPRContent() {
           description: 'This may take a minute or two. Please wait...',
       });
 
-      const generationInput = {
-          msmeDetails: { promoterName, businessName, businessType, location },
-          projectScope,
-          targetMarket,
-          financialData,
-          additionalInfo
-      };
-      
-      let sectionsGenerated = 0;
-      let generationFailed = false;
+      try {
+        // Step 1: Elaborate on the idea
+        setGenerationStatusText("Expanding business concept...");
+        setGenerationProgress(10);
+        const elaborationResponse = await fetch('/api/generate-dpr-elaboration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idea: businessName, promoterName: user.displayName || 'Entrepreneur' }),
+        });
 
-      for (const section of dprSections) {
-        if (generationFailed) break;
-
-        setGenerationStatusText(`Generating ${section.replace(/([A-Z])/g, ' $1').trim()}...`);
-        
-        const result = await generateDprSectionAction({ ...generationInput, section });
-
-        if (result.success) {
-            const sectionDocRef = doc(db, 'users', user.uid, 'dpr-projects', businessName, 'sections', section);
-            const dataToSave = {
-                content: result.data.content,
-                updatedAt: serverTimestamp(),
-            };
-            
-            await new Promise<void>((resolve) => {
-              setDoc(sectionDocRef, dataToSave, { merge: true })
-                .then(() => {
-                  sectionsGenerated++;
-                  setGenerationProgress((sectionsGenerated / dprSections.length) * 100);
-                  resolve();
-                })
-                .catch(async (e: any) => {
-                  const permissionError = new FirestorePermissionError({
-                    path: sectionDocRef.path,
-                    operation: 'write',
-                    requestResourceData: dataToSave,
-                  } satisfies SecurityRuleContext);
-                  errorEmitter.emit('permission-error', permissionError);
-                  toast({
-                    variant: 'destructive',
-                    title: `Could not save ${section} section`,
-                    description: 'Failed to save the generated section to your project.',
-                  });
-                  generationFailed = true;
-                  resolve();
-                });
-            });
-
-        } else {
-            toast({
-              variant: 'destructive',
-              title: `Failed to generate ${section}`,
-              description: result.error,
-            });
-            generationFailed = true;
+        if (!elaborationResponse.ok) {
+            const error = await elaborationResponse.json();
+            throw new Error(`Failed to elaborate on the idea: ${error.message}`);
         }
-      }
-      
-      if (generationFailed) {
-        setIsGenerating(false);
-        return;
-      }
+        const elaboratedProfile = await elaborationResponse.json();
+        setGenerationProgress(40);
+        
+        // Step 2: Generate the full DPR from the elaborated profile
+        setGenerationStatusText("Building full Detailed Project Report...");
+        const dprResponse = await fetch('/api/generate-dpr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(elaboratedProfile),
+        });
 
-      setGenerationStatusText("Finalizing report...");
-      setGenerationProgress(100);
+         if (!dprResponse.ok) {
+            const error = await dprResponse.json();
+            throw new Error(`Failed to generate the final DPR: ${error.message}`);
+        }
+        const generatedReport = await dprResponse.json();
+        
+        // Step 3: Finalize and redirect
+        setGenerationStatusText("Finalizing report...");
+        localStorage.setItem('generatedDPR', JSON.stringify(generatedReport));
+        setGenerationProgress(100);
 
-      toast({
-        title: "DPR Generated Successfully!",
-        description: "Your full Detailed Project Report is ready.",
-      });
-      router.push(`/dpr-report?idea=${encodeURIComponent(businessName)}`);
+        toast({
+            title: "DPR Generated Successfully!",
+            description: "Your full Detailed Project Report is ready.",
+        });
+
+        router.push(`/dpr-report?idea=${encodeURIComponent(businessName)}`);
+
+      } catch(e: any) {
+          console.error("DPR Generation failed:", e);
+          toast({
+              variant: 'destructive',
+              title: `DPR Generation Failed`,
+              description: e.message,
+          });
+          setIsGenerating(false);
+      }
   };
-
-
-  const renderStepContent = () => {
-      switch(currentStep) {
-          case 0: // MSME Details
-            return (
-                <div className="space-y-4">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <Label htmlFor="promoterName">Promoter Name</Label>
-                            <Input id="promoterName" value={promoterName} onChange={(e) => setPromoterName(e.target.value)} placeholder="e.g., Anika Sharma" />
-                        </div>
-                         <div className="space-y-1.5">
-                            <Label htmlFor="businessName">Business / Project Name</Label>
-                            <Input id="businessName" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g., Eco-Friendly Packaging Solutions" />
-                        </div>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <Label htmlFor="businessType">Business Type</Label>
-                            <Input id="businessType" value={businessType} onChange={(e) => setBusinessType(e.target.value)} placeholder="e.g., Manufacturing, Service" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label htmlFor="location">Location</Label>
-                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g., Pune, Maharashtra" />
-                        </div>
-                    </div>
-                </div>
-            );
-          case 1: // Project Scope
-            return (
-                <div className="space-y-1.5">
-                    <Label htmlFor="projectScope">Project Scope</Label>
-                    <Textarea id="projectScope" value={projectScope} onChange={(e) => setProjectScope(e.target.value)} rows={8} placeholder="Define the project's objectives, deliverables, and boundaries..." />
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Info className="h-3 w-3"/>This can be pre-filled from your idea analysis.</p>
-                </div>
-            );
-          case 2: // Target Market
-            return (
-                 <div className="space-y-1.5">
-                    <Label htmlFor="targetMarket">Target Market</Label>
-                    <Textarea id="targetMarket" value={targetMarket} onChange={(e) => setTargetMarket(e.target.value)} rows={8} placeholder="Describe your ideal customers, market size, and competitors..." />
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Info className="h-3 w-3"/>This can be pre-filled from your idea analysis.</p>
-                </div>
-            );
-          case 3: // Financial Data
-            return (
-                 <div className="space-y-1.5">
-                    <Label htmlFor="financialData">Financial Data</Label>
-                    <Textarea id="financialData" value={financialData} onChange={(e) => setFinancialData(e.target.value)} rows={8} placeholder="Provide details on estimated startup costs, funding sources, and revenue projections..." />
-                </div>
-            );
-          case 4: // Additional Info
-            return (
-                 <div className="space-y-1.5">
-                    <Label htmlFor="additionalInfo">Additional Information</Label>
-                    <Textarea id="additionalInfo" value={additionalInfo} onChange={(e) => setAdditionalInfo(e.target.value)} rows={8} placeholder="Include any other relevant details, such as your unique selling proposition (USP), team background, etc..." />
-                </div>
-            );
-          case 5: // Review & Generate
-             return (
-                 <div className="space-y-6">
-                     <h3 className="text-lg font-semibold">Review Your Input</h3>
-                     <div className="space-y-4 rounded-md border p-4 max-h-96 overflow-y-auto">
-                        <ReviewSection title="MSME Details" content={`Promoter: ${promoterName}\nBusiness: ${businessName}\nType: ${businessType}\nLocation: ${location}`} />
-                        <ReviewSection title="Project Scope" content={projectScope} />
-                        <ReviewSection title="Target Market" content={targetMarket} />
-                        <ReviewSection title="Financial Data" content={financialData} />
-                        <ReviewSection title="Additional Info" content={additionalInfo} />
-                     </div>
-                 </div>
-             );
-          default:
-            return null;
-      }
-  }
-  
-  const ReviewSection = ({ title, content }: { title: string; content: string }) => (
-      <div>
-          <h4 className="font-medium text-primary">{title}</h4>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{content || "Not provided"}</p>
-      </div>
-  );
-
-  const progress = ((currentStep + 1) / formSteps.length) * 100;
   
   if (isGenerating) {
     return (
@@ -314,43 +155,30 @@ function GenerateDPRContent() {
       </div>
 
        <Card>
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle>
-            Step {currentStep + 1}: {formSteps[currentStep]}
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="text-accent" />
+            Ready to Build Your Report?
           </CardTitle>
            <CardDescription>
-            Please provide the following details to generate your report.
+            The information from your idea analysis will be used to generate a bank-ready Detailed Project Report.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-4 md:p-6">
-            <div className="my-4">
-                <Progress value={progress} className="w-full" />
-            </div>
-            <div className="min-h-[250px] mt-6">
-                {renderStepContent()}
+        <CardContent>
+            <div className="space-y-4">
+                <p className="text-muted-foreground">
+                    Click the button below to start the automated DPR generation process. The AI will first elaborate on your business concept and then write all the necessary sections for a complete report.
+                </p>
+                <Button onClick={handleGenerateDPR} disabled={isGenerating} size="lg">
+                    {isGenerating ? (
+                        <> <Loader2 className="mr-2 animate-spin" /> Generating Report...</>
+                    ) : (
+                       <> <ChevronsRight className="mr-2"/> Generate Full DPR</>
+                    )}
+                </Button>
             </div>
         </CardContent>
       </Card>
-      
-      <div className="flex justify-between gap-2">
-          <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || isGenerating}>
-            Back
-          </Button>
-          {currentStep < formSteps.length - 1 ? (
-             <Button onClick={handleNext}>
-                Next <ChevronsRight className="ml-2" />
-            </Button>
-          ) : (
-            <Button onClick={handleGenerateDPR} disabled={isGenerating}>
-                {isGenerating ? (
-                    <> <Loader2 className="mr-2 animate-spin" /> Generating Report...</>
-                ) : (
-                    "Generate DPR"
-                )}
-            </Button>
-          )}
-      </div>
-
     </div>
   );
 }

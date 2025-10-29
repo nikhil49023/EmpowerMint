@@ -1,23 +1,29 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
-import Sidebar from './sidebar';
 import { useAuth } from '@/context/auth-provider';
+import { Avatar, AvatarFallback } from '../ui/avatar';
+import Link from 'next/link';
 
 export default function AppHeader() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user } = useAuth();
 
   if (!user) {
     return null;
   }
 
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  };
+
   return (
-    <header className="sticky top-0 z-10 flex h-16 flex-shrink-0 items-center justify-between border-b bg-background/80 backdrop-blur-lg px-4 print:hidden">
+    <header className="sticky top-0 z-10 flex h-16 flex-shrink-0 items-center justify-between border-b glassmorphic px-2 sm:px-4 print:hidden">
       <div className="flex items-center gap-2">
         <svg
           width="32"
@@ -48,20 +54,15 @@ export default function AppHeader() {
         </svg>
         <div>
           <h1 className="text-lg font-bold">FIn-Box</h1>
-          <p className="text-xs text-muted-foreground">Welcome, {user?.displayName || 'there'}!</p>
         </div>
       </div>
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <Menu className="h-6 w-6" />
-            <span className="sr-only">Open sidebar</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="p-0 w-64 md:w-72">
-          <Sidebar onLinkClick={() => setIsSidebarOpen(false)} />
-        </SheetContent>
-      </Sheet>
+      <Link href="/profile">
+         <Avatar className="h-9 w-9 border-2 border-primary/50">
+            <AvatarFallback className="text-sm bg-muted">
+              {getInitials(user.displayName)}
+            </AvatarFallback>
+          </Avatar>
+      </Link>
     </header>
   );
 }

@@ -1,23 +1,32 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth.uid == userId;
-
-      match /transactions/{transactionId} {
-        allow read, write: if request.auth.uid == userId;
-      }
-      match /ideas/{ideaId} {
-        allow read, write: if request.auth.uid == userId;
-      }
-      match /budgets/{budgetId} {
-        allow read, write: if request.auth.uid == userId;
-      }
+    
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Allow public read access for the community ideas collection
+    match /communityIdeas/{ideaId} {
+      allow read: if true;
+      allow create: if request.auth != null; // Only authenticated users can contribute
+      allow update, delete: if false; // Nobody can edit or delete contributed ideas
     }
 
-    match /feedback/{feedbackId} {
-      allow create: if request.auth != null;
+    // MSME Marketplace: Allow anyone to query the users collection
+    match /users/{userId} {
+      allow list: if true;
+    }
+
+    // Allow users to read and write their own data.
+    // This rule is more specific, so it overrides the general deny rule.
+    match /users/{userId}/{document=**} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
+
+    

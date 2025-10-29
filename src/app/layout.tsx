@@ -10,12 +10,10 @@ import { Inter } from 'next/font/google';
 import { AuthProvider, useAuth } from '@/context/auth-provider';
 import { LanguageProvider } from '@/context/language-provider';
 import AppHeader from '@/components/financify/app-header';
+import DesktopHeader from '@/components/financify/desktop-header';
 import BottomNavbar from '@/components/financify/bottom-navbar';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import AIAdvisorChat from '@/components/financify/ai-advisor-chat';
-import { MessagesSquare } from 'lucide-react';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -25,27 +23,45 @@ const inter = Inter({
 function AppContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Special layout for the login page
-  if (pathname === '/' || pathname === '/login' || !user) {
+  // Special layout for public pages
+  const isPublicPage = pathname === '/login' || pathname === '/signup';
+  if (isPublicPage) {
     return <>{children}</>;
+  }
+  
+  if (!isPublicPage && !user) {
+    // If not on a public page and not logged in, render nothing (or a loader)
+    // as the AuthProvider should handle redirection.
+    return null;
   }
 
   return (
-    <div className="md:flex md:h-screen md:overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <Sidebar />
+      <div className={cn(
+        "hidden md:flex flex-shrink-0 transition-all duration-300 ease-in-out",
+        isSidebarCollapsed ? "w-20" : "w-64"
+      )}>
+        <Sidebar isCollapsed={isSidebarCollapsed} />
       </div>
 
-      <div className="flex flex-col w-0 flex-1 md:overflow-hidden print:overflow-visible">
+      <div className="flex flex-col w-0 flex-1 overflow-hidden print:overflow-visible">
         {/* Mobile Header */}
         <div className="md:hidden">
             <AppHeader />
         </div>
+
+        {/* Desktop Header */}
+        <div className="hidden md:block">
+          <DesktopHeader 
+            isSidebarCollapsed={isSidebarCollapsed} 
+            toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          />
+        </div>
         
-        <main className="flex-1 relative md:overflow-y-auto focus:outline-none print:overflow-visible pb-16 md:pb-0">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none print:overflow-visible pb-16 md:pb-0">
           <div className="py-6 px-4 sm:px-6 lg:px-8">
             <AnimatePresence mode="wait">
               <motion.div
@@ -62,24 +78,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
-
-       {/* Floating AI Chat Button */}
-      <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
-        <SheetTrigger asChild>
-          <Button
-            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 h-14 w-14 rounded-full shadow-lg"
-            size="icon"
-          >
-            <MessagesSquare className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent className="w-full sm:w-[440px] p-0 flex flex-col">
-           <SheetHeader className="p-4 border-b">
-                <SheetTitle>AI Financial Advisor</SheetTitle>
-            </SheetHeader>
-          <AIAdvisorChat />
-        </SheetContent>
-      </Sheet>
 
       <BottomNavbar />
       <Toaster />

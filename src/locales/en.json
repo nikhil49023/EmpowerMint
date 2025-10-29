@@ -5,6 +5,7 @@
     "transactions": "Transactions",
     "brainstorm": "Brainstorm",
     "launchpad": "Launchpad",
+    "growthHub": "Growth Hub",
     "applicationTracker": "Application Tracker",
     "myProfile": "My Profile",
     "giveFeedback": "Give Feedback",
@@ -226,8 +227,8 @@
     "loading": "Loading DPR Generator..."
   },
   "launchpad": {
-    "title": "Founder's Launchpad",
-    "description": "Your guide to starting and growing your enterprise in India.",
+    "title": "Launchpad",
+    "description": "Your guide to starting your entrepreneurial journey.",
     "statePortals": {
       "title": "State-Specific Portals",
       "description": "Access resources and schemes from your state government.",
@@ -306,6 +307,10 @@
         "description": "Implement your marketing strategy to attract customers and scale your operations for growth."
       }
     }
+  },
+  "growthHub": {
+    "title": "Growth Hub",
+    "description": "Your guide to scaling and managing your enterprise in India."
   },
   "aiAdvisor": {
     "title": "AI Financial Advisor",

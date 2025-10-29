@@ -21,32 +21,22 @@ import {
   Loader2,
   ChevronsRight,
   Landmark,
+  Share2,
 } from 'lucide-react';
-import { generateInvestmentIdeaAnalysisAction } from '@/app/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/sarvam-schemas';
+import type { GenerateInvestmentIdeaAnalysisOutput } from '@/ai/schemas/investment-idea-analysis';
 import { FormattedText } from '@/components/financify/formatted-text';
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/auth-provider';
 import { useToast } from '@/hooks/use-toast';
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  query,
-  where,
-  getDocs,
-  limit,
-} from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import {
-  FirestorePermissionError,
-  type SecurityRuleContext,
-} from '@/firebase/errors';
 import { useLanguage } from '@/hooks/use-language';
+import { Badge } from '@/components/ui/badge';
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, limit } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+
+const db = getFirestore(app);
 
 type SavedIdea = GenerateInvestmentIdeaAnalysisOutput & {
   savedAt: any;
@@ -82,15 +72,16 @@ function InvestmentIdeaContent() {
   
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isContributing, setIsContributing] = useState(false);
+  const [isContributed, setIsContributed] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const { translations } = useLanguage();
 
   const handleBuildDpr = () => {
     if (!title || !user) return;
     
-    // Construct the full analysis object from the generated sections
     const fullAnalysis: Partial<GenerateInvestmentIdeaAnalysisOutput> = sections.reduce((acc, section) => {
         if(section.content) {
             acc[section.key] = section.content;
@@ -107,43 +98,77 @@ function InvestmentIdeaContent() {
   };
   
   const saveAnalysis = useCallback(
-    async () => {
+    async (fullAnalysis?: GenerateInvestmentIdeaAnalysisOutput) => {
       if (!user || !title) return;
       setIsSaving(true);
       
-      const analysisToSave = sections.reduce((acc, section) => {
+      const analysisToSave = fullAnalysis || sections.reduce((acc, section) => {
         if (section.content) {
           acc[section.key] = section.content;
         }
         return acc;
       }, { title, summary } as Partial<GenerateInvestmentIdeaAnalysisOutput>);
 
-
-      const ideasCollectionRef = collection(db, 'users', user.uid, 'ideas');
-      const ideaData = {
-        ...analysisToSave,
-        savedAt: serverTimestamp(),
-      };
-
-      addDoc(ideasCollectionRef, ideaData).catch(async serverError => {
-          const permissionError = new FirestorePermissionError({
-            path: ideasCollectionRef.path,
-            operation: 'create',
-            requestResourceData: ideaData,
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-        })
-        .finally(() => {
-          setIsSaving(false);
-          setIsSaved(true);
-          toast({
+      try {
+        const ideasRef = collection(db, 'users', user.uid, 'savedIdeas');
+        await addDoc(ideasRef, {
+            ...analysisToSave,
+            savedAt: serverTimestamp()
+        });
+        setIsSaved(true);
+        toast({
             title: translations.investmentIdea._TITLE,
             description: translations.investmentIdea.ideaSavedSuccess,
-          });
         });
+      } catch (e) {
+        console.error("Error saving idea: ", e);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not save the idea. Please try again."
+        });
+      } finally {
+        setIsSaving(false);
+      }
     },
     [user, toast, translations, sections, title, summary]
   );
+  
+  const contributeAnalysis = async () => {
+      if (!user || !title || !summary || !userProfile) return;
+      setIsContributing(true);
+
+      const analysisToContribute: GenerateInvestmentIdeaAnalysisOutput = sections.reduce((acc, section) => {
+        if (section.content) {
+          acc[section.key] = section.content;
+        }
+        return acc;
+      }, { title, summary } as any);
+
+      try {
+        const communityIdeasRef = collection(db, 'communityIdeas');
+        await addDoc(communityIdeasRef, {
+            ...analysisToContribute,
+            contributedBy: userProfile.displayName || 'Anonymous',
+            userId: user.uid,
+            createdAt: serverTimestamp()
+        });
+        setIsContributed(true);
+        toast({
+            title: "Thank You!",
+            description: "Your idea has been shared with the community.",
+        });
+      } catch (e) {
+        console.error("Error contributing idea: ", e);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not contribute the idea. Please try again."
+        });
+      } finally {
+        setIsContributing(false);
+      }
+  };
 
   useEffect(() => {
     const fetchOrGenerateAnalysis = async () => {
@@ -152,86 +177,80 @@ function InvestmentIdeaContent() {
         return;
       }
       if (!user) {
-        // Just generate the first section for logged-out users, then stop.
-        const result = await generateInvestmentIdeaAnalysisAction({ idea });
-        if (result.success) {
-            setTitle(result.data.title);
-            setSummary(result.data.summary);
-            setSections(prev => prev.map((s, i) => i === 0 ? { ...s, content: result.data.investmentStrategy, status: 'done' } : s));
-        } else {
-            setError(result.error);
-        }
+         router.push('/login');
         return;
       }
 
       setError(null);
-
-      // Check Firestore for a fully saved analysis first
-      const ideasRef = collection(db, 'users', user.uid, 'ideas');
-      const q = query(ideasRef, where('title', '==', idea), limit(1));
+      setSections(prev => prev.map(s => ({ ...s, status: 'loading' })));
 
       try {
+        // Check if analysis is already saved in Firestore
+        const ideasRef = collection(db, 'users', user.uid, 'savedIdeas');
+        const q = query(ideasRef, where("title", "==", idea), limit(1));
         const querySnapshot = await getDocs(q);
+        
         if (!querySnapshot.empty) {
-          const docData = querySnapshot.docs[0].data() as GenerateInvestmentIdeaAnalysisOutput;
-          setTitle(docData.title);
-          setSummary(docData.summary);
-          setSections(prevSections =>
-            prevSections.map(s => ({
-              ...s,
-              content: docData[s.key] as string,
-              status: 'done',
-            }))
-          );
-          setIsSaved(true);
-          return; // Stop here if we found a cached version
-        }
-      } catch (err: any) {
-         console.error('Error checking for cached analysis:', err);
-      }
+            const savedData = querySnapshot.docs[0].data() as GenerateInvestmentIdeaAnalysisOutput;
+            setTitle(savedData.title);
+            setSummary(savedData.summary);
+            setSections(prev =>
+                prev.map(s => ({
+                    ...s,
+                    content: savedData[s.key] as string,
+                    status: 'done',
+                }))
+            );
+            setIsSaved(true);
+        } else {
+           // If not found in DB, generate new analysis
+            const response = await fetch('/api/generate-idea-analysis', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ idea })
+            });
 
-      // If no cached version, generate section by section
-      let fullAnalysis: GenerateInvestmentIdeaAnalysisOutput | null = null;
-      for (let i = 0; i < sectionConfig.length; i++) {
-        const section = sectionConfig[i];
-        
-        setSections(prev => prev.map(s => s.key === section.key ? { ...s, status: 'loading' } : s));
-        
-        // On the first iteration, we generate the full data but only display the first part
-        if (i === 0) {
-            const result = await generateInvestmentIdeaAnalysisAction({ idea });
-            if (result.success) {
-                fullAnalysis = result.data;
+            const result = await response.json();
+
+            if (response.ok) {
+                const fullAnalysis = result;
                 setTitle(fullAnalysis.title);
                 setSummary(fullAnalysis.summary);
+
+                setSections(prev =>
+                    prev.map(s => ({
+                        ...s,
+                        content: fullAnalysis[s.key] as string,
+                        status: 'done',
+                    }))
+                );
+                
+                // Automatically save the newly generated analysis to personal ideas
+                if (!isSaved) {
+                    await saveAnalysis(fullAnalysis);
+                }
             } else {
-                setError(result.error);
-                setSections(prev => prev.map(s => s.key === section.key ? { ...s, status: 'pending' } : s));
-                break; // Stop generation on error
+                throw new Error(result.message || 'Failed to generate analysis');
             }
         }
         
-        if (fullAnalysis) {
-            // Simulate a delay for subsequent cards to feel like they are generating
-            if (i > 0) await new Promise(resolve => setTimeout(resolve, 800));
-            
-            setSections(prev => prev.map(s => 
-                s.key === section.key 
-                ? { ...s, content: fullAnalysis![s.key] as string, status: 'done' } 
-                : s
-            ));
+        // After loading or generating, check if it's already a community idea
+        const communityIdeasRef = collection(db, 'communityIdeas');
+        const communityQuery = query(communityIdeasRef, where("title", "==", idea), where("userId", "==", user.uid), limit(1));
+        const communitySnapshot = await getDocs(communityQuery);
+        if (!communitySnapshot.empty) {
+            setIsContributed(true);
         }
-      }
 
-      // After generating all sections, automatically save.
-      if (fullAnalysis && user && !isSaved) {
-        await saveAnalysis();
+      } catch (err: any) {
+        setError(err.message);
+        setSections(prev => prev.map(s => ({ ...s, status: 'pending' })));
       }
     };
 
     fetchOrGenerateAnalysis();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idea, user, translations]);
+  }, [idea, user]);
 
   if (error) {
     return (
@@ -261,7 +280,7 @@ function InvestmentIdeaContent() {
 
          <div className="flex flex-wrap gap-2 justify-end">
               <Button
-                onClick={saveAnalysis}
+                onClick={() => saveAnalysis()}
                 disabled={isSaving || isSaved || !user || !allSectionsLoaded}
                 variant="outline"
               >
@@ -282,6 +301,21 @@ function InvestmentIdeaContent() {
                   </>
                 )}
               </Button>
+
+              <Button
+                onClick={contributeAnalysis}
+                disabled={isContributing || isContributed || !user || !allSectionsLoaded}
+                variant="outline"
+              >
+                {isContributed ? (
+                    <> <CheckCircle className="mr-2 text-green-500" /> Contributed </>
+                ) : isContributing ? (
+                    <> <Loader2 className="mr-2 animate-spin" /> Contributing... </>
+                ) : (
+                    <> <Share2 className="mr-2" /> Contribute </>
+                )}
+              </Button>
+              
               <Button onClick={handleBuildDpr} disabled={!allSectionsLoaded || !user}>
                   <ChevronsRight className="mr-2" />
                   Build DPR
@@ -298,8 +332,11 @@ function InvestmentIdeaContent() {
               </div>
             ) : (
               <>
-                <CardTitle className="text-2xl md:text-3xl">{title}</CardTitle>
-                <CardDescription className="text-base">{summary}</CardDescription>
+                <div className="flex flex-wrap items-center gap-4">
+                  <CardTitle className="text-2xl md:text-3xl">{title}</CardTitle>
+                  <Badge variant="secondary">Powered by FIn-Box AI</Badge>
+                </div>
+                <CardDescription className="text-base pt-2">{summary}</CardDescription>
               </>
             )}
           </CardHeader>
@@ -313,19 +350,18 @@ function InvestmentIdeaContent() {
                         key={section.key}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
+                        transition={{ duration: 0.5, delay: 0.1 * index }}
                     >
                       <Card>
                         <CardHeader className="flex flex-row items-center gap-4 p-4 md:p-6">
                           <section.icon className="h-8 w-8 text-primary flex-shrink-0" />
                           <CardTitle className="text-xl">{section.title}</CardTitle>
                         </CardHeader>
-                        <CardContent className="p-4 md:p-6 pt-0">
+                        <CardContent className="p-4 md:p-6 pt-0 min-h-[120px]">
                           {section.status === 'loading' ? (
-                            <div className="space-y-2">
-                              <Skeleton className="h-4 w-full" />
-                              <Skeleton className="h-4 w-full" />
-                              <Skeleton className="h-4 w-3/4" />
+                            <div className="flex items-center justify-center flex-col text-muted-foreground gap-2 h-24">
+                              <Loader2 className="h-8 w-8 animate-spin" />
+                              <span>Generating...</span>
                             </div>
                           ) : (
                             <FormattedText text={section.content || ''} />

@@ -2,95 +2,33 @@
 'use server';
 
 /**
- * @fileOverview A Genkit flow for generating a dashboard summary from transaction data.
- *
- * This flow analyzes a list of transactions to calculate financial metrics and provide a personalized suggestion.
- * - generateDashboardSummary - A function that generates a dashboard summary.
- * - GenerateDashboardSummaryInput - The input type for the generateDashboardSummary function.
- * - GenerateDashboardSummaryOutput - The return type for the generateDashboardSummary function.
+ * @fileOverview A function for generating a dashboard summary from transaction data using Sarvam AI.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import type { ExtractedTransaction } from '../schemas/transactions';
+import type { z } from 'zod';
 import {
   GenerateDashboardSummaryInputSchema,
   GenerateDashboardSummaryOutputSchema,
 } from '../schemas/dashboard-summary';
+import fetch from 'node-fetch';
 
-export type GenerateDashboardSummaryInput = z.infer<
+
+type GenerateDashboardSummaryInput = z.infer<
   typeof GenerateDashboardSummaryInputSchema
 >;
 type GenerateDashboardSummaryOutput = z.infer<
   typeof GenerateDashboardSummaryOutputSchema
 >;
 
-export async function generateDashboardSummary(
-  input: GenerateDashboardSummaryInput
-): Promise<GenerateDashboardSummaryOutput> {
-  return generateDashboardSummaryFlow(input);
-}
+const SARVAM_API_KEY = process.env.SARVAM_API_KEY;
+const API_URL = 'https://api.sarvam.ai/v1/chat/completions';
 
-const prompt = ai.definePrompt({
-  name: 'generateDashboardSummaryPrompt',
-  input: { schema: GenerateDashboardSummaryInputSchema },
-  output: { schema: GenerateDashboardSummaryOutputSchema },
-  prompt: `You are "FIn-Box," a financial analyst. Your task is to analyze a list of financial transactions and provide a summary.
-
-  Based on the provided transactions, calculate the following:
-  1.  **Total Income**: Sum of all 'income' type transactions.
-  2.  **Total Expenses**: Sum of all 'expense' type transactions.
-  3.  **Savings Rate**: The percentage of income that is saved. Calculate as ((Total Income - Total Expenses) / Total Income) * 100. If Total Income is zero, Savings Rate should be 0.
-  4.  **Personalized Suggestion**: Provide one short, actionable financial tip based on the user's spending patterns or savings rate. This should be in the style of a "Fin Bite".
-
-  Here is the list of transactions:
-  {{#each transactions}}
-  - {{this.description}}: {{this.amount}} ({{this.type}}) on {{this.date}}
-  {{/each}}
-
-  Your output must be in the specified JSON format. Ensure all numerical values are returned as numbers, not strings.
-  `,
-});
-
-// Moved the suggestion-only prompt definition outside the flow to prevent re-registration on every call.
-const suggestionPrompt = ai.definePrompt({
-  name: 'generateSuggestionOnlyPrompt',
-  input: {
-    schema: z.object({
-      transactions: z.any(),
-      totalIncome: z.number(),
-      totalExpenses: z.number(),
-      savingsRate: z.number(),
-    }),
-  },
-  output: {
-    schema: z.object({
-      suggestion: z
-        .string()
-        .describe(
-          'A short, actionable financial tip based on the transactions.'
-        ),
-    }),
-  },
-  prompt: `Based on the following financial summary, provide one short, actionable "Fin Bite" for an entrepreneur.
-
-        - Total Income: {{totalIncome}}
-        - Total Expenses: {{totalExpenses}}
-        - Savings Rate: {{savingsRate}}%
-
-        Transaction List:
-        {{#each transactions}}
-        - {{this.description}}: {{this.amount}} ({{this.type}}) on {{this.date}}
-        {{/each}}
-        `,
-});
 
 function parseCurrency(amount: string | number): number {
   if (typeof amount === 'number') {
     return amount;
   }
   if (typeof amount === 'string') {
-    // Remove currency symbols (like INR, ₹), commas, and any non-numeric characters except for the decimal point.
     const sanitizedAmount = amount.replace(/[^0-9.-]+/g, '');
     const parsed = parseFloat(sanitizedAmount);
     return isNaN(parsed) ? 0 : parsed;
@@ -98,59 +36,119 @@ function parseCurrency(amount: string | number): number {
   return 0;
 }
 
-const generateDashboardSummaryFlow = ai.defineFlow(
-  {
-    name: 'generateDashboardSummaryFlow',
-    inputSchema: GenerateDashboardSummaryInputSchema,
-    outputSchema: GenerateDashboardSummaryOutputSchema,
-  },
-  async (input: { transactions: ExtractedTransaction[] }) => {
-    // If there are no transactions, return a default zero-state summary.
-    if (!input.transactions || input.transactions.length === 0) {
-      return {
-        totalIncome: 0,
-        totalExpenses: 0,
-        savingsRate: 0,
-        suggestion:
-          'Start by adding some transactions to see your financial summary.',
-      };
-    }
-    // For a small number of transactions, we can calculate totals directly and just use the LLM for the suggestion.
-    if (input.transactions.length < 20) {
-      let totalIncome = 0;
-      let totalExpenses = 0;
+export async function generateDashboardSummary(
+  input: GenerateDashboardSummaryInput
+): Promise<GenerateDashboardSummaryOutput> {
+  const { transactions } = input;
 
-      input.transactions.forEach(t => {
-        const amount = parseCurrency(t.amount);
-        if (t.type === 'income') {
-          totalIncome += amount;
-        } else {
-          totalExpenses += amount;
-        }
-      });
-
-      const savingsRate =
-        totalIncome > 0
-          ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100)
-          : 0;
-
-      const { output } = await suggestionPrompt({
-        transactions: input.transactions,
-        totalIncome,
-        totalExpenses,
-        savingsRate,
-      });
-
-      return {
-        totalIncome,
-        totalExpenses,
-        savingsRate,
-        suggestion: output!.suggestion,
-      };
-    } else {
-      // If there's a large number of transactions, let the LLM handle everything.
-      const { output } = await prompt(input);
-      return output!;
-    }
+  if (!transactions || transactions.length === 0) {
+    return {
+      totalIncome: 0,
+      totalExpenses: 0,
+      savingsRate: 0,
+      suggestion:
+        'Start by adding some transactions to see your financial summary.',
+    };
   }
-);
+
+  let totalIncome = 0;
+  let totalExpenses = 0;
+
+  transactions.forEach(t => {
+    const amount = parseCurrency(t.amount);
+    if (t.type === 'income') {
+      totalIncome += amount;
+    } else {
+      totalExpenses += amount;
+    }
+  });
+
+  const savingsRate =
+    totalIncome > 0
+      ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100)
+      : 0;
+
+  const transactionSample = transactions
+    .slice(0, 15)
+    .map(t => `- ${t.description}: ${t.amount} (${t.type}) on ${t.date}`)
+    .join('\n');
+
+  const prompt = `You are "FIn-Box," a financial analyst. Based on the following financial summary and transaction list for an entrepreneur, provide one short, actionable "Fin Bite" (a financial tip). Your response MUST be a valid JSON object with a "suggestion" key.
+
+Example Output:
+\`\`\`json
+{
+  "suggestion": "Your spending on subscriptions is high. Consider reviewing them."
+}
+\`\`\`
+
+Financial Summary:
+- Total Income: ${totalIncome}
+- Total Expenses: ${totalExpenses}
+- Savings Rate: ${savingsRate}%
+
+Transaction List (sample):
+${transactionSample}
+`;
+
+  const headers = {
+    Authorization: `Bearer ${SARVAM_API_KEY}`,
+    'Content-Type': 'application/json',
+  };
+
+  const data = {
+    model: 'sarvam-1',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are a helpful AI assistant that provides financial tips.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.7,
+  };
+
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("Sarvam AI Error Body:", errorBody);
+        throw new Error(`Sarvam AI API request failed with status: ${response.status}`);
+    }
+    
+    const responseJson: any = await response.json();
+    const message = responseJson.choices[0].message.content;
+
+    const jsonString = message
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+    const parsedOutput = JSON.parse(jsonString);
+
+    return {
+      totalIncome,
+      totalExpenses,
+      savingsRate,
+      suggestion:
+        parsedOutput?.suggestion ||
+        'Review your spending to find potential savings opportunities.',
+    };
+  } catch (e: any) {
+    console.error('Failed to generate dashboard suggestion from AI:', e.message);
+    // Fallback suggestion
+    return {
+      totalIncome,
+      totalExpenses,
+      savingsRate,
+      suggestion:
+        'Review your spending to find potential savings opportunities.',
+    };
+  }
+}

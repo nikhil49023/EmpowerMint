@@ -10,10 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { FormattedText } from '@/components/financify/formatted-text';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-provider';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, doc } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError, type SecurityRuleContext } from '@/firebase/errors';
 import { ProjectCostPieChart, FinancialProjectionsBarChart } from '@/components/financify/dpr-charts';
 
 
@@ -57,29 +53,18 @@ function DPRReportContent() {
         return;
       }
       setIsLoading(true);
-      
-      const sections: ReportData = {};
-      try {
-        const sectionsCollectionRef = collection(db, 'users', user.uid, 'dpr-projects', ideaTitle, 'sections');
-        const querySnapshot = await getDocs(sectionsCollectionRef);
-        
-        if (querySnapshot.empty) {
-            setError('No report data found. Please generate the DPR first.');
-        } else {
-            querySnapshot.forEach((doc) => {
-                sections[doc.id] = doc.data().content;
-            });
-            setReport(sections);
+
+      const storedReport = localStorage.getItem('generatedDPR');
+      if (storedReport) {
+        try {
+          setReport(JSON.parse(storedReport));
+        } catch (e) {
+          setError('Failed to parse the generated report data.');
+        } finally {
+          setIsLoading(false);
         }
-      } catch (e: any) {
-        const permissionError = new FirestorePermissionError({
-          path: `users/${user.uid}/dpr-projects/${ideaTitle}/sections`,
-          operation: 'list',
-        } satisfies SecurityRuleContext);
-        errorEmitter.emit('permission-error', permissionError);
-        console.error('Failed to fetch report:', e);
-        setError(`Failed to load the generated report data: ${e.message}`);
-      } finally {
+      } else {
+        setError('No generated report data found. Please generate the DPR first.');
         setIsLoading(false);
       }
     };
@@ -113,7 +98,7 @@ function DPRReportContent() {
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-3/4" />
           </div>
-        ) : title === 'Financial Projections' && typeof content === 'object' ? (
+        ) : title.includes('Financial Projections') && typeof content === 'object' ? (
            <div className="space-y-6">
                 <div>
                     <h3 className="text-lg font-semibold mb-2">Financial Summary</h3>
@@ -230,7 +215,7 @@ function DPRReportContent() {
           }
           .print-toc {
              page-break-after: always;
-          }
+           }
            .print-toc h1 {
             font-size: 18pt;
             margin-bottom: 2rem;
@@ -329,10 +314,9 @@ function DPRReportContent() {
         
         {report && !isLoading &&
           dprChapterTitles.map((title, index) => {
-            // Find the key in the report object that matches the title, ignoring case and spaces.
             const key = Object.keys(report).find(k => k.toLowerCase().replace(/ /g, '') === title.toLowerCase().replace(/ /g, '')) || title;
             const content = report[key];
-             const sectionTitle = `${index + 1}. ${title.replace(/([A-Z])/g, ' $1').trim()}`.replace("And", "and");
+            const sectionTitle = `${index + 1}. ${title.replace(/([A-Z])/g, ' $1').trim()}`.replace("And", "and");
 
             return (
               <Section

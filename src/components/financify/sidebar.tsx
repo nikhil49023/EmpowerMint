@@ -9,6 +9,7 @@ import {
   BrainCircuit,
   Rocket,
   Globe,
+  MessagesSquare,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -31,22 +32,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLanguage } from '@/hooks/use-language';
 import { useAuth } from '@/context/auth-provider';
 
 type SidebarProps = {
   onLinkClick?: () => void;
+  isCollapsed?: boolean;
 };
 
-export default function Sidebar({ onLinkClick }: SidebarProps) {
+export default function Sidebar({ onLinkClick, isCollapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { language, setLanguage, translations } = useLanguage();
-  const { signOut } = useAuth();
+  const { signOut, userProfile } = useAuth();
 
+  const isMsme = userProfile?.role === 'msme';
 
   const navItems = [
-    { href: '/dashboard', label: translations.sidebar.dashboard, icon: Home },
+    { href: '/', label: translations.sidebar.dashboard, icon: Home },
     {
       href: '/transactions',
       label: translations.sidebar.transactions,
@@ -57,12 +61,17 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
       label: translations.sidebar.brainstorm,
       icon: BrainCircuit,
     },
-    { href: '/launchpad', label: translations.sidebar.launchpad, icon: Rocket },
+    { 
+      href: '/ai-advisor', 
+      label: "AI Advisor", 
+      icon: MessagesSquare 
+    },
+    { href: '/launchpad', label: isMsme ? translations.sidebar.growthHub : translations.sidebar.launchpad, icon: Rocket },
   ];
 
   const handleLogout = () => {
     signOut();
-    router.push('/');
+    router.push('/login');
   };
 
   const handleLinkClick = () => {
@@ -71,9 +80,47 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
     }
   };
 
+  const NavLink = ({ item }: { item: typeof navItems[0] }) => {
+    const isActive = pathname === item.href;
+    const linkContent = (
+      <>
+        <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+        <span className={cn({ 'hidden': isCollapsed })}>{item.label}</span>
+      </>
+    );
+
+    return (
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              asChild
+              className={cn(
+                'w-full justify-start text-base font-normal text-muted-foreground hover:text-primary hover:bg-primary/10',
+                isActive && 'font-semibold text-primary bg-primary/10',
+                isCollapsed && 'justify-center'
+              )}
+              onClick={handleLinkClick}
+            >
+              <Link href={item.href}>
+                {linkContent}
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          {isCollapsed && (
+            <TooltipContent side="right">
+              <p>{item.label}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+  
   return (
-    <aside className="w-full md:w-64 flex-shrink-0 bg-card/80 backdrop-blur-lg border-r flex flex-col p-4 md:p-0">
-      <div className="hidden md:flex p-6 items-center gap-2">
+    <aside className="w-full h-full glassmorphic flex flex-col p-4">
+      <div className={cn("flex items-center gap-2 p-2", isCollapsed ? 'justify-center' : 'justify-start')}>
         <svg
           width="40"
           height="40"
@@ -101,84 +148,104 @@ export default function Sidebar({ onLinkClick }: SidebarProps) {
             strokeLinejoin="round"
           />
         </svg>
-        <h1 className="text-xl font-bold">FIn-Box</h1>
+        <h1 className={cn("text-xl font-bold", { 'hidden': isCollapsed })}>FIn-Box</h1>
       </div>
-      <nav className="flex-1 px-0 md:px-4 py-2 space-y-1">
+      <nav className="flex-1 px-0 py-2 space-y-1 mt-4">
         {navItems.map(item => (
-          <Button
-            key={item.label}
-            variant="ghost"
-            asChild
-            className={cn(
-              'w-full justify-start text-base font-normal text-muted-foreground hover:text-primary hover:bg-primary/10',
-              pathname.startsWith(item.href) &&
-                'font-semibold text-primary bg-primary/10'
-            )}
-            onClick={handleLinkClick}
-          >
-            <Link href={item.href}>
-              <item.icon className="mr-3 h-5 w-5" />
-              {item.label}
-            </Link>
-          </Button>
+          <NavLink key={item.href} item={item} />
         ))}
       </nav>
-      <div className="p-0 md:p-4 border-t">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground font-normal hover:text-primary hover:bg-primary/10"
-            >
-              <Globe className="mr-3 h-5 w-5" />
-              {language === 'en' ? 'English' : 'తెలుగు'}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => setLanguage('en')}>
-              English
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setLanguage('te')}>
-              తెలుగు
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button
-          variant="ghost"
-          asChild
-          className="w-full justify-start text-muted-foreground font-normal hover:text-primary hover:bg-primary/10"
-          onClick={handleLinkClick}
-        >
-          <Link href="/profile">
-            <User className="mr-3 h-5 w-5" />
-            {translations.sidebar.myProfile}
-          </Link>
-        </Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <LogOut className="mr-3 h-5 w-5" />
-              {translations.sidebar.logout}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{translations.logoutDialog.title}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {translations.logoutDialog.description}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{translations.logoutDialog.cancel}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleLogout}>
-                {translations.logoutDialog.confirm}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      <div className={cn("border-t", isCollapsed ? "p-0" : "p-4")}>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn("w-full justify-start text-muted-foreground font-normal hover:text-primary hover:bg-primary/10", isCollapsed && "justify-center")}
+                  >
+                    <Globe className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                    <span className={cn({ 'hidden': isCollapsed })}>{language === 'en' ? 'English' : 'తెలుగు'}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => setLanguage('en')}>
+                    English
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLanguage('te')}>
+                    తెలుగు
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TooltipTrigger>
+            {isCollapsed && (
+              <TooltipContent side="right">
+                <p>Language</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                asChild
+                className={cn("w-full justify-start text-muted-foreground font-normal hover:text-primary hover:bg-primary/10", isCollapsed && "justify-center")}
+                onClick={handleLinkClick}
+              >
+                <Link href="/profile">
+                  <User className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                  <span className={cn({ 'hidden': isCollapsed })}>{translations.sidebar.myProfile}</span>
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            {isCollapsed && (
+              <TooltipContent side="right">
+                <p>{translations.sidebar.myProfile}</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+               <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn("w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10", isCollapsed && "justify-center")}
+                  >
+                    <LogOut className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                    <span className={cn({ 'hidden': isCollapsed })}>{translations.sidebar.logout}</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{translations.logoutDialog.title}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {translations.logoutDialog.description}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{translations.logoutDialog.cancel}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLogout}>
+                      {translations.logoutDialog.confirm}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </TooltipTrigger>
+            {isCollapsed && (
+              <TooltipContent side="right">
+                <p>{translations.sidebar.logout}</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </aside>
   );

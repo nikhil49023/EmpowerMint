@@ -4,12 +4,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/auth-provider';
 import {
-  collection,
-  query,
-  onSnapshot,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import {
   Card,
   CardContent,
   CardDescription,
@@ -18,21 +12,19 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown, ArrowLeft, FilePieChart } from 'lucide-react';
-import { generateBudgetReportAction } from '@/app/actions';
 import type { GenerateBudgetReportOutput } from '@/ai/schemas/budget-report';
 import type { ExtractedTransaction } from '@/ai/schemas/transactions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FormattedText } from '@/components/financify/formatted-text';
 import { ProjectCostPieChart } from '@/components/financify/dpr-charts';
 import { useToast } from '@/hooks/use-toast';
-import { errorEmitter } from '@/firebase/error-emitter';
-import {
-  FirestorePermissionError,
-  type SecurityRuleContext,
-} from '@/firebase/errors';
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { useRouter } from 'next/navigation';
+import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+
+const db = getFirestore(app);
 
 export default function BudgetReportPage() {
   const { user } = useAuth();
@@ -48,27 +40,12 @@ export default function BudgetReportPage() {
   useEffect(() => {
     if (user) {
       setIsLoading(true);
-      const transCollectionRef = collection(db, 'users', user.uid, 'transactions');
-      const transQuery = query(transCollectionRef);
-      const unsubscribe = onSnapshot(
-        transQuery,
-        (snapshot) => {
-          const transData = snapshot.docs.map(doc => ({
-            ...(doc.data() as ExtractedTransaction),
-          }));
-          setTransactions(transData);
+      const transactionsRef = collection(db, 'users', user.uid, 'transactions');
+      const unsubscribe = onSnapshot(transactionsRef, (snapshot) => {
+          const fetchedTransactions = snapshot.docs.map(doc => doc.data()) as ExtractedTransaction[];
+          setTransactions(fetchedTransactions);
           setIsLoading(false);
-        },
-        (error) => {
-          const permissionError = new FirestorePermissionError({
-            path: `users/${user.uid}/transactions`,
-            operation: 'list',
-          } satisfies SecurityRuleContext);
-          errorEmitter.emit('permission-error', permissionError);
-          setIsLoading(false);
-          setError('Could not fetch transaction data. Please check your permissions.');
-        }
-      );
+      });
       return () => unsubscribe();
     } else {
       setIsLoading(false);
@@ -87,7 +64,8 @@ export default function BudgetReportPage() {
   }, [isGenerating, progress]);
 
   const handleGenerateReport = async () => {
-    if (transactions.length === 0) {
+    const expenseTransactions = transactions.filter(t => t.type === 'expense');
+    if (expenseTransactions.length === 0) {
       toast({
         variant: 'destructive',
         title: 'Cannot Generate Report',
@@ -98,19 +76,33 @@ export default function BudgetReportPage() {
     setIsGenerating(true);
     setProgress(5);
     setError(null);
-    const result = await generateBudgetReportAction({ transactions });
-    if (result.success) {
-      setProgress(100);
-      setReport(result.data);
-    } else {
-      setError(result.error);
-      toast({
-        variant: 'destructive',
-        title: 'Generation Failed',
-        description: result.error,
-      });
+    
+    try {
+        const response = await fetch('/api/budget-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transactions: expenseTransactions }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to generate report.');
+        }
+
+        const data = await response.json();
+        setProgress(100);
+        setReport(data);
+
+    } catch (e: any) {
+        setError(e.message);
+        toast({
+            variant: 'destructive',
+            title: 'Generation Failed',
+            description: e.message,
+        });
+    } finally {
+        setIsGenerating(false);
     }
-    setIsGenerating(false);
   };
 
   const handleExport = () => {
