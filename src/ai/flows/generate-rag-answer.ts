@@ -13,7 +13,7 @@ import type {
 import fetch from 'node-fetch';
 
 const SARVAM_API_KEY = process.env.SARVAM_API_KEY;
-const API_URL = 'https://api.sarvam.ai/v1/chat/completions';
+const API_URL = 'https://api.sarvam.ai/chat/completions';
 
 export async function generateRagAnswer(
   input: GenerateRagAnswerInput
@@ -35,7 +35,7 @@ ${transactions
 `;
 
   const headers = {
-    Authorization: `Bearer ${SARVAM_API_KEY}`,
+    'API-Subscription-Key': `${SARVAM_API_KEY}`,
     'Content-Type': 'application/json',
   };
 
