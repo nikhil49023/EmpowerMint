@@ -97,7 +97,7 @@ ${transactionSample}
   };
 
   const data = {
-    model: 'sarvam-1',
+    model: 'sarvam-m',
     messages: [
       {
         role: 'system',
