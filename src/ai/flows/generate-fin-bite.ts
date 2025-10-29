@@ -10,7 +10,7 @@ import type { GenerateFinBiteOutput } from '@/ai/schemas/fin-bite';
 import fetch from 'node-fetch';
 
 const SARVAM_API_KEY = process.env.SARVAM_API_KEY;
-const API_URL = 'https://api.sarvam.ai/chat/completions';
+const API_URL = 'https://api.sarvam.ai/v1/chat/completions';
 
 export async function generateFinBite(): Promise<GenerateFinBiteOutput> {
   const prompt = `You are "FIn-Box," a specialized financial news anchor for early-stage entrepreneurs in India.
