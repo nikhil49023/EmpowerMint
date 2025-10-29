@@ -2,7 +2,8 @@
 'use server';
 
 /**
- * @fileOverview A flow for extracting transaction data from a document using Sarvam AI.
+ * @fileOverview A flow for extracting transaction data from a document using Google Gemini (for OCR).
+ * Using Gemini because it has better OCR/vision capabilities than Sarvam AI.
  */
 
 import type {
@@ -11,14 +12,14 @@ import type {
 } from '@/ai/schemas/transactions';
 import fetch from 'node-fetch';
 
-const SARVAM_API_KEY = process.env.SARVAM_API_KEY;
-const API_URL = 'https://api.sarvam.ai/chat/completions';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 export async function extractTransactionsFromDocument(
   input: ExtractTransactionsInput
 ): Promise<ExtractTransactionsOutput> {
   const prompt = `You are an expert at extracting structured data from financial documents.
-Analyze the provided document content and extract all financial transactions you can find.
+Analyze the provided document image and extract all financial transactions you can find.
 
 CRITICAL: You MUST output ONLY a valid JSON object with a single key "transactions".
 The value should be an array of transaction objects.
@@ -29,42 +30,64 @@ For each transaction, provide:
 - "type": "income" or "expense".
 - "amount": The amount as a string with currency (e.g., "INR 1,234.56").
 
-Document Content (Base64 Encoded):
-${input.documentDataUri.split(',')[1]}
+Example output:
+{
+  "transactions": [
+    {
+      "description": "Salary Payment",
+      "date": "15/01/2024",
+      "type": "income",
+      "amount": "INR 50,000.00"
+    }
+  ]
+}
 `;
 
-  const headers = {
-    'API-Subscription-Key': `${SARVAM_API_KEY}`,
-    'Content-Type': 'application/json',
-  };
+  // Extract the base64 data and mime type
+  const [mimeInfo, base64Data] = input.documentDataUri.split(',');
+  const mimeType = mimeInfo.match(/:(.*?);/)?.[1] || 'image/jpeg';
+
   const data = {
-    model: 'sarvam-1',
-    messages: [
+    contents: [
       {
-        role: 'system',
-        content:
-          'You are a helpful AI for extracting financial transaction data.',
+        parts: [
+          { text: prompt },
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: base64Data,
+            },
+          },
+        ],
       },
-      { role: 'user', content: prompt },
     ],
-    temperature: 0.2,
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 2048,
+    },
   };
 
   try {
     const response = await fetch(API_URL, {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("Sarvam AI Error Body:", errorBody);
-        throw new Error(`Sarvam AI API request failed with status: ${response.status}`);
+      const errorBody = await response.text();
+      console.error('Gemini API Error Body:', errorBody);
+      throw new Error(`Gemini API request failed with status: ${response.status}`);
     }
 
     const responseJson: any = await response.json();
-    const message = responseJson.choices[0].message.content;
+    const message = responseJson.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!message) {
+      throw new Error('No response from Gemini API');
+    }
 
     // Clean the response to get only the JSON part
     const jsonString = message
@@ -75,7 +98,7 @@ ${input.documentDataUri.split(',')[1]}
     const parsedOutput = JSON.parse(jsonString);
     return parsedOutput;
   } catch (error: any) {
-    console.error('Sarvam AI (extractTransactions) Error:', error);
+    console.error('Gemini (extractTransactions) Error:', error);
     throw new Error(
       `Failed to extract transactions from document: ${error.message}`
     );
