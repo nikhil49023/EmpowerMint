@@ -34,7 +34,7 @@ Use the following guidelines for each section of the JSON output:
 `;
 
   const headers = {
-    'API-Subscription-Key': `${SARVAM_API_KEY}`,
+    'Authorization': `Bearer ${SARVAM_API_KEY}`,
     'Content-Type': 'application/json',
   };
   const data = {
