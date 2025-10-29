@@ -63,12 +63,41 @@ Now, generate the full JSON object for the ElaboratedBusinessProfile. The schema
 
     const responseJson: any = await response.json();
     const message = responseJson.choices[0].message.content;
-    const jsonString = message
+    
+    // Clean the response to get only the JSON part
+    let jsonString = message
       .replace(/```json/g, '')
       .replace(/```/g, '')
       .trim();
+    
+    // Try to fix common JSON issues
+    jsonString = jsonString
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+      .replace(/\n/g, '\\n') // Escape newlines
+      .replace(/\r/g, '\\r') // Escape carriage returns
+      .replace(/\t/g, '\\t'); // Escape tabs
+    
+    // Find the JSON object boundaries
+    const startIndex = jsonString.indexOf('{');
+    const lastIndex = jsonString.lastIndexOf('}');
+    
+    if (startIndex !== -1 && lastIndex !== -1 && lastIndex > startIndex) {
+      jsonString = jsonString.substring(startIndex, lastIndex + 1);
+    }
 
     const parsedOutput = JSON.parse(jsonString);
+    
+    // Convert object fields to strings if needed for DPR elaboration
+    if (parsedOutput.targetAudienceAnalysis && typeof parsedOutput.targetAudienceAnalysis === 'object') {
+      parsedOutput.targetAudienceAnalysis = JSON.stringify(parsedOutput.targetAudienceAnalysis);
+    }
+    if (parsedOutput.marketingStrategy && typeof parsedOutput.marketingStrategy === 'object') {
+      parsedOutput.marketingStrategy = JSON.stringify(parsedOutput.marketingStrategy);
+    }
+    if (parsedOutput.financialSummary && typeof parsedOutput.financialSummary === 'object') {
+      parsedOutput.financialSummary = JSON.stringify(parsedOutput.financialSummary);
+    }
+    
     return parsedOutput;
   } catch (e: any) {
     console.error('Sarvam AI (DPR Elaboration) Error:', e.message);
