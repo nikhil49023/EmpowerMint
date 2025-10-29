@@ -72,13 +72,6 @@ Use the following guidelines for each section of the JSON output:
       .replace(/```/g, '')
       .trim();
     
-    // Try to fix common JSON issues
-    jsonString = jsonString
-      .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
-      .replace(/\n/g, '\\n') // Escape newlines
-      .replace(/\r/g, '\\r') // Escape carriage returns
-      .replace(/\t/g, '\\t'); // Escape tabs
-    
     // Find the JSON object boundaries
     const startIndex = jsonString.indexOf('{');
     const lastIndex = jsonString.lastIndexOf('}');
