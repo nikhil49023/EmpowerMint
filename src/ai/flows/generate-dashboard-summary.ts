@@ -21,7 +21,7 @@ type GenerateDashboardSummaryOutput = z.infer<
 >;
 
 const SARVAM_API_KEY = process.env.SARVAM_API_KEY;
-const API_URL = 'https://api.sarvam.ai/chat/completions';
+const API_URL = 'https://api.sarvam.ai/v1/chat/completions';
 
 
 function parseCurrency(amount: string | number): number {
