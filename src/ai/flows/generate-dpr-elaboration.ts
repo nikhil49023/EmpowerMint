@@ -12,7 +12,7 @@ import type { ElaborationInput } from '@/ai/schemas/dpr-elaboration';
 import fetch from 'node-fetch';
 
 const SARVAM_API_KEY = process.env.SARVAM_API_KEY;
-const API_URL = 'https://api.sarvam.ai/v1/chat/completions';
+const API_URL = 'https://api.sarvam.ai/chat/completions';
 
 export async function generateDprElaboration(
   input: ElaborationInput
@@ -31,7 +31,7 @@ Now, generate the full JSON object for the ElaboratedBusinessProfile. The schema
 `;
 
   const headers = {
-    Authorization: `Bearer ${SARVAM_API_KEY}`,
+    'API-Subscription-Key': `${SARVAM_API_KEY}`,
     'Content-Type': 'application/json',
   };
 
