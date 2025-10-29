@@ -43,7 +43,7 @@ Example Output:
 `;
 
   const headers = {
-    'API-Subscription-Key': `${SARVAM_API_KEY}`,
+    'Authorization': `Bearer ${SARVAM_API_KEY}`,
     'Content-Type': 'application/json',
   };
 
